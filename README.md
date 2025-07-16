@@ -43,7 +43,7 @@ Powered by OpenAI and customizable through Python, Kairos is your personal tool 
 
 ```bash
 python -m venv .venv
-.\.venv\Scriptsctivate
+.\.venv\Scripts\activate
 ```
 
 3. Install dependencies:
