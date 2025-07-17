@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/kairos/__init__.py
+src/kairos/main.py
+src/kairos.egg-info/PKG-INFO
+src/kairos.egg-info/SOURCES.txt
+src/kairos.egg-info/dependency_links.txt
+src/kairos.egg-info/requires.txt
+src/kairos.egg-info/top_level.txt
+src/kairos/core/__init__.py
+src/kairos/core/document_handler.py
+src/kairos/core/kairos_assistant.py

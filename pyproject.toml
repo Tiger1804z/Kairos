@@ -1,0 +1,22 @@
+[project]
+name = "kairos"
+version = "0.1.0"
+description = "Kairos — Your personal AI assistant powered by GPT-4"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openai",
+    "python-dotenv",
+    "python-docx",
+    "PyMuPDF",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
