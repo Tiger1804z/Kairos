@@ -64,4 +64,3 @@ class FileReader:
     def read(self):
         return self.reader.read()
 
-print("✅ document_handler loaded")

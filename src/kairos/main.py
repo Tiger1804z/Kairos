@@ -1,9 +1,18 @@
-from core.kairos_assistant import KairosAssistant
-import core.document_handler as dh
+import os
+from dotenv import load_dotenv  # 👈 ajoute ça
+
+# Charge les variables depuis le fichier .env
+load_dotenv()
+
+# Tu peux maintenant accéder à la clé comme ça :
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+from kairos.core.kairos_assistant import KairosAssistant
+from kairos.core import document_handler as dh
 
 def main():
-    assistant = KairosAssistant()
-    
+    assistant = KairosAssistant(api_key=openai_api_key)  # 👈 passe-la ici si ton assistant en a besoin
+
     print("🌟 Welcome, I'm Kairos — your personal AI assistant 🌟")
 
     while True:
