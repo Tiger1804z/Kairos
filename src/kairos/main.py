@@ -22,9 +22,10 @@ def main():
         print("1. Ask a question to GPT")
         print("2. Summarize a text")
         print("3. Read a document")
-        print("4. Exit")
+        print("4. Summarize a document")
+        print("5. Exit")
 
-        choice = input("Select an option (1-4): ")
+        choice = input("Select an option (1-5): ")
 
         if choice == "1":
             question = input("\nWhat is your question?\n> ")
@@ -46,6 +47,16 @@ def main():
                 print(f"❌ Error reading file: {e}")
 
         elif choice == "4":
+          file_path = input("Enter the path to the document:\n> ").strip().strip('"')
+          try:
+              summarizer = dh.DocumentSummarizer(file_path)
+              summary = summarizer.summarize_doc()
+              print(f"\n📄 Summary:\n{summary}")
+              summarizer.save_summary_to_file(summary)
+          except Exception as e:
+           print(f"❌ Error summarizing document: {e}")
+
+        elif choice == "5":
             print("\n👋 Goodbye!")
             break
 
