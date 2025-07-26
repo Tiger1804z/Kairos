@@ -1,10 +1,12 @@
 import os
 from dotenv import load_dotenv  # 👈 ajoute ça
 
-# Charge les variables depuis le fichier .env
-load_dotenv()
 
-# Tu peux maintenant accéder à la clé comme ça :
+from pathlib import Path
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / '.env')
+
+
+
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 from kairos.core.kairos_assistant import KairosAssistant
@@ -26,7 +28,7 @@ def main():
 
         if choice == "1":
             question = input("\nWhat is your question?\n> ")
-            answer = assistant.ask("Answer the following question:", question)
+            answer = assistant.ask_with_web_context( question)
             print(f"\n🧠 GPT-4 says:\n{answer}")
 
         elif choice == "2":
