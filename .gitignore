@@ -1,4 +1,10 @@
 __pycache__/
 *.py[cod]
 .venv
+.env.venv/
 .env
+.env.*
+KairosSummarySaves/
+__pycache__/
+*.pyc
+.vscode/
