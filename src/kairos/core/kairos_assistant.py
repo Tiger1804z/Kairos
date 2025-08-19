@@ -21,11 +21,11 @@ class KairosAssistant:
      def generate_response(self, prompt: str) -> str:
       current_date = datetime.now().strftime("%B %d, %Y")  # Ex: July 25, 2025
       response = self.client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5",
         messages=[
             {
                 "role": "system",
-                "content": f"You are GPT-4o and the current date is {current_date}."
+                "content": f"You are GPT-5 and the current date is {current_date}."
             },
             {
                 "role": "user",
@@ -37,7 +37,7 @@ class KairosAssistant:
     
      def summarize_text(self, text: str) -> str:
         response = self.client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5",
             messages=[
                 {
                     "role": "user",
@@ -62,7 +62,7 @@ class KairosAssistant:
            
         )
         response = self.client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5",
             messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
