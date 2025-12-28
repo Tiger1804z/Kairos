@@ -1,0 +1,15 @@
+# node
+**/node_modules
+
+# env
+**/.env
+
+# prisma generated
+**/generated/prisma
+
+# uploads
+**/uploads
+
+# OS / editor
+.DS_Store
+.vscode
