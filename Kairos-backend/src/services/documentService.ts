@@ -1,6 +1,11 @@
 import prisma from "../prisma/prisma";
 import { Prisma } from "../../generated/prisma/client";
 
+import fs from "fs";
+import path from "path";
+import { extractTextSample } from "../utils/documentTextExtract";
+import { askKairosFromDocument } from "./aiService";
+
 type CreateDocumentInput = {
   user_id: number;
   business_id: number;
@@ -104,4 +109,107 @@ export const getDocumentByIdService = async (id_document: number) => {
       updated_at: true,
     },
   });
+};
+
+
+/** Convertit le storage_path en chemin absolu (stocké relatif genre "uploads/...") */
+function toAbsoluteDiskPath(storagePath: string): string {
+  // storagePath: "uploads/4/2025-12/uuid.pdf"
+  return path.join(process.cwd(), storagePath);
+}
+
+/** Supprime le fichier sur disque si présent */
+async function safeUnlink(filePath: string): Promise<"deleted" | "missing" | "error"> {
+  try {
+    await fs.promises.unlink(filePath);
+    return "deleted";
+  } catch (err: any) {
+    // Fichier déjà absent => OK
+    if (err?.code === "ENOENT") return "missing";
+    return "error";
+  }
+}
+
+/**
+ * Delete DB + disk
+ * - Vérifie business_id (anti delete cross-tenant)
+ * - Retourne le doc supprimé + statut suppression fichier
+ */
+export const deleteDocumentService = async (
+  id_document: number,
+  business_id: number
+) => {
+  // 1) récupérer le doc (pour storage_path)
+  const doc = await prisma.document.findFirst({
+    where: { id_document, business_id },
+  });
+
+  if (!doc) {
+    return null;
+  }
+
+  // 2) delete DB
+  const deleted = await prisma.document.delete({
+    where: { id_document },
+  });
+
+  // 3) delete file disk
+  const abs = toAbsoluteDiskPath(doc.storage_path);
+  const disk = await safeUnlink(abs);
+
+  return { deleted, disk };
+};
+
+export const processDocumentByIdService = async (params: {
+  id_document: number;
+  business_id: number;
+}) => {
+  const doc = await prisma.document.findFirst({
+    where: {
+      id_document: params.id_document,
+      business_id: params.business_id,
+    },
+  });
+
+  if (!doc) return null;
+
+  // Fichier absent sur disque => on garde un état non-traité + message clair
+  try {
+    const textSample = await extractTextSample({
+      storage_path: doc.storage_path,
+      file_type: doc.file_type,
+      maxChars: 2500,
+    });
+
+    const { aiText } = await askKairosFromDocument({
+      fileName: doc.file_name,
+      fileType: doc.file_type,
+      fileSize: doc.file_size,
+      textSample,
+    });
+
+    const updated = await prisma.document.update({
+      where: { id_document: doc.id_document },
+      data: {
+        ai_summary: aiText,
+        is_processed: true,
+        processed_at: new Date(),
+      },
+    });
+
+    return updated;
+  } catch (e: any) {
+    // cas : fs access/read fail, etc.
+    const updated = await prisma.document.update({
+      where: { id_document: doc.id_document },
+      data: {
+        ai_summary:
+          "Traitement impossible : fichier introuvable ou non lisible sur disque.",
+        is_processed: false,
+        processed_at: null,
+      },
+    });
+
+    return updated;
+  }
 };

@@ -93,6 +93,64 @@ Question utilisateur: ${input.question}
   return text.replace(/\\n/g, " ").replace(/\n/g, " ").trim();
 };
 
+
+export const askKairosText = async (prompt: string): Promise<string> => {
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "Tu es Kairos, un assistant analytique. Tu réponds uniquement à partir des données fournies.",
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.2,
+  });
+
+  return completion.choices[0]?.message?.content ?? "";
+};
+
+export const askKairosFromDocument = async (params: {
+  fileName: string;
+  fileType?: string | null;
+  fileSize?: number | null;
+  textSample: string;
+}) => {
+  const { fileName, fileType, fileSize, textSample } = params;
+
+  const prompt = `
+DOCUMENT
+Nom: ${fileName}
+Type: ${fileType ?? "unknown"}
+Taille: ${fileSize ?? "unknown"} bytes
+
+EXTRAIT RÉEL:
+${textSample}
+
+RÈGLES:
+- Répondre en français
+- 2 paragraphes maximum
+- Puis 2 actions numérotées
+- Aucun markdown
+- Aucun chiffre inventé
+- Si l'extrait est insuffisant, le dire clairement
+
+TÂCHE:
+Produire un résumé utile du document à partir de l'extrait fourni uniquement.
+  `.trim();
+
+  const aiText = await askKairosText(prompt);
+
+  return { aiText };
+};
+
+
+
+
 /**
  * Wrapper pour aiAsk
  * - Prend le résultat brut SQL (unknown)

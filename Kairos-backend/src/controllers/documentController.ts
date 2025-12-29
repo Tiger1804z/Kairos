@@ -6,6 +6,8 @@ import {
   createDocumentService,
   listDocumentsByBusinessService,
   getDocumentByIdService,
+  deleteDocumentService,
+  processDocumentByIdService,
 } from "../services/documentService";
 
 /**
@@ -150,4 +152,53 @@ export const downloadDocument = async (req: Request, res: Response) => {
   }
 
   return res.download(absolutePath, doc.file_name);
+};
+
+
+export const deleteDocumentById = async (req: Request, res: Response) => {
+  const businessId = Number(req.query.business_id);
+  if (!businessId || Number.isNaN(businessId)) {
+    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
+  }
+
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
+  }
+
+  const result = await deleteDocumentService(id, businessId);
+
+  if (!result) {
+    return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
+  }
+
+  return res.json({
+    document: result.deleted,
+    disk: result.disk, // "deleted" | "missing" | "error"
+  });
+};
+
+
+
+export const processDocument = async (req: Request, res: Response) => {
+  const businessId = Number(req.query.business_id);
+  if (!businessId || Number.isNaN(businessId)) {
+    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
+  }
+
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
+  }
+
+  const updated = await processDocumentByIdService({
+    id_document: id,
+    business_id: businessId,
+  });
+
+  if (!updated) {
+    return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
+  }
+
+  return res.json({ document: updated });
 };
