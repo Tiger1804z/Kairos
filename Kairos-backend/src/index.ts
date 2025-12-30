@@ -14,6 +14,7 @@ import queryLogsRoutes from "./routes/queryLogRoutes";
 import { report } from "process";
 import reportsRoutes from "./routes/reportsRoutes";
 import documentRoutes from "./routes/documentRoutes";
+import authRoutes from "./routes/authRoutes";
 
 dotenv.config();
 
@@ -40,6 +41,8 @@ app.use("/documents", documentRoutes);
 app.use("/query-logs", queryLogsRoutes);
 
 app.use("/ai", aiRoutes);
+
+app.use("/auth", authRoutes);
 
 const PORT = process.env.PORT || 3000;
 
