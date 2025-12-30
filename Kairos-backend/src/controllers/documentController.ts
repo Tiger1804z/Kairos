@@ -185,15 +185,16 @@ export const processDocument = async (req: Request, res: Response) => {
   if (!businessId || Number.isNaN(businessId)) {
     return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
   }
-
+  
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
-
+  const mode = (req.query.mode?.toString() ?? "auto").toLowerCase();
   const updated = await processDocumentByIdService({
     id_document: id,
     business_id: businessId,
+    mode,
   });
 
   if (!updated) {

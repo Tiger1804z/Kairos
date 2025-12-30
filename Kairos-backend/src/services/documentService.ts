@@ -4,7 +4,7 @@ import { Prisma } from "../../generated/prisma/client";
 import fs from "fs";
 import path from "path";
 import { extractTextSample } from "../utils/documentTextExtract";
-import { askKairosFromDocument } from "./aiService";
+import { askKairosFinanceFromDocument, askKairosFromDocument } from "./aiService";
 
 type CreateDocumentInput = {
   user_id: number;
@@ -160,10 +160,15 @@ export const deleteDocumentService = async (
   return { deleted, disk };
 };
 
+// ------------------------------------------------------
+// PROCESS DOCUMENT (extract -> AI -> update DB)
+// ------------------------------------------------------
 export const processDocumentByIdService = async (params: {
   id_document: number;
   business_id: number;
+  mode?: "auto" | "finance" | "general" | string;
 }) => {
+  // 1) récupérer le doc en validant l'appartenance au business
   const doc = await prisma.document.findFirst({
     where: {
       id_document: params.id_document,
@@ -173,7 +178,7 @@ export const processDocumentByIdService = async (params: {
 
   if (!doc) return null;
 
-  // Fichier absent sur disque => on garde un état non-traité + message clair
+  // 2) extraction texte (peut throw si fichier absent / non lisible)
   try {
     const textSample = await extractTextSample({
       storage_path: doc.storage_path,
@@ -181,13 +186,56 @@ export const processDocumentByIdService = async (params: {
       maxChars: 2500,
     });
 
-    const { aiText } = await askKairosFromDocument({
-      fileName: doc.file_name,
-      fileType: doc.file_type,
-      fileSize: doc.file_size,
-      textSample,
-    });
+    // 2.1) si pas assez de texte => pas d'appel AI (inutile)
+    if (!textSample || textSample.trim().length < 50) {
+      const updated = await prisma.document.update({
+        where: { id_document: doc.id_document },
+        data: {
+          ai_summary:
+            "Impossible de résumer : aucun texte extractible (scan/image ou format non supporté).",
+          is_processed: false,
+          processed_at: null,
+        },
+      });
+      return updated;
+    }
 
+    // 3) détection simple "finance-like" (nom/type + extrait)
+    const hay = (doc.file_name + " " + (doc.file_type ?? "") + " " + textSample)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const isFinanceLikeAuto = [
+      "statement", "income", "balance", "p&l", "profit", "expense",
+      "revenu", "depense", "bilan", "etat", "resultat",
+      "invoice", "facture", "total", "tax", "tps", "tvq"
+    ].some(k => hay.includes(k));
+
+    const mode = (params.mode ?? "auto").toString().toLowerCase();
+    const useFinance =
+      mode === "finance" ? true :
+      mode === "general" ? false :
+      isFinanceLikeAuto;
+
+    
+
+    // 4) appel AI (finance ou générique)
+    const { aiText } = useFinance
+      ? await askKairosFinanceFromDocument({
+          fileName: doc.file_name,
+          fileType: doc.file_type,
+          fileSize: doc.file_size,
+          textSample,
+        })
+      : await askKairosFromDocument({
+          fileName: doc.file_name,
+          fileType: doc.file_type,
+          fileSize: doc.file_size,
+          textSample,
+        });
+
+    // 5) update DB: on sauvegarde le résumé + flags
     const updated = await prisma.document.update({
       where: { id_document: doc.id_document },
       data: {
@@ -199,7 +247,7 @@ export const processDocumentByIdService = async (params: {
 
     return updated;
   } catch (e: any) {
-    // cas : fs access/read fail, etc.
+    // cas: fichier introuvable, pas accessible, erreur parsing, etc.
     const updated = await prisma.document.update({
       where: { id_document: doc.id_document },
       data: {

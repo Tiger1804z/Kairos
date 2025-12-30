@@ -6,6 +6,30 @@ const client = new OpenAI({
 });
 
 /**
+ * ---------------------------------------------------------------------------
+ * Kairos AI Service
+ * ---------------------------------------------------------------------------
+ * 3 gros usages:
+ * 1) Finance (à partir d'agrégats) -> résumé court + questions
+ * 2) Documents (à partir d'un extrait texte réel) -> résumé / analyse
+ * 3) SQL generator (question -> SQL READ ONLY sécurisé)
+ *
+ * Règle d'or:
+ * - On ne passe jamais tout un dataset énorme au LLM.
+ * - On envoie seulement: agrégats + extrait réel + contraintes strictes.
+ */
+
+/**
+ * Nettoyage simple:
+ * - enlève les retours de lignes visibles
+ * - garde réponse lisible
+ */
+const cleanOneLine = (s: string) => s.replace(/\\n/g, " ").replace(/\n/g, " ").trim();
+
+/**
+ * ---------------------------------------------------------------------------
+ * 1) Résumé financier court (à partir d'agrégats)
+ * ---------------------------------------------------------------------------
  * Ici on envoie juste des agrégats (pas besoin d'envoyer 200 transactions).
  * C'est plus safe + plus rapide.
  */
@@ -31,7 +55,7 @@ Période: ${input.periodLabel}
 Revenus: ${input.income}
 Dépenses: ${input.expenses}
 Net: ${input.net}
-Top catégories: ${input.topCategories.map(c => `${c.category}: ${c.total}`).join(", ")}
+Top catégories: ${input.topCategories.map((c) => `${c.category}: ${c.total}`).join(", ")}
 `.trim();
 
   const resp = await client.chat.completions.create({
@@ -44,9 +68,16 @@ Top catégories: ${input.topCategories.map(c => `${c.category}: ${c.total}`).joi
   });
 
   const text = resp.choices[0]?.message?.content ?? "Aucun résumé généré.";
-  return text.replace(/\\n/g, " ").replace(/\n/g, " ").trim();
+  return cleanOneLine(text);
 };
 
+/**
+ * ---------------------------------------------------------------------------
+ * 2) Q&A financier (agrégats + question)
+ * ---------------------------------------------------------------------------
+ * - Sert pour aiAsk (quand on a déjà les agrégats calculés).
+ * - Règles strictes anti-hallucination.
+ */
 export const askKairos = async (input: {
   businessName: string;
   periodLabel: string;
@@ -75,7 +106,7 @@ Période: ${input.periodLabel}
 Revenus: ${input.income}
 Dépenses: ${input.expenses}
 Net: ${input.net}
-Top catégories: ${input.topCategories.map(c => `${c.category}: ${c.total}`).join(", ")}
+Top catégories: ${input.topCategories.map((c) => `${c.category}: ${c.total}`).join(", ")}
 
 Question utilisateur: ${input.question}
 `.trim();
@@ -90,23 +121,24 @@ Question utilisateur: ${input.question}
   });
 
   const text = resp.choices[0]?.message?.content ?? "Aucune réponse générée.";
-  return text.replace(/\\n/g, " ").replace(/\n/g, " ").trim();
+  return cleanOneLine(text);
 };
 
-
+/**
+ * ---------------------------------------------------------------------------
+ * 3) Texte générique (tu passes déjà un prompt string)
+ * ---------------------------------------------------------------------------
+ * - Utilisé par les wrappers document / autres.
+ */
 export const askKairosText = async (prompt: string): Promise<string> => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
-        content:
-          "Tu es Kairos, un assistant analytique. Tu réponds uniquement à partir des données fournies.",
+        content: "Tu es Kairos, un assistant analytique. Tu réponds uniquement à partir des données fournies.",
       },
-      {
-        role: "user",
-        content: prompt,
-      },
+      { role: "user", content: prompt },
     ],
     temperature: 0.2,
   });
@@ -114,6 +146,13 @@ export const askKairosText = async (prompt: string): Promise<string> => {
   return completion.choices[0]?.message?.content ?? "";
 };
 
+/**
+ * ---------------------------------------------------------------------------
+ * 4) Documents (résumé à partir d'un extrait réel)
+ * ---------------------------------------------------------------------------
+ * - Le service de processing extrait textSample (PDF/CSV/XLSX/TXT)
+ * - Ici on demande un résumé utile, sans inventer.
+ */
 export const askKairosFromDocument = async (params: {
   fileName: string;
   fileType?: string | null;
@@ -141,17 +180,16 @@ RÈGLES:
 
 TÂCHE:
 Produire un résumé utile du document à partir de l'extrait fourni uniquement.
-  `.trim();
+`.trim();
 
   const aiText = await askKairosText(prompt);
-
-  return { aiText };
+  return { aiText: cleanOneLine(aiText) };
 };
 
-
-
-
 /**
+ * ---------------------------------------------------------------------------
+ * 5) aiAsk wrapper (SQL -> normalisation -> agrégats -> réponse)
+ * ---------------------------------------------------------------------------
  * Wrapper pour aiAsk
  * - Prend le résultat brut SQL (unknown)
  * - Normalise
@@ -173,11 +211,11 @@ export const askKairosFromSql = async (input: {
   const hasType = normalized.columns.includes("transaction_type");
   const amountCol =
     normalized.columns.find((c) => c === "total_amount") ??
-    normalized.columns.find((c) => c === "total_expense") ??   // utile pour ta query category
-    normalized.columns.find((c) => c === "total_amount") ??
+    normalized.columns.find((c) => c === "total_expense") ?? // utile pour query category
     normalized.columns.find((c) => c.startsWith("total_")) ??
     null;
 
+  // Cas 1: rows contiennent transaction_type + une colonne total_...
   if (hasType && amountCol) {
     for (const r of normalized.rows) {
       const t = String(r["transaction_type"] ?? "").toLowerCase();
@@ -187,18 +225,20 @@ export const askKairosFromSql = async (input: {
       if (t === "expense") expenses += v;
     }
   } else {
+    // Cas 2: fallback sur summary.numeric_totals
     const totals = normalized.summary?.numeric_totals ?? {};
     const firstTotalKey = Object.keys(totals)[0];
     if (firstTotalKey) {
       const total = Number(totals[firstTotalKey] ?? 0);
-      if (input.question.toLowerCase().includes("dépense") || input.question.toLowerCase().includes("depense")) {
-        expenses = total;
-      }
+      // heuristique simple: si la question parle de dépense -> on met dans expenses
+      const q = input.question.toLowerCase();
+      if (q.includes("dépense") || q.includes("depense")) expenses = total;
     }
   }
 
   const net = income - expenses;
 
+  // Top categories si présent
   const topCategories: Array<{ category: string; total: number }> = [];
   const hasCategory = normalized.columns.includes("category");
 
@@ -227,6 +267,14 @@ export const askKairosFromSql = async (input: {
   return { aiText, normalized, income, expenses, net, topCategories };
 };
 
+/**
+ * ---------------------------------------------------------------------------
+ * 6) SQL generator (question -> SQL READ ONLY sécurisé)
+ * ---------------------------------------------------------------------------
+ * - Aucun JOIN / WITH / UNION
+ * - Table allowlist: public.transactions
+ * - Must have business_id + LIMIT 50
+ */
 type SqlGenInput = {
   question: string;
   businessId: number;
@@ -315,4 +363,87 @@ const toISODate = (d: Date) => {
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+};
+
+/**
+ * ---------------------------------------------------------------------------
+ * 7) Finance prompt builder (OPTION A - documents financiers)
+ * ---------------------------------------------------------------------------
+ * IMPORTANT:
+ * - On ne met PAS textSample dans une constante globale.
+ * - On construit le prompt au runtime avec les params.
+ */
+export const buildFinancePrompt = (params: {
+  fileName: string;
+  fileType?: string | null;
+  fileSize?: number | null;
+  textSample: string;
+}) => {
+  const { fileName, fileType, fileSize, textSample } = params;
+
+  return {
+    system: `
+Tu es un analyste financier senior.
+Tu travailles UNIQUEMENT à partir des données fournies.
+Tu ne dois JAMAIS inventer de chiffres, périodes, catégories ou conclusions.
+Si une information est absente ou incertaine, indique-le clairement.
+`.trim(),
+
+    input: {
+      file_name: fileName,
+      file_type: fileType ?? "unknown",
+      file_size_bytes: fileSize ?? null,
+      text_sample: textSample, // extrait réel
+    },
+
+    rules: [
+      "Répondre en français",
+      "Maximum 2 courts paragraphes",
+      "Aucune mise en forme markdown",
+      "Aucun chiffre inventé",
+      "Utiliser 'Non précisé' si l'information est absente",
+      "Ne pas supposer le type de document sans preuve explicite",
+    ],
+
+    task: `
+Analyse ce document financier et produis :
+
+1) Identification
+- Type de document (ex: état des résultats, bilan, tableau de flux de trésorerie)
+- Période couverte
+- Devise utilisée
+
+2) Résumé financier
+- Revenus
+- Dépenses
+- Résultat net
+- Catégories principales mentionnées
+
+3) Qualité des données
+- Complètes / partielles / insuffisantes
+
+4) Actions suggérées (1 à 3)
+
+Si l'analyse est impossible, explique pourquoi (extrait trop court, tableau illisible, etc.).
+`.trim(),
+  };
+};
+
+/**
+ * ---------------------------------------------------------------------------
+ * 8) Wrapper qui envoie le buildFinancePrompt à askKairosText
+ * ---------------------------------------------------------------------------
+ * - Dans ton service de processing, tu peux choisir:
+ *   - askKairosFromDocument (résumé générique)
+ *   - askKairosFinanceFromDocument (finance)
+ */
+export const askKairosFinanceFromDocument = async (params: {
+  fileName: string;
+  fileType?: string | null;
+  fileSize?: number | null;
+  textSample: string;
+}) => {
+  const promptObj = buildFinancePrompt(params);
+  const aiText = await askKairosText(JSON.stringify(promptObj));
+  return { aiText: cleanOneLine(aiText) };
 };
