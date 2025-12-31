@@ -15,7 +15,7 @@ import prisma from "../prisma/prisma";
 /**
  * POST /documents/upload
  */
-export const uploadDocument = async (req: Request, res: Response) => {
+export const uploadMyDocument = async (req: Request, res: Response) => {
   try {
     await new Promise<void>((resolve, reject) => {
       uploadSingle(req, res, (err: any) => {
@@ -84,7 +84,7 @@ export const uploadDocument = async (req: Request, res: Response) => {
 /**
  * GET /documents?business_id=4&limit=20&cursor=0
  */
-export const listDocuments = async (req: Request, res: Response) => {
+export const listMyDocuments = async (req: Request, res: Response) => {
   const businessId = (req as any).businessId as number;
 
   const limitRaw = Number(req.query.limit ?? 20);
@@ -115,7 +115,7 @@ export const listDocuments = async (req: Request, res: Response) => {
 /**
  * GET /documents/:id
  */
-export const getDocumentById = async (req: Request, res: Response) => {
+export const listMyDocumentById = async (req: Request, res: Response) => {
   
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
@@ -135,7 +135,7 @@ export const getDocumentById = async (req: Request, res: Response) => {
  * - Télécharge le fichier depuis storage_path
  * - Nom de fichier = file_name (original)
  */
-export const downloadDocument = async (req: Request, res: Response) => {
+export const downloadMyDocumentById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
@@ -155,7 +155,7 @@ export const downloadDocument = async (req: Request, res: Response) => {
 };
 
 
-export const deleteDocumentById = async (req: Request, res: Response) => {
+export const deleteMyDocumentById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
@@ -175,7 +175,7 @@ export const deleteDocumentById = async (req: Request, res: Response) => {
 
 
 
-export const processDocument = async (req: Request, res: Response) => {
+export const processMyDocument = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });

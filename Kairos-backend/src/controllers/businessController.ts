@@ -1,55 +1,23 @@
 import type { Request, Response } from "express";
-import prisma from "../prisma/prisma"; // adapte le chemin si ton fichier est ailleurs
+import {
+  createBusinessForOwnerService,
+  listBusinessesByOwnerService,
+  getBusinessByIdService,
+  updateBusinessByIdService,
+  deleteBusinessByIdService,
+} from "../services/businessService";
 
-import { createNewBusiness,deleteBusinessService,getBusinessesService,getOneBusinessById, updateBusinessService} from "../services/businessService";
-
-export const createBusiness = async (req: Request, res: Response) => {
+// --------------------
+// MY (user connecté)
+// --------------------
+export const createMyBusiness = async (req: Request, res: Response) => {
   try {
-    const business = await createNewBusiness(req.body);
-    res.status(201).json(business);
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-};
+    if (!req.user) return res.status(401).json({ error: "AUTH_REQUIRED" });
 
-export const getBusinesses = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!.user_id;
+    const owner_id = req.user.user_id; // 🔒 forcé
+    const { name, business_type, city, country, currency, timezone, is_active } = req.body;
 
-    const businesses = await getBusinessesService(userId);
-    return res.status(200).json(businesses);
-  } catch (err) {
-    console.error("Get businesses error:", err);
-    return res.status(500).json({ error: "SERVER_ERROR" });
-  }
-};
-
-export const getBusinessById = async (req: Request, res: Response) => {
-  const businessId = Number(req.params.id);
-  if (isNaN(businessId)) {
-    return res.status(400).json({ error: "Invalid business ID" });
-  }
-  try {
-    const business = await getOneBusinessById(businessId); 
-    if (!business) {
-      return res.status(404).json({ error: "Business not found" });
-    }
-    res.status(200).json(business);
-  } catch (err) {
-    console.error("Get business error:", err);
-    res.status(500).json({ error: "Server error while fetching business" });
-  }
-};
-
-export const updateBusiness = async (req: Request, res: Response) => {
-  const businessId = Number(req.params.id);
-  if (isNaN(businessId)) {
-    return res.status(400).json({ error: "Invalid business ID" });
-  }
-  const { owner_id, name, business_type, city, country, currency, timezone, is_active } = req.body;
-
-  try {
-    const updatedBusiness = await updateBusinessService(businessId, {
+    const business = await createBusinessForOwnerService({
       owner_id,
       name,
       business_type,
@@ -59,26 +27,75 @@ export const updateBusiness = async (req: Request, res: Response) => {
       timezone,
       is_active,
     });
-    res.status(200).json(updatedBusiness);
-  } catch (err: any) {
-  console.error("Update business error:", err);
-  if (err.code === "P2025") {
-    return res.status(404).json({ error: "Business not found" });
+
+    return res.status(201).json({ business });
+  } catch (error: any) {
+    const msg = error?.message ?? "SERVER_ERROR";
+    if (msg === "BUSINESS_NAME_ALREADY_EXISTS") {
+      return res.status(400).json({ error: "BUSINESS_NAME_ALREADY_EXISTS" });
+    }
+    return res.status(500).json({ error: "SERVER_ERROR" });
   }
-  res.status(500).json({ error: "Server error while updating business" });
-}
 };
 
-export const deleteBusiness = async (req: Request, res: Response) => {
-  const businessId = Number(req.params.id);
-  if (isNaN(businessId)) {
-    return res.status(400).json({ error: "Invalid business ID" });
-  }
+export const listMyBusinesses = async (req: Request, res: Response) => {
   try {
-    await deleteBusinessService(businessId);
-    res.status(204).send();
-  } catch (err) {
-    console.error("Delete business error:", err);
-    res.status(500).json({ error: "Server error while deleting business" });
+    if (!req.user) return res.status(401).json({ error: "AUTH_REQUIRED" });
+
+    const businesses = await listBusinessesByOwnerService(req.user.user_id);
+    return res.status(200).json({ items: businesses });
+  } catch {
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+};
+
+export const getMyBusinessById = async (req: Request, res: Response) => {
+  try {
+    const businessId = req.businessId;
+    if (!businessId) return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
+
+    const business = await getBusinessByIdService(businessId);
+    if (!business) return res.status(404).json({ error: "BUSINESS_NOT_FOUND" });
+
+    return res.status(200).json({ business });
+  } catch {
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+};
+
+export const updateMyBusinessById = async (req: Request, res: Response) => {
+  try {
+    const businessId = req.businessId;
+    if (!businessId) return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
+
+    const { name, business_type, city, country, currency, timezone, is_active } = req.body ?? {};
+
+    const updated = await updateBusinessByIdService(businessId, {
+      name,
+      business_type,
+      city,
+      country,
+      currency,
+      timezone,
+      is_active,
+    });
+
+    return res.status(200).json({ business: updated });
+  } catch (err: any) {
+    if (err?.code === "P2025") return res.status(404).json({ error: "BUSINESS_NOT_FOUND" });
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+};
+
+export const deleteMyBusinessById = async (req: Request, res: Response) => {
+  try {
+    const businessId = req.businessId;
+    if (!businessId) return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
+
+    await deleteBusinessByIdService(businessId);
+    return res.status(204).send();
+  } catch (err: any) {
+    if (err?.code === "P2025") return res.status(404).json({ error: "BUSINESS_NOT_FOUND" });
+    return res.status(500).json({ error: "SERVER_ERROR" });
   }
 };

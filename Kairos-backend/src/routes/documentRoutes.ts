@@ -1,11 +1,11 @@
 import { Router } from "express";
 import {
-  uploadDocument,
-  listDocuments,
-  getDocumentById,
-  downloadDocument,
-  deleteDocumentById,
-  processDocument,
+  uploadMyDocument,
+  listMyDocuments,
+  listMyDocumentById,
+  downloadMyDocumentById,
+  deleteMyDocumentById,
+  processMyDocument
 } from "../controllers/documentController";
 import { requireAuth } from "../middleware/authMiddleware";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
@@ -18,37 +18,36 @@ const router = Router();
 router.post(
   "/:business_id/upload",
   requireBusinessAccess({ from: "params", key: "business_id" }),
-  uploadDocument
+  uploadMyDocument
 );
 
 // List (query params)
-router.get("/",requireBusinessAccess({from:"query" , key: "business_id", entity: "business" }) , listDocuments);
-
+router.get("/",requireBusinessAccess({from:"query" , key: "business_id", entity: "business" }) , listMyDocuments);
 // Detail
 router.get(
   "/:id",
   requireBusinessAccess({ from: "params", key: "id", entity: "document" }),
-  getDocumentById
+  listMyDocumentById
 );
 
 // Download
 router.get(
   "/:id/download",
   requireBusinessAccess({ from: "params", key: "id", entity: "document" }),
-  downloadDocument
+  downloadMyDocumentById
 );
 
 // Delete
 router.delete(
   "/:id",
   requireBusinessAccess({ from: "params", key: "id", entity: "document" }),
-  deleteDocumentById
+  deleteMyDocumentById
 );
 
 router.post(
   "/:id/process",
   requireBusinessAccess({ from: "params", key: "id", entity: "document" }),
-  processDocument
+  processMyDocument
 );
 
 

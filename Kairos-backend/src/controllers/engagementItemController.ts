@@ -8,7 +8,7 @@ import {
 } from "../services/engagementItemsService";
 
 // POST /engagementitems
-export const createEngagementItem = async (req: Request, res: Response) => {
+export const createMyEngagementItem = async (req: Request, res: Response) => {
   try {
     const { engagement_id, business_id, item_name, item_type, quantity, unit_price } = req.body;
 
@@ -29,7 +29,7 @@ export const createEngagementItem = async (req: Request, res: Response) => {
 };
 
 // GET /engagementitems?business_id=4&engagement_id=1
-export const getAllEngagementItems = async (req: Request, res: Response) => {
+export const listAllMyEngagementItems = async (req: Request, res: Response) => {
   try {
     const businessId = Number(req.query.business_id);
     const engagementId = req.query.engagement_id ? Number(req.query.engagement_id) : undefined;
@@ -48,7 +48,7 @@ export const getAllEngagementItems = async (req: Request, res: Response) => {
 };
 
 // GET /engagementitems/:id?business_id=4
-export const getEngagementItem = async (req: Request, res: Response) => {
+export const listMyEngagementItemById = async (req: Request, res: Response) => {
   try {
     const itemId = Number(req.params.id);
     const businessId = Number(req.query.business_id);
@@ -68,7 +68,7 @@ export const getEngagementItem = async (req: Request, res: Response) => {
 };
 
 // PATCH /engagementitems/:id?business_id=4
-export const updateEngagementItem = async (req: Request, res: Response) => {
+export const updateMyEngagementItem = async (req: Request, res: Response) => {
   try {
     const itemId = Number(req.params.id);
     const businessId = Number(req.query.business_id);
@@ -101,7 +101,7 @@ export const updateEngagementItem = async (req: Request, res: Response) => {
 };
 
 // DELETE /engagementitems/:id?business_id=4
-export const deleteEngagementItem = async (req: Request, res: Response) => {
+export const deleteMyEngagementItem = async (req: Request, res: Response) => {
   try {
     const itemId = Number(req.params.id);
     const businessId = Number(req.query.business_id);

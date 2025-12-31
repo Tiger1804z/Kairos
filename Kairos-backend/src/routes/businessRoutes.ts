@@ -1,29 +1,26 @@
 import { Router } from "express";
-import {
-  createBusiness,
-  deleteBusiness,
-  getBusinessById,
-  getBusinesses,
-  updateBusiness,
-} from "../controllers/businessController";
+import { createMyBusiness, deleteMyBusinessById, getMyBusinessById, listMyBusinesses, updateMyBusinessById } from "../controllers/businessController";
 import { requireAuth } from "../middleware/authMiddleware";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 
 const router = Router();
 
-// POST /businesses  (créer)
-router.post("/", requireAuth, createBusiness);
+router.post("/", requireAuth, createMyBusiness);
+router.get("/", requireAuth, listMyBusinesses);
 
-// GET /businesses  (liste "mes businesses")
-router.get("/", requireAuth, getBusinesses);
+router.get("/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "business" }),
+  getMyBusinessById
+);
 
-// GET /businesses/:id (détail)
-router.get("/:id", requireBusinessAccess({ from: "params", key: "id" }), getBusinessById);
+router.patch("/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "business" }),
+  updateMyBusinessById
+);
 
-// PATCH /businesses/:id
-router.patch("/:id", requireBusinessAccess({ from: "params", key: "id" }), updateBusiness);
-
-// DELETE /businesses/:id
-router.delete("/:id", requireBusinessAccess({ from: "params", key: "id" }), deleteBusiness);
+router.delete("/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "business" }),
+  deleteMyBusinessById
+);
 
 export default router;

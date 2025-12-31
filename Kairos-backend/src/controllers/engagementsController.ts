@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { createNewEngagement, deleteEngagementById, getAllEngagements, getEngagementById, updateEngagementById } from "../services/engagementsService";
 
-export const createEngagement = async (req: Request, res: Response) => {
+export const createMyEngagement = async (req: Request, res: Response) => {
   const {
     business_id,
     client_id,
@@ -30,7 +30,7 @@ export const createEngagement = async (req: Request, res: Response) => {
   }
 };
 
-export const getEngagements = async (req: Request, res: Response) => {
+export const listMyEngagements = async (req: Request, res: Response) => {
   const businessId = Number(req.query.business_id);
 
   if (isNaN(businessId)) {
@@ -47,7 +47,7 @@ export const getEngagements = async (req: Request, res: Response) => {
 };
 
 
-export const getEngagement = async (req: Request, res: Response) => {
+export const listMyEngagementById = async (req: Request, res: Response) => {
   const engagementId = Number(req.params.id);
   const businessId = Number(req.query.business_id);
 
@@ -66,7 +66,7 @@ export const getEngagement = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteEngagement = async (req: Request, res: Response) => {
+export const deleteMyEngagement = async (req: Request, res: Response) => {
   const engagementId = Number(req.params.id);
   const business_Id = Number(req.query.business_id);
   if (isNaN(engagementId)) {
@@ -84,7 +84,7 @@ export const deleteEngagement = async (req: Request, res: Response) => {
   }
 };
 
-export const updateEngagement = async (req: Request, res: Response) => {
+export const updateMyEngagement = async (req: Request, res: Response) => {
   const engagementId = Number(req.params.id);
   if (isNaN(engagementId)) {
     return res.status(400).json({ error: "Invalid engagement ID" });

@@ -44,11 +44,15 @@ export const adminGetUserById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) return res.status(400).json({ error: "INVALID_USER_ID" });
 
-  const user = await getUserByIdService(id);
-  if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
-
-  return res.json({ user });
+  try {
+    const user = await getUserByIdService(id);
+    if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+    return res.json({ user });
+  } catch {
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
 };
+
 
 export const adminUpdateUserById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -64,6 +68,7 @@ export const adminUpdateUserById = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "SERVER_ERROR" });
   }
 };
+
 
 export const adminDeleteUserById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
@@ -86,14 +91,18 @@ export const adminDeleteUserById = async (req: Request, res: Response) => {
 export const getMe = async (req: Request, res: Response) => {
   const userId = req.user!.user_id;
   const user = await getUserByIdService(userId);
-  return res.json({ user });
+  if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+  return res.json({ user })
+  
 };
 
 export const updateMe = async (req: Request, res: Response) => {
   const userId = req.user!.user_id;
 
-  // IMPORTANT: on empêche un user de changer son role lui-même
-  const { role, ...safeBody } = req.body ?? {};
+  // IMPORTANT: on empêche un user de changer son role lui-même et autres champs sensibles
+  const { first_name, last_name, email, password } = req.body ?? {};
+  const safeBody = { first_name, last_name, email, password };
+
 
   try {
     const updated = await updateUserByIdService(userId, safeBody);

@@ -1,8 +1,30 @@
 import prisma from "../prisma/prisma";
+import { Prisma } from "../../generated/prisma/client";
 
+// (Optionnel) safe select minimal (évite de renvoyer tout si tu ajoutes des champs plus tard)
+const clientSafeSelect = {
+  id_client: true,
+  business_id: true,
+  first_name: true,
+  last_name: true,
+  company_name: true,
+  email: true,
+  phone: true,
+  address: true,
+  city: true,
+  country: true,
+  postal_code: true,
+  notes: true,
+  is_active: true,
+  created_at: true,
+  updated_at: true,
+} satisfies Prisma.ClientSelect;
 
-
-export const createNewClient = async (data: {
+/**
+ * Create client (business scoped)
+ * - email unique par business (si fourni)
+ */
+export const createClientForBusinessService = async (data: {
   business_id: number;
   first_name?: string | null;
   last_name?: string | null;
@@ -31,18 +53,14 @@ export const createNewClient = async (data: {
     is_active,
   } = data;
 
-  // 🔍 Vérifier si un client avec ce email existe déjà pour cette business
-  if (email) {  // seulement si un email est fourni
-    const clientExisting = await prisma.client.findFirst({
-      where: { email, business_id },
+  if (email) {
+    const existing = await prisma.client.findFirst({
+      where: { business_id, email },
+      select: { id_client: true },
     });
-
-    if (clientExisting) {
-      throw new Error("Client with this email already exists for this business");
-    }
+    if (existing) throw new Error("CLIENT_EMAIL_ALREADY_EXISTS");
   }
 
-  // ✅ Création du client
   return prisma.client.create({
     data: {
       business_id,
@@ -56,24 +74,41 @@ export const createNewClient = async (data: {
       country: country ?? null,
       postal_code: postal_code ?? null,
       notes: notes ?? null,
-      is_active: is_active ?? true, // par défaut actif
+      is_active: is_active ?? true,
     },
+    select: clientSafeSelect,
   });
 };
 
-export const  getAllClients = async () => {
-    return prisma.client.findMany();
+/**
+ * List clients for a business (business scoped)
+ */
+export const listClientsByBusinessService = async (businessId: number) => {
+  return prisma.client.findMany({
+    where: { business_id: businessId },
+    orderBy: { created_at: "desc" },
+    select: clientSafeSelect,
+  });
 };
 
-export const getOneClientById = async (id: number) => {
-    const client = await prisma.client.findUnique({ where: { id_client: id } });
-    return client;
+/**
+ * Get client by id
+ */
+export const getClientByIdService = async (id_client: number) => {
+  return prisma.client.findUnique({
+    where: { id_client },
+    select: clientSafeSelect,
+  });
 };
 
-export const updateClientService = async (
-  id: number,
+/**
+ * Update client by id
+ * - IMPORTANT: ne jamais accepter business_id ici
+ * - email unique par business (si modifié) -> nécessite de retrouver le client d'abord
+ */
+export const updateClientByIdService = async (
+  id_client: number,
   data: Partial<{
-    business_id: number;
     first_name: string | null;
     last_name: string | null;
     company_name: string | null;
@@ -87,16 +122,54 @@ export const updateClientService = async (
     is_active: boolean;
   }>
 ) => {
-  const updateData: any = { ...data };
+  // On lit le business_id pour faire la règle "email unique par business"
+  const current = await prisma.client.findUnique({
+    where: { id_client },
+    select: { business_id: true, email: true },
+  });
+  if (!current) {
+    // Prisma update throw P2025, mais ici on veut un message clair si besoin
+    throw new Error("CLIENT_NOT_FOUND");
+  }
+
+  if (data.email !== undefined && data.email !== null) {
+    const existing = await prisma.client.findFirst({
+      where: {
+        business_id: current.business_id,
+        email: data.email,
+        NOT: { id_client },
+      },
+      select: { id_client: true },
+    });
+    if (existing) throw new Error("CLIENT_EMAIL_ALREADY_EXISTS");
+  }
+
+  const updateData: Prisma.ClientUpdateInput = {};
+  if (data.first_name !== undefined) updateData.first_name = data.first_name;
+  if (data.last_name !== undefined) updateData.last_name = data.last_name;
+  if (data.company_name !== undefined) updateData.company_name = data.company_name;
+  if (data.email !== undefined) updateData.email = data.email;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.address !== undefined) updateData.address = data.address;
+  if (data.city !== undefined) updateData.city = data.city;
+  if (data.country !== undefined) updateData.country = data.country;
+  if (data.postal_code !== undefined) updateData.postal_code = data.postal_code;
+  if (data.notes !== undefined) updateData.notes = data.notes;
+  if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
   return prisma.client.update({
-    where: { id_client: id },
+    where: { id_client },
     data: updateData,
+    select: clientSafeSelect,
   });
 };
 
-export const deleteClientService = async (id: number) => {
+/**
+ * Delete client by id
+ */
+export const deleteClientByIdService = async (id_client: number) => {
   return prisma.client.delete({
-    where: { id_client: id },
+    where: { id_client },
+    select: { id_client: true },
   });
 };

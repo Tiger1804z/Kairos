@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import prisma from "../prisma/prisma"; // adapte le chemin si ton fichier est ailleurs
 import {createNewClient, deleteClientService, getAllClients, getOneClientById, updateClientService} from "../services/clientsService";
 
-export const createClient = async (req: Request, res: Response) => {
+export const createMyClient = async (req: Request, res: Response) => {
     try {
         const client = await createNewClient(req.body);
         res.status(201).json(client);
@@ -11,7 +11,7 @@ export const createClient = async (req: Request, res: Response) => {
     }
 };
 
-export const getClients = async (req: Request, res: Response) => {
+export const listMyClients = async (req: Request, res: Response) => {
     try {
         const clients = await getAllClients();
         res.status(200).json(clients);
@@ -20,7 +20,7 @@ export const getClients = async (req: Request, res: Response) => {
     }
 };
 
-export const getClientById = async (req: Request, res: Response) => {
+export const getMyClientById = async (req: Request, res: Response) => {
     const clientId = Number(req.params.id);
     if (isNaN(clientId)) {
         return res.status(400).json({ error: "Invalid client ID" });
@@ -37,7 +37,7 @@ export const getClientById = async (req: Request, res: Response) => {
     }
 };
 
-export const updateClient = async (req: Request, res: Response) => {
+export const updateMyClient = async (req: Request, res: Response) => {
   const clientId = Number(req.params.id);
   if (isNaN(clientId)) {
     return res.status(400).json({ error: "Invalid client ID" });
@@ -80,7 +80,7 @@ export const updateClient = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteClient = async (req: Request, res: Response) => {
+export const deleteMyClient = async (req: Request, res: Response) => {
   const clientId = Number(req.params.id);
   if (isNaN(clientId)) {
     return res.status(400).json({ error: "Invalid client ID" });
