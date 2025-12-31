@@ -9,6 +9,8 @@ import {
   deleteDocumentService,
   processDocumentByIdService,
 } from "../services/documentService";
+import prisma from "../prisma/prisma";
+
 
 /**
  * POST /documents/upload
@@ -22,12 +24,11 @@ export const uploadDocument = async (req: Request, res: Response) => {
       });
     });
 
-    const userId = Number(req.body?.user_id);
-    const businessId = Number(req.params.business_id ?? req.body?.business_id);
+    const userId = req.user!.user_id;
 
-    if (!userId || Number.isNaN(userId)) {
-      return res.status(400).json({ error: "USER_ID_REQUIRED" });
-    }
+    const businessId = Number(req.params.business_id);
+
+    
     if (!businessId || Number.isNaN(businessId)) {
       return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
     }
@@ -84,10 +85,7 @@ export const uploadDocument = async (req: Request, res: Response) => {
  * GET /documents?business_id=4&limit=20&cursor=0
  */
 export const listDocuments = async (req: Request, res: Response) => {
-  const businessId = Number(req.query.business_id);
-  if (!businessId || Number.isNaN(businessId)) {
-    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
-  }
+  const businessId = (req as any).businessId as number;
 
   const limitRaw = Number(req.query.limit ?? 20);
   const limit = Number.isNaN(limitRaw) ? 20 : Math.min(Math.max(limitRaw, 1), 50);
@@ -113,10 +111,12 @@ export const listDocuments = async (req: Request, res: Response) => {
   });
 };
 
+
 /**
  * GET /documents/:id
  */
 export const getDocumentById = async (req: Request, res: Response) => {
+  
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
@@ -156,17 +156,12 @@ export const downloadDocument = async (req: Request, res: Response) => {
 
 
 export const deleteDocumentById = async (req: Request, res: Response) => {
-  const businessId = Number(req.query.business_id);
-  if (!businessId || Number.isNaN(businessId)) {
-    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
-  }
-
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
 
-  const result = await deleteDocumentService(id, businessId);
+  const result = await deleteDocumentService(id);
 
   if (!result) {
     return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
@@ -174,26 +169,22 @@ export const deleteDocumentById = async (req: Request, res: Response) => {
 
   return res.json({
     document: result.deleted,
-    disk: result.disk, // "deleted" | "missing" | "error"
+    disk: result.disk,
   });
 };
 
 
 
 export const processDocument = async (req: Request, res: Response) => {
-  const businessId = Number(req.query.business_id);
-  if (!businessId || Number.isNaN(businessId)) {
-    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
-  }
-  
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
+
   const mode = (req.query.mode?.toString() ?? "auto").toLowerCase();
+
   const updated = await processDocumentByIdService({
     id_document: id,
-    business_id: businessId,
     mode,
   });
 
@@ -203,3 +194,4 @@ export const processDocument = async (req: Request, res: Response) => {
 
   return res.json({ document: updated });
 };
+

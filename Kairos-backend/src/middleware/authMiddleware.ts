@@ -1,34 +1,51 @@
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "";
 
-/**
- * AUTH MIDDLEWARE
- * - Vérifie Authorization: Bearer <token>
- * - Injecte req.user = { user_id, role, email }
- */
+
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!JWT_SECRET) return res.status(500).json({ error: "JWT_SECRET_MISSING" });
+    const JWT_SECRET = process.env.JWT_SECRET;
+    // 1) Sécurité environnement
+    if (!JWT_SECRET) {
+      return res.status(500).json({ error: "JWT_SECRET_MISSING" });
+    }
 
-    const auth = req.headers.authorization ?? "";
-    const [type, token] = auth.split(" ");
+    // 2) Header Authorization
+    const authHeader = req.headers.authorization;
 
-    if (type !== "Bearer" || !token) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "AUTH_REQUIRED" });
     }
 
-    const payload = jwt.verify(token, JWT_SECRET) as any;
+    // 3) Extraction token
+    const token = authHeader.slice("Bearer ".length).trim();
+    if (!token) {
+      return res.status(401).json({ error: "AUTH_REQUIRED" });
+    }
 
-    (req as any).user = {
-      user_id: Number(payload.user_id),
+    // 4) Vérification JWT
+    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+
+    // 5) Payload minimal attendu
+    if (
+      !payload ||
+      typeof payload.user_id !== "number" ||
+      !payload.email ||
+      !payload.role
+    ) {
+      return res.status(401).json({ error: "INVALID_TOKEN" });
+    }
+
+    // 6) Injection user (contrat clair)
+    req.user = {
+      user_id: payload.user_id,
       role: String(payload.role),
       email: String(payload.email),
     };
 
     return next();
-  } catch {
+  } catch (err) {
     return res.status(401).json({ error: "INVALID_TOKEN" });
   }
 };

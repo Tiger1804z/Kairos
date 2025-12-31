@@ -1,23 +1,30 @@
 import { Router } from "express";
-import { createUser, getUsers, getUser, updateUser, deleteUser } 
-  from "../controllers/userController"; // ✅ tout vient du controller
+import { requireAuth } from "../middleware/authMiddleware";
+import { requireAdmin } from "../middleware/requireAdmin";
+import {
+  adminCreateUser,
+  adminListUsers,
+  adminGetUserById,
+  adminUpdateUserById,
+  adminDeleteUserById,
+  getMe,
+  updateMe,
+} from "../controllers/userController";
 
 const router = Router();
 
-// POST /users
-router.post("/", createUser);
+// Tout /users est protégé
+router.use(requireAuth);
 
-// GET /users
-router.get("/", getUsers);
+// Self
+router.get("/me", getMe);
+router.patch("/me", updateMe);
 
-// GET /users/:id
-router.get("/:id", getUser);
-
-// PATCH /users/:id
-router.patch("/:id", updateUser); // ✅ handler Express
-
-
-// DELETE /users/:id
-router.delete("/:id", deleteUser); // ✅ handler Express
+// Admin
+router.get("/", requireAdmin, adminListUsers);
+router.post("/", requireAdmin, adminCreateUser);
+router.get("/:id", requireAdmin, adminGetUserById);
+router.patch("/:id", requireAdmin, adminUpdateUserById);
+router.delete("/:id", requireAdmin, adminDeleteUserById);
 
 export default router;

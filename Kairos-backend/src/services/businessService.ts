@@ -46,8 +46,11 @@ export const createNewBusiness = async (data: {
   });
 };
 
-export const getAllBusinesses = async () => {
-  return prisma.business.findMany();
+export const getBusinessesService = async (userId: number) => {
+  return prisma.business.findMany({
+    where: { owner_id: userId },
+    orderBy: { created_at: "desc" },
+  });
 };
 
 export const getOneBusinessById = async (id: number) => {

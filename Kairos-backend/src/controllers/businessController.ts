@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import prisma from "../prisma/prisma"; // adapte le chemin si ton fichier est ailleurs
 
-import { createNewBusiness,deleteBusinessService,getAllBusinesses,getOneBusinessById, updateBusinessService} from "../services/businessService";
+import { createNewBusiness,deleteBusinessService,getBusinessesService,getOneBusinessById, updateBusinessService} from "../services/businessService";
 
 export const createBusiness = async (req: Request, res: Response) => {
   try {
@@ -14,10 +14,13 @@ export const createBusiness = async (req: Request, res: Response) => {
 
 export const getBusinesses = async (req: Request, res: Response) => {
   try {
-    const businesses = await getAllBusinesses();
-    res.status(200).json(businesses);
-  } catch (error) {
-    res.status(500).json({ error: "Server error while fetching businesses" });
+    const userId = req.user!.user_id;
+
+    const businesses = await getBusinessesService(userId);
+    return res.status(200).json(businesses);
+  } catch (err) {
+    console.error("Get businesses error:", err);
+    return res.status(500).json({ error: "SERVER_ERROR" });
   }
 };
 

@@ -6,6 +6,7 @@ import {
   getReportByIdController,
   toggleFavoriteReportController,
 } from "../controllers/reportsController";
+import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 
 const router = Router();
 
@@ -13,13 +14,12 @@ const router = Router();
 router.post("/", createReportController);
 
 // list
-router.get("/business/:businessId", getReportsByBusinessController);
-router.get("/user/:userId", getReportsByUserController);
+router.get("/business/:businessId",requireBusinessAccess({from:"params", key:"businessId"}), getReportsByBusinessController);
+router.get("/user/:userId", requireBusinessAccess({from:"params", key:"userId"}), getReportsByUserController);
 
 // single
-router.get("/:id", getReportByIdController);
-
+router.get("/:id", requireBusinessAccess({from:"params", key:"id"}), getReportByIdController);
 // favorite toggle
-router.patch("/:id/favorite", toggleFavoriteReportController);
+router.patch("/:id/favorite", requireBusinessAccess({from:"params", key:"id"}), toggleFavoriteReportController);
 
 export default router;

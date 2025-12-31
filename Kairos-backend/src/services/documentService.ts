@@ -135,44 +135,35 @@ async function safeUnlink(filePath: string): Promise<"deleted" | "missing" | "er
  * - Vérifie business_id (anti delete cross-tenant)
  * - Retourne le doc supprimé + statut suppression fichier
  */
-export const deleteDocumentService = async (
-  id_document: number,
-  business_id: number
-) => {
-  // 1) récupérer le doc (pour storage_path)
-  const doc = await prisma.document.findFirst({
-    where: { id_document, business_id },
+export const deleteDocumentService = async (id_document: number) => {
+  const doc = await prisma.document.findUnique({
+    where: { id_document },
   });
 
-  if (!doc) {
-    return null;
-  }
+  if (!doc) return null;
 
-  // 2) delete DB
   const deleted = await prisma.document.delete({
     where: { id_document },
   });
 
-  // 3) delete file disk
   const abs = toAbsoluteDiskPath(doc.storage_path);
   const disk = await safeUnlink(abs);
 
   return { deleted, disk };
 };
 
+
 // ------------------------------------------------------
 // PROCESS DOCUMENT (extract -> AI -> update DB)
 // ------------------------------------------------------
 export const processDocumentByIdService = async (params: {
   id_document: number;
-  business_id: number;
   mode?: "auto" | "finance" | "general" | string;
 }) => {
   // 1) récupérer le doc en validant l'appartenance au business
   const doc = await prisma.document.findFirst({
     where: {
       id_document: params.id_document,
-      business_id: params.business_id,
     },
   });
 
