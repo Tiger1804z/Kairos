@@ -37,10 +37,16 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
       return res.status(401).json({ error: "INVALID_TOKEN" });
     }
 
+    // 5.1) Validation du role
+    const validRoles = ["owner", "admin", "employee"] as const;
+    if (!validRoles.includes(payload.role as any)) {
+      return res.status(401).json({ error: "INVALID_ROLE" });
+    }
+
     // 6) Injection user (contrat clair)
     req.user = {
       user_id: payload.user_id,
-      role: String(payload.role),
+      role: payload.role as "owner" | "admin" | "employee",
       email: String(payload.email),
     };
 

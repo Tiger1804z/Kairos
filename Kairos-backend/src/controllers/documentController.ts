@@ -9,7 +9,7 @@ import {
   deleteDocumentService,
   processDocumentByIdService,
 } from "../services/documentService";
-import prisma from "../prisma/prisma";
+
 
 
 /**
@@ -26,7 +26,8 @@ export const uploadMyDocument = async (req: Request, res: Response) => {
 
     const userId = req.user!.user_id;
 
-    const businessId = Number(req.params.business_id);
+    const businessId = (req as any).businessId as number;
+
 
     
     if (!businessId || Number.isNaN(businessId)) {
@@ -87,6 +88,7 @@ export const uploadMyDocument = async (req: Request, res: Response) => {
 export const listMyDocuments = async (req: Request, res: Response) => {
   const businessId = (req as any).businessId as number;
 
+
   const limitRaw = Number(req.query.limit ?? 20);
   const limit = Number.isNaN(limitRaw) ? 20 : Math.min(Math.max(limitRaw, 1), 50);
 
@@ -122,7 +124,7 @@ export const listMyDocumentById = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
 
-  const doc = await getDocumentByIdService(id);
+  const doc = await getDocumentByIdService(id, (req as any).businessId as number);
   if (!doc) {
     return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
   }
@@ -136,12 +138,14 @@ export const listMyDocumentById = async (req: Request, res: Response) => {
  * - Nom de fichier = file_name (original)
  */
 export const downloadMyDocumentById = async (req: Request, res: Response) => {
+  const businessId = (req as any).businessId as number;
   const id = Number(req.params.id);
+
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
 
-  const doc = await getDocumentByIdService(id);
+  const doc = await getDocumentByIdService(id, businessId);
   if (!doc) {
     return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
   }
@@ -157,11 +161,13 @@ export const downloadMyDocumentById = async (req: Request, res: Response) => {
 
 export const deleteMyDocumentById = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
+  const businessId = (req as any).businessId as number;
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
+  
 
-  const result = await deleteDocumentService(id);
+  const result = await deleteDocumentService(id,businessId);
 
   if (!result) {
     return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
@@ -181,10 +187,12 @@ export const processMyDocument = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
 
+  const businessId = (req as any).businessId as number;
   const mode = (req.query.mode?.toString() ?? "auto").toLowerCase();
 
   const updated = await processDocumentByIdService({
     id_document: id,
+    business_id: businessId,
     mode,
   });
 

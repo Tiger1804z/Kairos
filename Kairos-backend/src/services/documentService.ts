@@ -89,9 +89,15 @@ export const listDocumentsByBusinessService = async (params: {
  * GET (by id)
  * Retourne le document complet (métadonnées)
  */
-export const getDocumentByIdService = async (id_document: number) => {
-  return prisma.document.findUnique({
-    where: { id_document },
+export const getDocumentByIdService = async (
+  id_document: number,
+  business_id: number
+) => {
+  return prisma.document.findFirst({
+    where: {
+      id_document,
+      business_id,
+    },
     select: {
       id_document: true,
       user_id: true,
@@ -110,6 +116,8 @@ export const getDocumentByIdService = async (id_document: number) => {
     },
   });
 };
+  
+  
 
 
 /** Convertit le storage_path en chemin absolu (stocké relatif genre "uploads/...") */
@@ -135,13 +143,17 @@ async function safeUnlink(filePath: string): Promise<"deleted" | "missing" | "er
  * - Vérifie business_id (anti delete cross-tenant)
  * - Retourne le doc supprimé + statut suppression fichier
  */
-export const deleteDocumentService = async (id_document: number) => {
-  const doc = await prisma.document.findUnique({
-    where: { id_document },
+
+export const deleteDocumentService = async (id_document: number, business_id: number) => {
+  // 1) récupérer le doc en validant l'appartenance au business
+  const doc = await prisma.document.findFirst({
+    where: {
+      id_document,
+      business_id,
+    },
   });
-
   if (!doc) return null;
-
+  
   const deleted = await prisma.document.delete({
     where: { id_document },
   });
@@ -158,12 +170,13 @@ export const deleteDocumentService = async (id_document: number) => {
 // ------------------------------------------------------
 export const processDocumentByIdService = async (params: {
   id_document: number;
+  business_id: number;
   mode?: "auto" | "finance" | "general" | string;
 }) => {
-  // 1) récupérer le doc en validant l'appartenance au business
   const doc = await prisma.document.findFirst({
     where: {
       id_document: params.id_document,
+      business_id: params.business_id,
     },
   });
 
