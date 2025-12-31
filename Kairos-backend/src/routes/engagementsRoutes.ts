@@ -4,15 +4,35 @@ import {
   deleteMyEngagement,
   listMyEngagements,
   listMyEngagementById,
-  updateMyEngagement
+  updateMyEngagement,
 } from "../controllers/engagementsController";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 
 const router = Router();
 
-router.post("/",requireBusinessAccess({from:"body"}), createMyEngagement);
-router.get("/", requireBusinessAccess({from:"query"}), listMyEngagements);
-router.get("/:id", requireBusinessAccess({from:"query"}), listMyEngagementById);
-router.patch("/:id", requireBusinessAccess({from:"query"}), updateMyEngagement);
-router.delete("/:id", requireBusinessAccess({from:"query"}), deleteMyEngagement);
+// POST /engagements  (body contient business_id)
+router.post("/", requireBusinessAccess({ from: "body" }), createMyEngagement);
+
+// GET /engagements?business_id=4
+router.get("/", requireBusinessAccess({ from: "query" }), listMyEngagements);
+
+// GET /engagements/:id (id = id_engagement)
+router.get(
+  "/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "engagement" }),
+  listMyEngagementById
+);
+
+router.patch(
+  "/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "engagement" }),
+  updateMyEngagement
+);
+
+router.delete(
+  "/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "engagement" }),
+  deleteMyEngagement
+);
+
 export default router;

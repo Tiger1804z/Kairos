@@ -6,7 +6,8 @@ import prisma from "../prisma/prisma";
 export const requireBusinessAccess = (opts?: {
   from?: "query" | "params" | "body";
   key?: string;
-  entity?: "business" | "document" | "client" | "engagement";
+  entity?: "business" | "document" | "client" | "engagement" | "engagementItem";
+
 }) => {
   const from = opts?.from ?? "query";
   const key = opts?.key ?? "business_id";
@@ -59,7 +60,18 @@ export const requireBusinessAccess = (opts?: {
       });
       if (!engagement) return res.status(404).json({ error: "ENGAGEMENT_NOT_FOUND" });
       businessId = engagement.business_id;
+      
+    }else if (entity === "engagementItem") {
+      const item = await prisma.engagementItem.findUnique({
+        where: { id_item: id },
+        select: { business_id: true },
+      });
+      if (!item) return res.status(404).json({ error: "ENGAGEMENT_ITEM_NOT_FOUND" });
+      businessId = item.business_id;
     }
+
+    
+    
 
     if (!businessId) {
       return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
