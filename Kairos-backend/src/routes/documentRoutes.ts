@@ -7,7 +7,7 @@ import {
   deleteMyDocumentById,
   processMyDocument
 } from "../controllers/documentController";
-import { requireAuth } from "../middleware/authMiddleware";
+
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 
 const router = Router();
@@ -21,8 +21,9 @@ router.post(
   uploadMyDocument
 );
 
-// List (query params)
-router.get("/",requireBusinessAccess({from:"query" , key: "business_id", entity: "business" }) , listMyDocuments);
+// List 
+router.get("/", requireBusinessAccess({ from: "query" }), listMyDocuments);
+
 // Detail
 router.get(
   "/:id",

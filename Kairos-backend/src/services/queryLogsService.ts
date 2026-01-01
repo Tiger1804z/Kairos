@@ -1,50 +1,48 @@
 import prisma from "../prisma/prisma";
 import { QueryActionType, QueryStatus } from "../../generated/prisma/client";
 
-
-
-/**
- * Service pour sauvegarder les requêtes IA de Kairos
- * Ici c'est du "logging": on garde la question, l'action, le status,
- * et (si on en a) le SQL généré + infos de perf.
- */
-
 type CreateQueryLogInput = {
   user_id: number;
   business_id: number;
 
-  // optionnel
   client_id?: number | null;
   document_id?: number | null;
 
-  // la question en langage naturel (celle du user)
   natural_query: string;
-
-  // ex: QueryActionType.ai_ask, QueryActionType.sql_select, etc.
   action_type: QueryActionType;
 
-  // si  génères du SQL (optionnel)
   generated_sql?: string | null;
 
-  // status: success | error | blocked
   status?: QueryStatus;
-
-  // si erreur
   error_message?: string | null;
 
-  // perf / tracking (optionnel)
   execution_time_ms?: number | null;
-  model_used?: string | null;     // ex: "gpt-4o-mini"
+  model_used?: string | null;
   tokens_used?: number | null;
 
-  // si on veux logger quand la requête a été exécutée
   executed_at?: Date | null;
 };
 
 export const createQueryLogService = async (data: CreateQueryLogInput) => {
-  // petit guard (pas obligé, mais ça évite des logs vides)
   if (!data.natural_query || data.natural_query.trim().length === 0) {
     throw new Error("natural_query is required");
+  }
+
+  // ✅ Fix: défense en profondeur sur client_id / document_id (optionnel)
+  if (data.client_id != null) {
+    const ok = await prisma.client.findFirst({
+      where: { id_client: data.client_id, business_id: data.business_id },
+      select: { id_client: true },
+    });
+    if (!ok) throw new Error("CLIENT_NOT_FOUND");
+  }
+
+  if (data.document_id != null) {
+    const ok = await prisma.document.findFirst({
+      where: { id_document: data.document_id, business_id: data.business_id },
+      select: { id_document: true },
+    });
+    if (!ok) throw new Error("DOCUMENT_NOT_FOUND");
   }
 
   return prisma.queryLog.create({
@@ -72,10 +70,6 @@ export const createQueryLogService = async (data: CreateQueryLogInput) => {
   });
 };
 
-/**
- * Récupérer l'historique des logs IA (par business)
- * (utile pour un dashboard / audit)
- */
 export const getQueryLogsByBusinessService = async (businessId: number, limit = 20) => {
   return prisma.queryLog.findMany({
     where: { business_id: businessId },
@@ -84,9 +78,6 @@ export const getQueryLogsByBusinessService = async (businessId: number, limit = 
   });
 };
 
-/**
- * Récupérer l'historique des logs (par user) - si tu veux voir qui fait quoi
- */
 export const getQueryLogsByUserService = async (userId: number, limit = 20) => {
   return prisma.queryLog.findMany({
     where: { user_id: userId },
