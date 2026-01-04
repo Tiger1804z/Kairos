@@ -24,12 +24,18 @@ export const signup = async (req: Request, res: Response) => {
   } catch (err: any) {
     const msg = err?.message ?? "SERVER_ERROR";
 
-    if (msg === "USER_ALREADY_EXISTS") return res.status(400).json({ error: msg });
-    if (msg === "JWT_SECRET_MISSING") return res.status(500).json({ error: msg });
+    if (msg === "EMAIL_ALREADY_USED") {
+      return res.status(409).json({ error: msg });
+    }
+
+    if (msg === "ROLE_NOT_ALLOWED") {
+      return res.status(400).json({ error: msg });
+    }
 
     return res.status(500).json({ error: "SERVER_ERROR" });
   }
 };
+
 
 /**
  * Controller: POST /auth/login

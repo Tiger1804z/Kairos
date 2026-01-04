@@ -6,7 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --import tsx src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+     "seed": "tsx prisma/seeds.ts"
+  },
+  "prisma": {
+    "seed": "npm run seed"
   },
   "keywords": [],
   "author": "",

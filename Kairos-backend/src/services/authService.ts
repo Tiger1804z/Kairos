@@ -12,7 +12,7 @@ type SignupInput = {
   last_name: string;
   email: string;
   password: string;
-  role?: "admin" | "owner" | "employee";
+  role?:  "owner" | "employee";
 };
 
 /**
@@ -49,7 +49,19 @@ const signToken = (payload: { user_id: number; role: string; email: string }) =>
  */
 export const signupService = async (data: SignupInput) => {
   const { first_name, last_name, email, password } = data;
-  const role = data.role ?? "owner";
+
+  // Roles autorisés via signup (jamais admin)
+  const allowedSignupRoles = new Set<NonNullable<SignupInput["role"]>>([
+    "owner",
+    "employee",
+  ]);
+
+  if ((data as any).role && !allowedSignupRoles.has((data as any).role)) {
+    // à mapper en 400 dans le controller
+    throw new Error("ROLE_NOT_ALLOWED");
+  }
+
+  const role = allowedSignupRoles.has(data.role ?? "owner") ? (data.role ?? "owner") : "owner";
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
