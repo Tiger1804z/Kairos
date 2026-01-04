@@ -1,37 +1,62 @@
 import fs from "fs";
 import path from "path";
 
-const toAbsoluteDiskPath = (storagePath: string) =>
-  path.join(process.cwd(), storagePath);
+const toAbsoluteDiskPath = (storagePath: string) => path.join(process.cwd(), storagePath);
 
-const normalize = (s: string) => s.replace(/\s+/g, " ").trim();
+// Soft normalize: garde les retours de ligne, nettoie juste espaces/tabs répétées
+const normalizeSoftKeepLines = (s: string) =>
+  s
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
-/**
- * Lecture UTF-8 safe (limite en chars) :
- * - évite de charger un fichier texte énorme inutilement
- * - garde un extrait exploitable pour l'IA
- */
-async function readUtf8Limited(absPath: string, maxChars: number) {
-  const raw = await fs.promises.readFile(absPath, "utf8");
-  return normalize(raw).slice(0, maxChars);
+// Hard normalize: pour texte “plain” (pas tabulaire)
+const normalizeHard = (s: string) => s.replace(/\s+/g, " ").trim();
+
+function getExtFromStoragePath(storagePath: string): string {
+  const ext = path.extname(storagePath).toLowerCase().replace(".", "");
+  return ext;
+}
+
+function inferExt(file_type?: string | null, storage_path?: string) {
+  const ft = (file_type ?? "").toLowerCase().trim();
+
+  // 1) si ft ressemble déjà à une extension
+  if (ft && /^[a-z0-9]{2,5}$/.test(ft)) return ft;
+
+  // 2) si ft est un mimetype connu
+  const mimeToExt: Record<string, string> = {
+    "application/pdf": "pdf",
+    "text/csv": "csv",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "text/plain": "txt",
+    "application/json": "json",
+  };
+  if (ft && mimeToExt[ft]) return mimeToExt[ft];
+
+  // 3) fallback: extension dans storage_path
+  if (storage_path) return getExtFromStoragePath(storage_path);
+
+  return "";
 }
 
 /**
- * Sampling tabulaire pour CSV (pas de parsing lourd) :
- * - prend header
- * - prend N lignes du début
- * - prend N lignes du milieu
- * - prend N lignes de fin
- * - concatène en un “mini dataset” lisible par l'IA
- *
- * Remarque:
- * - suffisant pour résumer un fichier financier
- * - évite d’envoyer le CSV complet
+ * Lecture UTF-8 safe (limite en chars)
+ */
+async function readUtf8Limited(absPath: string, maxChars: number) {
+  const raw = await fs.promises.readFile(absPath, "utf8");
+  return normalizeHard(raw).slice(0, maxChars);
+}
+
+/**
+ * Sampling tabulaire CSV
  */
 async function sampleCsv(absPath: string, maxChars: number) {
   const raw = await fs.promises.readFile(absPath, "utf8");
   const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0);
-
   if (lines.length === 0) return "";
 
   const header = lines[0];
@@ -65,20 +90,15 @@ async function sampleCsv(absPath: string, maxChars: number) {
     ...tailRows,
   ].join("\n");
 
-  return normalize(sample).slice(0, maxChars);
+  // ✅ on garde les lignes
+  return normalizeSoftKeepLines(sample).slice(0, maxChars);
 }
 
 /**
- * Sampling XLSX (si lib dispo) :
- * - lit les noms de feuilles
- * - extrait header + quelques lignes de chaque feuille (max 2-3 feuilles)
- *
- * Fallback:
- * - si “xlsx” pas installé → retourne ""
+ * Sampling XLSX (si lib dispo)
  */
 async function sampleXlsx(absPath: string, maxChars: number) {
   try {
-    // npm i xlsx
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const xlsx = require("xlsx");
 
@@ -86,7 +106,7 @@ async function sampleXlsx(absPath: string, maxChars: number) {
     const sheetNames: string[] = wb.SheetNames ?? [];
     if (sheetNames.length === 0) return "";
 
-    const picked = sheetNames.slice(0, 3); // limiter
+    const picked = sheetNames.slice(0, 3);
 
     const parts: string[] = [];
     parts.push(`XLSX SAMPLE`);
@@ -96,14 +116,15 @@ async function sampleXlsx(absPath: string, maxChars: number) {
       const ws = wb.Sheets[name];
       if (!ws) continue;
 
-      // Convertit en array-of-arrays (AOA) : simple à sample
       const rows: any[][] = xlsx.utils.sheet_to_json(ws, { header: 1, raw: false });
 
-      const nonEmpty = rows.filter((r) => Array.isArray(r) && r.some((c) => String(c ?? "").trim() !== ""));
+      const nonEmpty = rows.filter(
+        (r) => Array.isArray(r) && r.some((c) => String(c ?? "").trim() !== "")
+      );
       if (nonEmpty.length === 0) continue;
 
       const header = nonEmpty[0];
-      if (!header) continue; 
+      if (!header) continue;
       const body = nonEmpty.slice(1);
 
       const headRows = body.slice(0, 20);
@@ -119,25 +140,22 @@ async function sampleXlsx(absPath: string, maxChars: number) {
       for (const r of tailRows) parts.push(r.join(" | "));
     }
 
-    return normalize(parts.join("\n")).slice(0, maxChars);
+    return normalizeSoftKeepLines(parts.join("\n")).slice(0, maxChars);
   } catch {
     return "";
   }
 }
 
 /**
- * Extraction DOCX (si lib dispo):
- * - récupère le texte des paragraphes
- * Fallback si lib absente
+ * Extraction DOCX (si lib dispo)
  */
 async function sampleDocx(absPath: string, maxChars: number) {
   try {
-    // npm i mammoth
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mammoth = require("mammoth");
 
     const result = await mammoth.extractRawText({ path: absPath });
-    const text = normalize(String(result?.value ?? ""));
+    const text = normalizeHard(String(result?.value ?? ""));
     return text.slice(0, maxChars);
   } catch {
     return "";
@@ -145,9 +163,7 @@ async function sampleDocx(absPath: string, maxChars: number) {
 }
 
 /**
- * Extraction principale (multi types) :
- * - pdf / csv / xlsx / docx / txt / md / json
- * - maxChars default élevé (documents longs)
+ * Extraction principale
  */
 export const extractTextSample = async (params: {
   storage_path: string;
@@ -157,30 +173,29 @@ export const extractTextSample = async (params: {
   const maxChars = params.maxChars ?? 35000;
   const abs = toAbsoluteDiskPath(params.storage_path);
 
-  // fichier absent -> throw (le service gère)
   await fs.promises.access(abs);
 
-  const ext = (params.file_type ?? "").toLowerCase();
+  // ✅ déduction robuste
+  const ext = inferExt(params.file_type, params.storage_path);
 
   // Text-like
   if (ext === "txt" || ext === "md" || ext === "json") {
     return await readUtf8Limited(abs, maxChars);
   }
 
-  // CSV -> sample intelligent
+  // CSV
   if (ext === "csv") {
     return await sampleCsv(abs, maxChars);
   }
 
-  // PDF (si pdf-parse installé)
+  // PDF
   if (ext === "pdf") {
     try {
-      // npm i pdf-parse
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const pdfParse = require("pdf-parse");
       const buf = await fs.promises.readFile(abs);
       const parsed = await pdfParse(buf);
-      const text = normalize(String(parsed?.text ?? ""));
+      const text = normalizeSoftKeepLines(String(parsed?.text ?? ""));
       return text.slice(0, maxChars);
     } catch {
       return "";
@@ -197,6 +212,5 @@ export const extractTextSample = async (params: {
     return await sampleDocx(abs, maxChars);
   }
 
-  // Fallback
   return "";
 };

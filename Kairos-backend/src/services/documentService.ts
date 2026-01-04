@@ -18,19 +18,15 @@ type CreateDocumentInput = {
 };
 
 export const createDocumentService = async (data: CreateDocumentInput) => {
-  // IMPORTANT: Utiliser le type Prisma pour satisfaire TS strict
   const prismaData: Prisma.DocumentCreateInput = {
     file_name: data.file_name,
     storage_path: data.storage_path,
     visibility: data.visibility,
     source_type: data.source_type,
-
-    // Relations : Prisma attend des "connect" (pas user_id / business_id directement)
     user: { connect: { id_user: data.user_id } },
     business: { connect: { id_business: data.business_id } },
   };
 
-  // Champs optionnels (ne pas envoyer undefined)
   if (data.file_type) prismaData.file_type = data.file_type;
   if (data.file_size !== undefined) prismaData.file_size = data.file_size;
 
@@ -40,7 +36,6 @@ export const createDocumentService = async (data: CreateDocumentInput) => {
 
   return doc;
 };
-
 
 export const listDocumentsByBusinessService = async (params: {
   business_id: number;
@@ -69,7 +64,7 @@ export const listDocumentsByBusinessService = async (params: {
         processed_at: true,
         created_at: true,
         updated_at: true,
-      }
+      },
     }),
 
     prisma.document.count({ where: { business_id } }),
@@ -89,10 +84,7 @@ export const listDocumentsByBusinessService = async (params: {
  * GET (by id)
  * Retourne le document complet (métadonnées)
  */
-export const getDocumentByIdService = async (
-  id_document: number,
-  business_id: number
-) => {
+export const getDocumentByIdService = async (id_document: number, business_id: number) => {
   return prisma.document.findFirst({
     where: {
       id_document,
@@ -116,13 +108,9 @@ export const getDocumentByIdService = async (
     },
   });
 };
-  
-  
-
 
 /** Convertit le storage_path en chemin absolu (stocké relatif genre "uploads/...") */
 function toAbsoluteDiskPath(storagePath: string): string {
-  // storagePath: "uploads/4/2025-12/uuid.pdf"
   return path.join(process.cwd(), storagePath);
 }
 
@@ -132,7 +120,6 @@ async function safeUnlink(filePath: string): Promise<"deleted" | "missing" | "er
     await fs.promises.unlink(filePath);
     return "deleted";
   } catch (err: any) {
-    // Fichier déjà absent => OK
     if (err?.code === "ENOENT") return "missing";
     return "error";
   }
@@ -143,27 +130,24 @@ async function safeUnlink(filePath: string): Promise<"deleted" | "missing" | "er
  * - Vérifie business_id (anti delete cross-tenant)
  * - Retourne le doc supprimé + statut suppression fichier
  */
-
 export const deleteDocumentService = async (id_document: number, business_id: number) => {
-  // 1) récupérer le doc en validant l'appartenance au business
+  // 1) récupérer doc en validant l'appartenance au business
   const doc = await prisma.document.findFirst({
-    where: {
-      id_document,
-      business_id,
-    },
+    where: { id_document, business_id },
   });
   if (!doc) return null;
-  
+
+  // ✅ Amélioration: tenter suppression disque AVANT delete DB
+  const abs = toAbsoluteDiskPath(doc.storage_path);
+  const disk = await safeUnlink(abs);
+
+  // 2) supprimer DB ensuite (on garde la référence tant que pas supprimé)
   const deleted = await prisma.document.delete({
     where: { id_document },
   });
 
-  const abs = toAbsoluteDiskPath(doc.storage_path);
-  const disk = await safeUnlink(abs);
-
   return { deleted, disk };
 };
-
 
 // ------------------------------------------------------
 // PROCESS DOCUMENT (extract -> AI -> update DB)
@@ -182,7 +166,6 @@ export const processDocumentByIdService = async (params: {
 
   if (!doc) return null;
 
-  // 2) extraction texte (peut throw si fichier absent / non lisible)
   try {
     const textSample = await extractTextSample({
       storage_path: doc.storage_path,
@@ -190,7 +173,6 @@ export const processDocumentByIdService = async (params: {
       maxChars: 2500,
     });
 
-    // 2.1) si pas assez de texte => pas d'appel AI (inutile)
     if (!textSample || textSample.trim().length < 50) {
       const updated = await prisma.document.update({
         where: { id_document: doc.id_document },
@@ -204,27 +186,35 @@ export const processDocumentByIdService = async (params: {
       return updated;
     }
 
-    // 3) détection simple "finance-like" (nom/type + extrait)
     const hay = (doc.file_name + " " + (doc.file_type ?? "") + " " + textSample)
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
     const isFinanceLikeAuto = [
-      "statement", "income", "balance", "p&l", "profit", "expense",
-      "revenu", "depense", "bilan", "etat", "resultat",
-      "invoice", "facture", "total", "tax", "tps", "tvq"
-    ].some(k => hay.includes(k));
+      "statement",
+      "income",
+      "balance",
+      "p&l",
+      "profit",
+      "expense",
+      "revenu",
+      "depense",
+      "bilan",
+      "etat",
+      "resultat",
+      "invoice",
+      "facture",
+      "total",
+      "tax",
+      "tps",
+      "tvq",
+    ].some((k) => hay.includes(k));
 
     const mode = (params.mode ?? "auto").toString().toLowerCase();
     const useFinance =
-      mode === "finance" ? true :
-      mode === "general" ? false :
-      isFinanceLikeAuto;
+      mode === "finance" ? true : mode === "general" ? false : isFinanceLikeAuto;
 
-    
-
-    // 4) appel AI (finance ou générique)
     const { aiText } = useFinance
       ? await askKairosFinanceFromDocument({
           fileName: doc.file_name,
@@ -239,7 +229,6 @@ export const processDocumentByIdService = async (params: {
           textSample,
         });
 
-    // 5) update DB: on sauvegarde le résumé + flags
     const updated = await prisma.document.update({
       where: { id_document: doc.id_document },
       data: {
@@ -251,12 +240,10 @@ export const processDocumentByIdService = async (params: {
 
     return updated;
   } catch (e: any) {
-    // cas: fichier introuvable, pas accessible, erreur parsing, etc.
     const updated = await prisma.document.update({
       where: { id_document: doc.id_document },
       data: {
-        ai_summary:
-          "Traitement impossible : fichier introuvable ou non lisible sur disque.",
+        ai_summary: "Traitement impossible : fichier introuvable ou non lisible sur disque.",
         is_processed: false,
         processed_at: null,
       },
