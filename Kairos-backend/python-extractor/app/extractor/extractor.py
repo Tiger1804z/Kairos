@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Literal
 import csv
+from pypdf import PdfReader
 
 from app.detectors.finance import detect_finance_like
 
@@ -19,14 +20,15 @@ def _extract_csv(file_path: Path, max_chars: int) -> tuple[str, list]:
     with file_path.open("r", encoding="utf-8", errors="ignore", newline="") as f:
         reader = csv.reader(f)
         for i, row in enumerate(reader):
-            if i >= 100:
+            if i >= 200:
                 break
             rows.append(row)
 
     if not rows:
         return "", []
 
-    lines = [",".join(r) for r in rows[:50]]
+    # text sample
+    lines = [",".join(r) for r in rows[:80]]
     text = "\n".join(lines)[:max_chars]
 
     header = rows[0]
@@ -42,6 +44,34 @@ def _extract_csv(file_path: Path, max_chars: int) -> tuple[str, list]:
     return text, [table]
 
 
+def _extract_pdf(file_path: Path, max_chars: int) -> tuple[str, list]:
+    # PDF text-layer extraction (no OCR)
+
+    reader = PdfReader(str(file_path))
+    chunks: list[str] = []
+    current_len = 0
+
+    for page in reader.pages:
+        try:
+            page_text = page.extract_text() or ""
+        except Exception:
+            page_text = ""
+
+        if not page_text:
+            continue
+
+        remaining = max_chars - current_len
+        if remaining <= 0:
+            break
+
+        snippet = page_text[:remaining]
+        chunks.append(snippet)
+        current_len += len(snippet)
+
+    text = "\n\n".join(chunks)
+    return text, []
+
+
 def extract_document(
     file_path: Path,
     file_type: Optional[str] = None,
@@ -54,14 +84,16 @@ def extract_document(
     else:
         file_type = file_type.lower().replace(".", "")
 
-    if file_type not in {"txt", "csv"}:
+    if file_type not in {"txt", "csv", "pdf"}:
         raise ValueError(f"Unsupported file type (for now): {file_type}")
 
     # 2) Extract
     if file_type == "txt":
         text_sample, tables_preview = _extract_txt(file_path, max_chars)
-    else:
+    elif file_type == "csv":
         text_sample, tables_preview = _extract_csv(file_path, max_chars)
+    else:
+        text_sample, tables_preview = _extract_pdf(file_path, max_chars)
 
     # 3) Mode handling
     if mode == "text_only":
