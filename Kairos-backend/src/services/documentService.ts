@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { extractTextSample } from "../utils/documentTextExtract";
 import { askKairosFinanceFromDocument, askKairosFromDocument } from "./aiService";
+import { extractViaPython } from "./extractorClient";
 
 type CreateDocumentInput = {
   user_id: number;
@@ -157,6 +158,7 @@ export const processDocumentByIdService = async (params: {
   business_id: number;
   mode?: "auto" | "finance" | "general" | string;
 }) => {
+  // 1) Charger le document (tenant safe)
   const doc = await prisma.document.findFirst({
     where: {
       id_document: params.id_document,
@@ -166,89 +168,83 @@ export const processDocumentByIdService = async (params: {
 
   if (!doc) return null;
 
-  try {
-    const textSample = await extractTextSample({
-      storage_path: doc.storage_path,
-      file_type: doc.file_type,
-      maxChars: 2500,
-    });
+  // 2) Extraction via Python (source of truth)
+  const extracted = await extractViaPython({
+    storage_path: doc.storage_path,
+    ...(doc.file_type ? { file_type: doc.file_type } : {}),
+    max_chars: 35000,
+    mode: "auto",
+  });
+  console.log("doc.storage_path =", doc.storage_path);
 
-    if (!textSample || textSample.trim().length < 50) {
-      const updated = await prisma.document.update({
-        where: { id_document: doc.id_document },
-        data: {
-          ai_summary:
-            "Impossible de résumer : aucun texte extractible (scan/image ou format non supporté).",
-          is_processed: false,
-          processed_at: null,
-        },
-      });
-      return updated;
-    }
+    
 
-    const hay = (doc.file_name + " " + (doc.file_type ?? "") + " " + textSample)
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+  if (!extracted.ok) {
+    // On peut aussi sauvegarder l'erreur dans la DB si tu veux
+    throw new Error(`EXTRACTOR_FAILED: ${extracted.error} - ${extracted.message}`);
+  }
 
-    const isFinanceLikeAuto = [
-      "statement",
-      "income",
-      "balance",
-      "p&l",
-      "profit",
-      "expense",
-      "revenu",
-      "depense",
-      "bilan",
-      "etat",
-      "resultat",
-      "invoice",
-      "facture",
-      "total",
-      "tax",
-      "tps",
-      "tvq",
-    ].some((k) => hay.includes(k));
+  const textSample = (extracted.textSample ?? "").trim();
+  const tablesPreview = extracted.tablesPreview ?? [];
+  const extractMeta = extracted; // full payload (pratique à stocker)
+  const extractorMeta = extracted.meta; // kind_guess, finance_like, confidence...
 
-    const mode = (params.mode ?? "auto").toString().toLowerCase();
-    const useFinance =
-      mode === "finance" ? true : mode === "general" ? false : isFinanceLikeAuto;
-
-    const { aiText } = useFinance
-      ? await askKairosFinanceFromDocument({
-          fileName: doc.file_name,
-          fileType: doc.file_type,
-          fileSize: doc.file_size,
-          textSample,
-        })
-      : await askKairosFromDocument({
-          fileName: doc.file_name,
-          fileType: doc.file_type,
-          fileSize: doc.file_size,
-          textSample,
-        });
-
+  // 3) Vérif: si pas assez de texte, on stop (pas d'hallucination)
+  if (textSample.length < 50) {
     const updated = await prisma.document.update({
       where: { id_document: doc.id_document },
       data: {
-        ai_summary: aiText,
-        is_processed: true,
-        processed_at: new Date(),
-      },
-    });
-
-    return updated;
-  } catch (e: any) {
-    const updated = await prisma.document.update({
-      where: { id_document: doc.id_document },
-      data: {
-        ai_summary: "Traitement impossible : fichier introuvable ou non lisible sur disque.",
+        ai_summary: "Impossible de résumer : aucun texte extractible (scan/image ou format non supporté).",
         is_processed: false,
         processed_at: null,
+        // Si tu as la colonne Json:
+        // extract_meta: extractMeta as any,
       },
     });
-
     return updated;
   }
+
+  // 4) Décider finance/general
+  const mode = (params.mode ?? "auto").toString().toLowerCase();
+
+  // Priorité: mode explicite -> sinon auto via extractor
+  const useFinance =
+    mode === "finance"
+      ? true
+      : mode === "general"
+        ? false
+        : Boolean(extractorMeta?.finance_like) || extractorMeta?.kind_guess === "finance";
+
+  // 5) Appeler le LLM (avec textSample + meta + tablesPreview si tu veux l'inclure dans le prompt)
+  // NOTE: tes fonctions actuelles prennent textSample; si tu veux utiliser tablesPreview aussi,
+  // on pourra upgrader askKairosFromDocument/FinanceFromDocument plus tard.
+  const { aiText } = useFinance
+    ? await askKairosFinanceFromDocument({
+        fileName: doc.file_name,
+        fileType: doc.file_type,
+        fileSize: doc.file_size,
+        textSample,
+        // Option future: tablesPreview, meta: extractorMeta
+      })
+    : await askKairosFromDocument({
+        fileName: doc.file_name,
+        fileType: doc.file_type,
+        fileSize: doc.file_size,
+        textSample,
+        // Option future: tablesPreview, meta: extractorMeta
+      });
+
+  // 6) Sauvegarder en DB (succès)
+  const updated = await prisma.document.update({
+    where: { id_document: doc.id_document },
+    data: {
+      ai_summary: aiText,
+      is_processed: true,
+      processed_at: new Date(),
+      // Si tu as la colonne Json:
+      // extract_meta: extractMeta as any,
+    },
+  });
+
+  return updated;
 };

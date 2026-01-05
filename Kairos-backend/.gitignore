@@ -3,3 +3,6 @@ node_modules/
 uploads/
 generated/
 dist/
+.venv/
+__pycache__/
+*.pyc
