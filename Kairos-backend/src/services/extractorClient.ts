@@ -1,3 +1,7 @@
+import fs from "fs";
+import axios from "axios";
+import FormData from "form-data";
+
 export type ExtractMode = "auto" | "text_only" | "tables_only";
 
 export type ExtractRequest = {
@@ -49,75 +53,83 @@ export type ExtractResponseError = {
 
 export type ExtractResponse = ExtractResponseOk | ExtractResponseError;
 
-const EXTRACTOR_URL = process.env.EXTRACTOR_SERVICE_URL || "http://127.0.0.1:8001";
+const EXTRACTOR_URL =
+  process.env.EXTRACTOR_SERVICE_URL || "http://127.0.0.1:8001";
 const EXTRACTOR_KEY = process.env.KAIROS_EXTRACTOR_KEY;
 const TIMEOUT_MS = 20_000;
 
 
-export const extractViaPython = async (request: ExtractRequest): Promise<ExtractResponse> => {
+
+export type ExtractUploadRequest = {
+  file_path: string;
+  original_name: string;
+  file_type?: string; // optionnel
+  max_chars?: number;
+  mode?: ExtractMode;
+  mime_type?: string;
+};
+
+/**
+ * Upload mode: Node stream -> Python (/extract-upload)
+ */
+export const extractUploadViaPython = async (
+  req: ExtractUploadRequest
+): Promise<ExtractResponse> => {
   if (!EXTRACTOR_KEY) {
     return {
       ok: false,
       error: "MISSING_KEY",
       message: "KAIROS_EXTRACTOR_KEY not set",
-      storage_path: request.storage_path,
     };
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const url = `${EXTRACTOR_URL}/extract-upload`;
 
-  const url = `${EXTRACTOR_URL}/extract`;
+  const form = new FormData();
+  form.append("file", fs.createReadStream(req.file_path), {
+    filename: req.original_name,
+    contentType: req.mime_type ?? "application/octet-stream",
+  });
 
-  const payload = {
-    storage_path: request.storage_path,
-    file_type: request.file_type,
-    max_chars: request.max_chars ?? 35000,
-    mode: request.mode ?? "auto",
-  };
+  form.append("max_chars", String(req.max_chars ?? 35000));
+  form.append("mode", req.mode ?? "auto");
+  if (req.file_type) form.append("file_type", req.file_type);
 
-  // Logs utiles
-  console.log("EXTRACTOR_URL =", EXTRACTOR_URL);
-  console.log("Calling =", url);
-  console.log("Extractor payload =", payload);
+  console.log("[extractUploadViaPython] URL =", url);
+  console.log("[extractUploadViaPython] file_path =", req.file_path);
+  console.log("[extractUploadViaPython] original_name =", req.original_name);
+  console.log("[extractUploadViaPython] file_type =", req.file_type);
+  console.log("[extractUploadViaPython] mode =", req.mode ?? "auto");
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
+    const res = await axios.post(url, form, {
       headers: {
-        "Content-Type": "application/json",
         "X-KAIROS-EXTRACTOR-KEY": EXTRACTOR_KEY,
+        ...form.getHeaders(),
       },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
+      timeout: TIMEOUT_MS,
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      validateStatus: () => true,
     });
 
-    clearTimeout(timeoutId);
+    console.log("[extractUploadViaPython] status =", res.status);
 
-    console.log("Extractor HTTP status =", res.status);
-
-    if (!res.ok) {
-      // Important: lire le body pour voir le vrai détail (FastAPI renvoie souvent {"detail": "..."} )
-      const errText = await res.text();
-      console.log("Extractor error body =", errText);
-
+    if (res.status < 200 || res.status >= 300) {
       return {
         ok: false,
         error: "HTTP_ERROR",
-        message: `Extractor returned ${res.status} - ${errText}`,
-        storage_path: request.storage_path,
+        message: `Extractor ${res.status} - ${JSON.stringify(res.data)}`,
       };
     }
 
-    return (await res.json()) as ExtractResponse;
+    return res.data as ExtractResponse;
   } catch (e: any) {
-    clearTimeout(timeoutId);
-
+    const msg = e?.code === "ECONNABORTED" ? "Request timeout" : e?.message;
     return {
       ok: false,
-      error: e?.name === "AbortError" ? "TIMEOUT" : "FETCH_FAILED",
-      message: e?.message ?? "Unknown error",
-      storage_path: request.storage_path,
+      error: "REQUEST_FAILED",
+      message: msg ?? "Unknown error",
     };
   }
 };
