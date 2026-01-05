@@ -58,7 +58,7 @@ def health():
 
 def to_camel_response(result: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Normalise la réponse en camelCase pour Node/TS.
+    Normalise sla réponse en camelCase pour Node/TS.
     Supporte l'ancien format snake_case (text_sample, tables_preview).
     """
     text_sample = result.get("textSample")
@@ -83,61 +83,7 @@ def _debug_print(*args: Any):
         print(*args)
 
 
-# -----------------------------------------------------------------------------
-# A) Path-based extract (Node passe storage_path)
-# -----------------------------------------------------------------------------
-@app.post("/extract")
-def extract_endpoint(
-    req: ExtractRequest,
-    x_kairos_extractor_key: str = Header(..., alias="X-KAIROS-EXTRACTOR-KEY"),
-):
-    t0 = time.time()
 
-    # 1) Secret
-    if not verify_secret(x_kairos_extractor_key):
-        raise HTTPException(status_code=403, detail="INVALID_SECRET")
-
-    # 2) Résoudre le path
-    # Ex: req.storage_path = "uploads/4/2026-01/test.csv"
-    storage_path = req.storage_path.strip().lstrip("/")
-
-    # Protection simple : le storage_path doit commencer par "uploads/"
-    if not storage_path.startswith("uploads/"):
-        raise HTTPException(status_code=403, detail="PATH_NOT_ALLOWED")
-
-    full_path = (STORAGE_ROOT / storage_path).resolve()
-
-    _debug_print("STORAGE_ROOT =", STORAGE_ROOT)
-    _debug_print("UPLOADS_ROOT =", UPLOADS_ROOT)
-    _debug_print("Requested path =", storage_path)
-    _debug_print("Resolved path =", full_path)
-
-    # 3) Allowlist: doit être sous STORAGE_ROOT/uploads
-    if not is_path_allowed(full_path):
-        raise HTTPException(status_code=403, detail="PATH_NOT_ALLOWED")
-
-    # 4) Exists
-    if not full_path.exists():
-        raise HTTPException(status_code=404, detail="FILE_NOT_FOUND")
-
-    # 5) Extract
-    raw_result = extract_document(
-        file_path=full_path,
-        file_type=req.file_type,
-        max_chars=req.max_chars,
-        mode=req.mode,
-    )
-
-    # 6) camelCase
-    result = to_camel_response(raw_result)
-
-    ms = int((time.time() - t0) * 1000)
-    return {
-        "ok": True,
-        "storage_path": storage_path,
-        **result,
-        "processing_time_ms": ms,
-    }
 
 
 # -----------------------------------------------------------------------------
