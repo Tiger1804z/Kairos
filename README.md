@@ -155,3 +155,7 @@ Le serveur backend est maintenant prêt à recevoir des requêtes.
 - Le projet respecte une séparation claire des responsabilités
 
 - L’architecture facilite l’évolution vers des services externes
+
+## Diagramme UML
+
+![Diagramme UML de Kairos](docs/uml/kairos-uml.png)
