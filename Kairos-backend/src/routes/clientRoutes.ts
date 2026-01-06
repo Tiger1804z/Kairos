@@ -1,14 +1,38 @@
-import {Router} from "express";
-import { createClient,getClients,getClientById, updateClient, deleteClient } from "../controllers/clientController";
+import { Router } from "express";
+import {
+  listMyClients,
+  deleteMyClient,
+  getMyClientById,
+  updateMyClient,
+  createMyClient,
+} from "../controllers/clientController";
+import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 
 const router = Router();
 
-// POST /clients
-router.post("/", createClient);
+// POST /clients  (body contient business_id)
+router.post("/", requireBusinessAccess({ from: "body" }), createMyClient);
 
-router.get("/", getClients);
+// GET /clients?business_id=4
+router.get("/", requireBusinessAccess({ from: "query" }), listMyClients);
 
-router.get("/:id", getClientById);
-router.patch("/:id", updateClient);
-router.delete("/:id", deleteClient);
+// GET /clients/:id   (id = id_client)
+router.get(
+  "/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "client" }),
+  getMyClientById
+);
+
+router.patch(
+  "/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "client" }),
+  updateMyClient
+);
+
+router.delete(
+  "/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "client" }),
+  deleteMyClient
+);
+
 export default router;

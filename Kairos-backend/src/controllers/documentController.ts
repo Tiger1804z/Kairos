@@ -6,12 +6,16 @@ import {
   createDocumentService,
   listDocumentsByBusinessService,
   getDocumentByIdService,
+  deleteDocumentService,
+  processDocumentByIdService,
 } from "../services/documentService";
+
+
 
 /**
  * POST /documents/upload
  */
-export const uploadDocument = async (req: Request, res: Response) => {
+export const uploadMyDocument = async (req: Request, res: Response) => {
   try {
     await new Promise<void>((resolve, reject) => {
       uploadSingle(req, res, (err: any) => {
@@ -20,12 +24,12 @@ export const uploadDocument = async (req: Request, res: Response) => {
       });
     });
 
-    const userId = Number(req.body?.user_id);
-    const businessId = Number(req.params.business_id ?? req.body?.business_id);
+    const userId = req.user!.user_id;
 
-    if (!userId || Number.isNaN(userId)) {
-      return res.status(400).json({ error: "USER_ID_REQUIRED" });
-    }
+    const businessId = (req as any).businessId as number;
+
+
+    
     if (!businessId || Number.isNaN(businessId)) {
       return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
     }
@@ -81,11 +85,9 @@ export const uploadDocument = async (req: Request, res: Response) => {
 /**
  * GET /documents?business_id=4&limit=20&cursor=0
  */
-export const listDocuments = async (req: Request, res: Response) => {
-  const businessId = Number(req.query.business_id);
-  if (!businessId || Number.isNaN(businessId)) {
-    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
-  }
+export const listMyDocuments = async (req: Request, res: Response) => {
+  const businessId = (req as any).businessId as number;
+
 
   const limitRaw = Number(req.query.limit ?? 20);
   const limit = Number.isNaN(limitRaw) ? 20 : Math.min(Math.max(limitRaw, 1), 50);
@@ -111,16 +113,18 @@ export const listDocuments = async (req: Request, res: Response) => {
   });
 };
 
+
 /**
  * GET /documents/:id
  */
-export const getDocumentById = async (req: Request, res: Response) => {
+export const listMyDocumentById = async (req: Request, res: Response) => {
+  
   const id = Number(req.params.id);
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
 
-  const doc = await getDocumentByIdService(id);
+  const doc = await getDocumentByIdService(id, (req as any).businessId as number);
   if (!doc) {
     return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
   }
@@ -133,13 +137,15 @@ export const getDocumentById = async (req: Request, res: Response) => {
  * - Télécharge le fichier depuis storage_path
  * - Nom de fichier = file_name (original)
  */
-export const downloadDocument = async (req: Request, res: Response) => {
+export const downloadMyDocumentById = async (req: Request, res: Response) => {
+  const businessId = (req as any).businessId as number;
   const id = Number(req.params.id);
+
   if (!id || Number.isNaN(id)) {
     return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
   }
 
-  const doc = await getDocumentByIdService(id);
+  const doc = await getDocumentByIdService(id, businessId);
   if (!doc) {
     return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
   }
@@ -151,3 +157,49 @@ export const downloadDocument = async (req: Request, res: Response) => {
 
   return res.download(absolutePath, doc.file_name);
 };
+
+
+export const deleteMyDocumentById = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const businessId = (req as any).businessId as number;
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
+  }
+  
+
+  const result = await deleteDocumentService(id,businessId);
+
+  if (!result) {
+    return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
+  }
+
+  return res.json({
+    document: result.deleted,
+    disk: result.disk,
+  });
+};
+
+
+
+export const processMyDocument = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ error: "INVALID_DOCUMENT_ID" });
+  }
+
+  const businessId = (req as any).businessId as number;
+  const mode = (req.query.mode?.toString() ?? "auto").toLowerCase();
+
+  const updated = await processDocumentByIdService({
+    id_document: id,
+    business_id: businessId,
+    mode,
+  });
+
+  if (!updated) {
+    return res.status(404).json({ error: "DOCUMENT_NOT_FOUND" });
+  }
+
+  return res.json({ document: updated });
+};
+

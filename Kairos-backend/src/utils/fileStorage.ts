@@ -11,11 +11,7 @@
  * - Le fichier brut n’est JAMAIS stocké en base
  * - Seules les métadonnées sont persistées (via Prisma)
  *
- * FIX IMPORTANT (multer + form-data):
- * - Dans multipart/form-data, multer peut exécuter "destination()" avant
- *   que req.body soit fiable (ordre des parts).
- * - Solution robuste : accepter business_id via req.params (URL),
- *   avec fallback sur body/query.
+
  */
 
 import fs from "fs";
@@ -46,6 +42,7 @@ const allowedMime = new Set<string>([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "image/png",
   "image/jpeg",
+  "text/plain",
 ]);
 
 /**
@@ -59,6 +56,7 @@ const allowedExt = new Set<string>([
   "png",
   "jpg",
   "jpeg",
+  "txt",
 ]);
 
 /**
@@ -115,6 +113,7 @@ function resolveSafeExtension(file: Express.Multer.File): string {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "image/png": "png",
     "image/jpeg": "jpg",
+    "text/plain": "txt",
   };
 
   return mimeToExt[file.mimetype] ?? "bin";

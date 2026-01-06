@@ -6,24 +6,22 @@ import {
 } from "../services/queryLogsService";
 import { QueryActionType, QueryStatus } from "../../generated/prisma/client";
 
-/**
- * Petit helper: check si une string est une valeur d'enum
- * (sinon on renvoie 400 au lieu de crash)
- */
 const isEnumValue = <T extends Record<string, string>>(
   enumObj: T,
   value: unknown
 ): value is T[keyof T] => typeof value === "string" && Object.values(enumObj).includes(value);
 
-/**
- * POST /query-logs
- * On crée un log IA (question / sql / status / etc.)
- */
 export const createQueryLogController = async (req: Request, res: Response) => {
   try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: "AUTH_REQUIRED" });
+
+    const businessId = (req as any).businessId as number;
+    if (!businessId || Number.isNaN(businessId)) {
+      return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
+    }
+
     const {
-      user_id,
-      business_id,
       client_id,
       document_id,
       natural_query,
@@ -37,19 +35,10 @@ export const createQueryLogController = async (req: Request, res: Response) => {
       executed_at,
     } = req.body;
 
-    // check rapides (on reste simple)
-    const userIdNum = Number(user_id);
-    const businessIdNum = Number(business_id);
-
-    if (isNaN(userIdNum) || isNaN(businessIdNum)) {
-      return res.status(400).json({ error: "user_id and business_id are required (number)" });
-    }
-
     if (!natural_query || String(natural_query).trim().length === 0) {
       return res.status(400).json({ error: "natural_query is required" });
     }
 
-    // action_type doit être dans l'enum Prisma
     if (!isEnumValue(QueryActionType, action_type)) {
       return res.status(400).json({
         error: "Invalid action_type",
@@ -57,7 +46,6 @@ export const createQueryLogController = async (req: Request, res: Response) => {
       });
     }
 
-    // status (optionnel)
     if (status && !isEnumValue(QueryStatus, status)) {
       return res.status(400).json({
         error: "Invalid status",
@@ -66,8 +54,8 @@ export const createQueryLogController = async (req: Request, res: Response) => {
     }
 
     const created = await createQueryLogService({
-      user_id: userIdNum,
-      business_id: businessIdNum,
+      user_id: user.user_id,          // JWT (pas body)
+      business_id: businessId,        // middleware (pas body)
 
       client_id: client_id != null ? Number(client_id) : null,
       document_id: document_id != null ? Number(document_id) : null,
@@ -96,20 +84,16 @@ export const createQueryLogController = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * GET /query-logs/business/:businessId?limit=20
- * Logs par business (dashboard)
- */
 export const getQueryLogsByBusinessController = async (req: Request, res: Response) => {
   try {
-    const businessId = Number(req.params.businessId);
+    const businessId = (req as any).businessId as number;
     const limit = req.query.limit ? Number(req.query.limit) : 20;
 
-    if (isNaN(businessId)) {
-      return res.status(400).json({ error: "businessId param must be a number" });
+    if (!businessId || Number.isNaN(businessId)) {
+      return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
     }
 
-    const logs = await getQueryLogsByBusinessService(businessId, isNaN(limit) ? 20 : limit);
+    const logs = await getQueryLogsByBusinessService(businessId, Number.isNaN(limit) ? 20 : limit);
     return res.status(200).json(logs);
   } catch (err: any) {
     return res.status(500).json({
@@ -119,20 +103,24 @@ export const getQueryLogsByBusinessController = async (req: Request, res: Respon
   }
 };
 
-/**
- * GET /query-logs/user/:userId?limit=20
- * Logs par user (audit / activité)
- */
 export const getQueryLogsByUserController = async (req: Request, res: Response) => {
   try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: "AUTH_REQUIRED" });
+
     const userId = Number(req.params.userId);
     const limit = req.query.limit ? Number(req.query.limit) : 20;
 
-    if (isNaN(userId)) {
+    if (Number.isNaN(userId)) {
       return res.status(400).json({ error: "userId param must be a number" });
     }
 
-    const logs = await getQueryLogsByUserService(userId, isNaN(limit) ? 20 : limit);
+    // Fix sécurité: un user ne peut pas lire les logs d’un autre user (sauf admin)
+    if (user.role !== "admin" && userId !== user.user_id) {
+      return res.status(403).json({ error: "FORBIDDEN" });
+    }
+
+    const logs = await getQueryLogsByUserService(userId, Number.isNaN(limit) ? 20 : limit);
     return res.status(200).json(logs);
   } catch (err: any) {
     return res.status(500).json({

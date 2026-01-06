@@ -1,83 +1,72 @@
 import prisma from "../prisma/prisma";
+import { Prisma,  EngagementStatus } from "../../generated/prisma/client";
 
-export const createNewEngagement = async (data: {
+const engagementSafeSelect = {
+  id_engagement: true,
+  business_id: true,
+  client_id: true,
+  title: true,
+  description: true,
+  status: true,
+  start_date: true,
+  end_date: true,
+  total_amount: true,
+  created_at: true,
+  updated_at: true,
+  client: true,
+  items: true,
+} satisfies Prisma.EngagementSelect;
+
+export const createEngagementForBusinessService = async (data: {
   business_id: number;
-  title: string; // REQUIS
+  title: string;
   client_id?: number | null;
   description?: string | null;
-  status?: "draft" | "active" | "completed" | "cancelled";
+  status?: EngagementStatus;
   start_date?: string | Date | null;
   end_date?: string | Date | null;
   total_amount?: number | null;
 }) => {
-  const {
-    business_id,
-    client_id,
-    title,
-    description,
-    status,
-    start_date,
-    end_date,
-    total_amount,
-  } = data;
-
-  // Vérifier que la business existe
-  const isBusinessExisting = await prisma.business.findUnique({
-    where: { id_business: business_id },
-  });
-
-  if (!isBusinessExisting) {
-    throw new Error("Business does not exist");
-  }
-
-  // Si un client_id est fourni, vérifier qu'il existe
-  if (client_id) {
-    const isClientExisting = await prisma.client.findUnique({
-      where: { id_client: client_id },
+  // Si client fourni, vérifier qu'il existe ET appartient au même business
+  if (data.client_id) {
+    const client = await prisma.client.findFirst({
+      where: { id_client: data.client_id, business_id: data.business_id },
+      select: { id_client: true },
     });
-
-    if (!isClientExisting) {
-      throw new Error("Client does not exist");
-    }
+    if (!client) throw new Error("CLIENT_NOT_FOUND");
   }
 
-  // Construire l'objet de données conditionnellement
-  const engagementData: any = {
-    business_id,
-    title, // REQUIS
+  const createData: Prisma.EngagementUncheckedCreateInput = {
+    business_id: data.business_id,
+    client_id: data.client_id ?? null,
+    title: data.title,
+    description: data.description ?? null,
+    status: data.status ?? EngagementStatus.draft, 
+    start_date: data.start_date ?? null,
+    end_date: data.end_date ?? null,
+    total_amount: data.total_amount ?? null,
   };
 
-  // Ajouter les champs optionnels seulement s'ils sont définis
-  if (client_id !== undefined) engagementData.client_id = client_id;
-  if (description !== undefined) engagementData.description = description;
-  if (status !== undefined) engagementData.status = status;
-  if (start_date !== undefined) engagementData.start_date = start_date;
-  if (end_date !== undefined) engagementData.end_date = end_date;
-  if (total_amount !== undefined) engagementData.total_amount = total_amount;
-
-  // Créer l'engagement
   return prisma.engagement.create({
-    data: engagementData,
+    data: createData,
+    select: engagementSafeSelect,
   });
 };
 
-export const getAllEngagements = async (business_id: number) => {
+export const listEngagementsByBusinessService = async (business_id: number) => {
   return prisma.engagement.findMany({
     where: { business_id },
+    orderBy: { created_at: "desc" },
     include: {
       client: true,
       items: true,
     },
-    orderBy: { created_at: "desc" },
   });
 };
 
-export const getEngagementById = async (business_id: number, engagement_id: number) => {
-  return prisma.engagement.findFirst({
-    where: {
-      id_engagement: engagement_id,
-      business_id,
-    },
+export const getEngagementByIdService = async (id_engagement: number) => {
+  return prisma.engagement.findUnique({
+    where: { id_engagement },
     include: {
       client: true,
       items: true,
@@ -86,49 +75,45 @@ export const getEngagementById = async (business_id: number, engagement_id: numb
   });
 };
 
-export const updateEngagementById = async (
-  engagement_id: number,
-  data: {
-    title?: string;
-    description?: string | null;
-    status?: "draft" | "active" | "completed" | "cancelled";
-    start_date?: string | Date | null;
-    end_date?: string | Date | null;
-    total_amount?: number | null;
-  }
+export const updateEngagementByIdService = async (
+  id_engagement: number,
+  data: Partial<{
+    title: string;
+    description: string | null;
+    status: "draft" | "active" | "completed" | "cancelled";
+    start_date: string | Date | null;
+    end_date: string | Date | null;
+    total_amount: number | null;
+  }>
 ) => {
   const existing = await prisma.engagement.findUnique({
-    where: { id_engagement: engagement_id },
+    where: { id_engagement },
+    select: { id_engagement: true },
   });
+  if (!existing) throw new Error("ENGAGEMENT_NOT_FOUND");
 
-  if (!existing) throw new Error("Engagement not found");
-
-  const updateData: any = {};
-
+  const updateData: Prisma.EngagementUpdateInput = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
-  if (data.status !== undefined) updateData.status = data.status;
-  if (data.start_date !== undefined) updateData.start_date = data.start_date;
-  if (data.end_date !== undefined) updateData.end_date = data.end_date;
-  if (data.total_amount !== undefined) updateData.total_amount = data.total_amount;
+  if (data.status !== undefined) updateData.status = data.status as any;
+  if (data.start_date !== undefined) updateData.start_date = data.start_date as any;
+  if (data.end_date !== undefined) updateData.end_date = data.end_date as any;
+  if (data.total_amount !== undefined) updateData.total_amount = data.total_amount as any;
 
   return prisma.engagement.update({
-    where: { id_engagement: engagement_id },
+    where: { id_engagement },
     data: updateData,
+    include: { client: true, items: true },
   });
 };
 
-export const deleteEngagementById = async (business_id: number, engagement_id: number) => {
-  const existing = await prisma.engagement.findFirst({
-    where: {
-      id_engagement: engagement_id,
-      business_id,
-    },
+export const deleteEngagementByIdService = async (id_engagement: number) => {
+  const existing = await prisma.engagement.findUnique({
+    where: { id_engagement },
+    select: { id_engagement: true },
   });
+  if (!existing) throw new Error("ENGAGEMENT_NOT_FOUND");
 
-  if (!existing) throw new Error("Engagement not found");
-
-  return prisma.engagement.delete({
-    where: { id_engagement: engagement_id },
-  });
+  await prisma.engagement.delete({ where: { id_engagement } });
+  return { message: "ENGAGEMENT_DELETED" };
 };

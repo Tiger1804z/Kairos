@@ -6,7 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --import tsx src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+     "seed": "tsx prisma/seeds.ts"
+  },
+  "prisma": {
+    "seed": "npm run seed"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +18,7 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
     "ts-node": "^10.9.2",
@@ -27,8 +32,12 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mammoth": "^1.11.0",
     "multer": "^2.0.2",
     "openai": "^6.13.0",
-    "prisma": "^7.0.1"
+    "pdf-parse": "^2.4.5",
+    "prisma": "^7.0.1",
+    "xlsx": "^0.18.5"
   }
 }

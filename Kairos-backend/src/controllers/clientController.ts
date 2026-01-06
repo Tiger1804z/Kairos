@@ -1,66 +1,36 @@
 import type { Request, Response } from "express";
-import prisma from "../prisma/prisma"; // adapte le chemin si ton fichier est ailleurs
-import {createNewClient, deleteClientService, getAllClients, getOneClientById, updateClientService} from "../services/clientsService";
+import {
+  createClientForBusinessService,
+  listClientsByBusinessService,
+  getClientByIdService,
+  updateClientByIdService,
+  deleteClientByIdService,
+} from "../services/clientsService";
 
-export const createClient = async (req: Request, res: Response) => {
-    try {
-        const client = await createNewClient(req.body);
-        res.status(201).json(client);
-    } catch (error) {
-        res.status(400).json({ error: (error as Error).message });
-    }
-};
+// --------------------
+// MY (user connecté) - business scoped
+// --------------------
 
-export const getClients = async (req: Request, res: Response) => {
-    try {
-        const clients = await getAllClients();
-        res.status(200).json(clients);
-    } catch (error) {
-        res.status(500).json({ error: "Server error while fetching clients" });
-    }
-};
-
-export const getClientById = async (req: Request, res: Response) => {
-    const clientId = Number(req.params.id);
-    if (isNaN(clientId)) {
-        return res.status(400).json({ error: "Invalid client ID" });
-    }
-    try {
-        const client = await getOneClientById(clientId);
-        if (!client) {
-            return res.status(404).json({ error: "Client not found" });
-        }
-        res.status(200).json(client);
-    } catch (err) {
-        console.error("Get client error:", err);
-        res.status(500).json({ error: "Server error while fetching client" });
-    }
-};
-
-export const updateClient = async (req: Request, res: Response) => {
-  const clientId = Number(req.params.id);
-  if (isNaN(clientId)) {
-    return res.status(400).json({ error: "Invalid client ID" });
-  }
-
-  const {
-    business_id,
-    first_name,
-    last_name,
-    company_name,
-    email,
-    phone,
-    address,
-    city,
-    country,
-    postal_code,
-    notes,
-    is_active,
-  } = req.body;
-
+export const createMyClient = async (req: Request, res: Response) => {
   try {
-    const updatedClient = await updateClientService(clientId, {
-      business_id,
+    const businessId = req.businessId!; // forcé
+
+    const {
+      first_name,
+      last_name,
+      company_name,
+      email,
+      phone,
+      address,
+      city,
+      country,
+      postal_code,
+      notes,
+      is_active,
+    } = req.body ?? {};
+
+    const client = await createClientForBusinessService({
+      business_id: businessId, // forcé
       first_name,
       last_name,
       company_name,
@@ -73,24 +43,94 @@ export const updateClient = async (req: Request, res: Response) => {
       notes,
       is_active,
     });
-    res.status(200).json(updatedClient);
+
+    return res.status(201).json({ client });
   } catch (err: any) {
-    console.error("Update client error:", err);
-    res.status(500).json({ error: "Server error while updating client" });
+    return res.status(500).json({ error: "SERVER_ERROR" });
   }
 };
 
-export const deleteClient = async (req: Request, res: Response) => {
-  const clientId = Number(req.params.id);
-  if (isNaN(clientId)) {
-    return res.status(400).json({ error: "Invalid client ID" });
-  }
-
+export const listMyClients = async (req: Request, res: Response) => {
   try {
-    await deleteClientService(clientId);
-    res.status(204).send();
+    const businessId = req.businessId!; // forcé
+    const items = await listClientsByBusinessService(businessId);
+    return res.json({ items });
+  } catch {
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+};
+
+export const getMyClientById = async (req: Request, res: Response) => {
+  try {
+    const clientId = Number(req.params.id);
+    if (!clientId || Number.isNaN(clientId)) {
+      return res.status(400).json({ error: "INVALID_CLIENT_ID" });
+    }
+
+    const client = await getClientByIdService(clientId);
+    if (!client) return res.status(404).json({ error: "CLIENT_NOT_FOUND" });
+
+   
+    return res.json({ client });
+  } catch {
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+};
+
+export const updateMyClient = async (req: Request, res: Response) => {
+  try {
+    const clientId = Number(req.params.id);
+    if (!clientId || Number.isNaN(clientId)) {
+      return res.status(400).json({ error: "INVALID_CLIENT_ID" });
+    }
+
+    // allowlist (PAS business_id)
+    const {
+      first_name,
+      last_name,
+      company_name,
+      email,
+      phone,
+      address,
+      city,
+      country,
+      postal_code,
+      notes,
+      is_active,
+    } = req.body ?? {};
+
+    const updated = await updateClientByIdService(clientId, {
+      first_name,
+      last_name,
+      company_name,
+      email,
+      phone,
+      address,
+      city,
+      country,
+      postal_code,
+      notes,
+      is_active,
+    });
+
+    return res.json({ client: updated });
   } catch (err: any) {
-    console.error("Delete client error:", err);
-    res.status(500).json({ error: "Server error while deleting client" });
+    if (err?.code === "P2025") return res.status(404).json({ error: "CLIENT_NOT_FOUND" });
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
+};
+
+export const deleteMyClient = async (req: Request, res: Response) => {
+  try {
+    const clientId = Number(req.params.id);
+    if (!clientId || Number.isNaN(clientId)) {
+      return res.status(400).json({ error: "INVALID_CLIENT_ID" });
+    }
+
+    await deleteClientByIdService(clientId);
+    return res.status(204).send();
+  } catch (err: any) {
+    if (err?.code === "P2025") return res.status(404).json({ error: "CLIENT_NOT_FOUND" });
+    return res.status(500).json({ error: "SERVER_ERROR" });
   }
 };

@@ -7,9 +7,8 @@ import {
   getReportByIdService,
   toggleFavoriteReportService,
 } from "../services/reportsService";
-import prisma from "../prisma/prisma";
 
-// helper enum check (même style que QueryLog)
+// helper enum check
 const isEnumValue = <T extends Record<string, string>>(
   enumObj: T,
   value: unknown
@@ -17,9 +16,12 @@ const isEnumValue = <T extends Record<string, string>>(
 
 export const createReportController = async (req: Request, res: Response) => {
   try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: "AUTH_REQUIRED" });
+
+    const businessId = (req as any).businessId as number;
+
     const {
-      user_id,
-      business_id,
       query_id,
       title,
       report_type,
@@ -30,25 +32,20 @@ export const createReportController = async (req: Request, res: Response) => {
       is_favorite,
     } = req.body;
 
-    const userId = Number(user_id);
-    const businessId = Number(business_id);
     const queryId = query_id != null ? Number(query_id) : null;
 
-    if (isNaN(userId) || isNaN(businessId)) {
-      return res.status(400).json({ error: "user_id and business_id are required (number)" });
+    if (!businessId || Number.isNaN(businessId)) {
+      return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
     }
-    if (query_id != null && isNaN(queryId as any)) {
+    if (query_id != null && Number.isNaN(queryId as any)) {
       return res.status(400).json({ error: "query_id must be a number or null" });
     }
-
     if (!title || String(title).trim().length === 0) {
       return res.status(400).json({ error: "title is required" });
     }
-
     if (!content || String(content).trim().length === 0) {
       return res.status(400).json({ error: "content is required" });
     }
-
     if (!isEnumValue(ReportType, report_type)) {
       return res.status(400).json({
         error: "Invalid report_type",
@@ -57,8 +54,8 @@ export const createReportController = async (req: Request, res: Response) => {
     }
 
     const created = await createReportService({
-      user_id: userId,
-      business_id: businessId,
+      user_id: user.user_id,          // depuis JWT
+      business_id: businessId,        //  depuis middleware
       query_id: queryId,
 
       title: String(title),
@@ -75,8 +72,6 @@ export const createReportController = async (req: Request, res: Response) => {
 
     return res.status(201).json(created);
   } catch (err: any) {
-    // si query_id est @unique et tu essaies de créer 2 reports pour le même query_id
-    // Prisma va throw -> on renvoie un 400 plus clair
     if (String(err?.message ?? "").includes("Unique constraint failed")) {
       return res.status(400).json({ error: "This query_id already has a report (query_id is unique)." });
     }
@@ -88,79 +83,64 @@ export const createReportController = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const getReportsByBusinessController = async (req: Request, res: Response) => {
-  const businessId = Number(req.params.businessId);
+  const businessId = (req as any).businessId as number;
   const limit = req.query.limit ? Number(req.query.limit) : 20;
 
-  if (isNaN(businessId)) {
-    return res.status(400).json({ error: "businessId must be a number" });
+  if (!businessId || Number.isNaN(businessId)) {
+    return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });
   }
 
-  const reports = await getReportsByBusinessService(businessId, isNaN(limit) ? 20 : limit);
+  const reports = await getReportsByBusinessService(businessId, Number.isNaN(limit) ? 20 : limit);
   return res.status(200).json(reports);
 };
 
-
-
 export const getReportsByUserController = async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: "AUTH_REQUIRED" });
+
   const userId = Number(req.params.userId);
   const limit = req.query.limit ? Number(req.query.limit) : 20;
 
-  if (isNaN(userId)) {
+  if (Number.isNaN(userId)) {
     return res.status(400).json({ error: "userId must be a number" });
   }
 
-  const reports = await getReportsByUserService(userId, isNaN(limit) ? 20 : limit);
+  // Fix sécurité: un user ne peut pas lire les reports d’un autre user (sauf admin)
+  if (user.role !== "admin" && userId !== user.user_id) {
+    return res.status(403).json({ error: "FORBIDDEN" });
+  }
+
+  const reports = await getReportsByUserService(userId, Number.isNaN(limit) ? 20 : limit);
   return res.status(200).json(reports);
 };
 
-
-
 export const getReportByIdController = async (req: Request, res: Response) => {
   const reportId = Number(req.params.id);
+  const businessId = (req as any).businessId as number;
 
-  if (isNaN(reportId)) {
+  if (Number.isNaN(reportId)) {
     return res.status(400).json({ error: "report id must be a number" });
   }
 
-  const report = await getReportByIdService(reportId);
+  const report = await getReportByIdService(reportId, businessId);
   if (!report) return res.status(404).json({ error: "Report not found" });
 
   return res.status(200).json(report);
 };
 
-
-
-export const toggleFavoriteReportController = async (
-  req: Request,
-  res: Response
-) => {
+export const toggleFavoriteReportController = async (req: Request, res: Response) => {
   const reportId = Number(req.params.id);
+  const businessId = (req as any).businessId as number;
 
-  if (isNaN(reportId)) {
+  if (Number.isNaN(reportId)) {
     return res.status(400).json({ error: "Invalid report id" });
   }
 
-  // Récupération du report avant modification
-  const report = await prisma.report.findUnique({
-    where: { id_report: reportId },
-  });
+  //  on lit le report en mode tenant-safe via service
+  const report = await getReportByIdService(reportId, businessId);
+  if (!report) return res.status(404).json({ error: "Report not found" });
 
-  /**
-   * Sécurité:
-   * - Impossible de toggler un report inexistant
-   * - Évite les erreurs Prisma + crash runtime
-   */
-  if (!report) {
-    return res.status(404).json({ error: "Report not found" });
-  }
-
-  const updated = await toggleFavoriteReportService(
-    reportId,
-    !report.is_favorite
-  );
-
+  const updated = await toggleFavoriteReportService(reportId, businessId, !report.is_favorite);
   return res.status(200).json(updated);
 };
