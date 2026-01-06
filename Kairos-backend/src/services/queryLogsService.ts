@@ -28,7 +28,7 @@ export const createQueryLogService = async (data: CreateQueryLogInput) => {
     throw new Error("natural_query is required");
   }
 
-  // ✅ Fix: défense en profondeur sur client_id / document_id (optionnel)
+  //  Fix: défense en profondeur sur client_id / document_id (optionnel)
   if (data.client_id != null) {
     const ok = await prisma.client.findFirst({
       where: { id_client: data.client_id, business_id: data.business_id },

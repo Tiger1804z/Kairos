@@ -4,7 +4,7 @@ import { Prisma } from "../../generated/prisma/client";
 
 const SALT_ROUNDS = 10;
 
-// ✅ SELECT safe (ne jamais renvoyer password_hash)
+//  SELECT safe (ne jamais renvoyer password_hash)
 const userSafeSelect = {
   id_user: true,
   first_name: true,

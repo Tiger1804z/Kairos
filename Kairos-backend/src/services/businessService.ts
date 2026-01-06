@@ -22,8 +22,8 @@ export const createBusinessForOwnerService = async (data: {
   business_type?: string | null;
   city?: string | null;
   country?: string | null;
-  currency?: string;     // ⚠️ PAS null (schema = String non-null)
-  timezone?: string;     // ⚠️ PAS null (schema = String non-null)
+  currency?: string;     //  PAS null (schema = String non-null)
+  timezone?: string;     //  PAS null (schema = String non-null)
   is_active?: boolean;
 }) => {
   const { owner_id, name, business_type, city, country, currency, timezone, is_active } = data;
@@ -73,8 +73,8 @@ export const updateBusinessByIdService = async (
     business_type: string | null;
     city: string | null;
     country: string | null;
-    currency: string;     // ⚠️ PAS null
-    timezone: string;     // ⚠️ PAS null
+    currency: string;     //  PAS null
+    timezone: string;     // PAS null
     is_active: boolean;
   }>
 ) => {

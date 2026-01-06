@@ -46,7 +46,6 @@ export const createMyEngagementItem = async (req: Request, res: Response) => {
 };
 
 
-// GET /engagementitems?business_id=4&engagement_id=1
 export const listAllMyEngagementItems = async (req: Request, res: Response) => {
   try {
     const businessId = (req as any).businessId as number;
@@ -63,7 +62,7 @@ export const listAllMyEngagementItems = async (req: Request, res: Response) => {
   }
 };
 
-// GET /engagementitems/:id
+
 export const listMyEngagementItemById = async (req: Request, res: Response) => {
   try {
     const itemId = Number(req.params.id);
@@ -80,7 +79,6 @@ export const listMyEngagementItemById = async (req: Request, res: Response) => {
   }
 };
 
-// PATCH /engagementitems/:id
 export const updateMyEngagementItem = async (req: Request, res: Response) => {
   try {
     const itemId = Number(req.params.id);
@@ -92,7 +90,7 @@ export const updateMyEngagementItem = async (req: Request, res: Response) => {
 
     const patch: {
       item_name?: string;
-      item_type?: any; // ou EngagementItemType si tu imports l'enum proprement
+      item_type?: any; // ajuster selon type réel
       quantity?: number;
       unit_price?: number | null;
     } = {};
@@ -115,7 +113,7 @@ export const updateMyEngagementItem = async (req: Request, res: Response) => {
 };
 
 
-// DELETE /engagementitems/:id
+
 export const deleteMyEngagementItem = async (req: Request, res: Response) => {
   try {
     const itemId = Number(req.params.id);

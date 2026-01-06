@@ -15,10 +15,10 @@ import { QueryActionType, QueryStatus, ReportType } from "../../generated/prisma
 export const aiDailyFinanceSummary = async (req: Request, res: Response) => {
   const t0 = Date.now();
 
-  // ✅ businessId vient du middleware
+  // businessId vient du middleware
   const businessId = (req as any).businessId as number;
 
-  // ✅ userId vient du JWT / auth middleware
+  //  userId vient du JWT / auth middleware
   const userId = req.user!.user_id;
 
   const dateStr = req.query.date?.toString();
@@ -162,7 +162,7 @@ export const aiAsk = async (req: Request, res: Response) => {
     });
 
     if (!isSafeSQL(sql, businessId)) {
-      // ✅ log en status "blocked" (plus propre pour ton QueryStatus enum)
+      //  log en status "blocked" (plus propre pour  QueryStatus enum)
       await safeLogError({
         userId,
         businessId,

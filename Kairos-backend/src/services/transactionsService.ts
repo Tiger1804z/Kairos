@@ -97,7 +97,7 @@ export const updateTransactionByIdService = async (
     transaction_date: string | Date; // NOT NULL
   }>
 ) => {
-  // ✅ vérifier que la transaction appartient au business
+  //  vérifier que la transaction appartient au business
   const existing = await prisma.transaction.findFirst({
     where: { id_transaction, business_id },
     select: { id_transaction: true },
@@ -106,7 +106,7 @@ export const updateTransactionByIdService = async (
 
   const patch: Prisma.TransactionUpdateInput = {};
 
-  // ✅ si on connect un client: vérifier qu’il est dans le business
+  //  si on connect un client: vérifier qu’il est dans le business
   if (data.client_id !== undefined && data.client_id !== null) {
     const ok = await prisma.client.findFirst({
       where: { id_client: data.client_id, business_id },
@@ -115,7 +115,7 @@ export const updateTransactionByIdService = async (
     if (!ok) throw new Error("CLIENT_NOT_FOUND");
   }
 
-  // ✅ si on connect un engagement: vérifier qu’il est dans le business
+  // si on connect un engagement: vérifier qu’il est dans le business
   if (data.engagement_id !== undefined && data.engagement_id !== null) {
     const ok = await prisma.engagement.findFirst({
       where: { id_engagement: data.engagement_id, business_id },

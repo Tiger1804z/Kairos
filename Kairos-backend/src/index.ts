@@ -36,7 +36,7 @@ app.use("/auth", authRoutes);
 
 app.use(requireAuth);
 
-// 👉 Toutes les routes users vont commencer par /users
+
 app.use("/users", userRoutes);
 app.use("/businesses", businessRoutes);
 app.use("/engagements", engagementsRoutes);

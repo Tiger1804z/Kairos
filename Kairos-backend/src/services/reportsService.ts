@@ -43,14 +43,14 @@ export const createReportService = async (data: CreateReportInput) => {
     });
   }
 
-  // 2) Vérifier QueryLog existe + appartient au même business (✅ fix)
+  // 2) Vérifier QueryLog existe + appartient au même business (fix)
   const qlog = await prisma.queryLog.findUnique({
     where: { id_query: queryId },
     select: { id_query: true, business_id: true },
   });
 
   if (!qlog || qlog.business_id !== data.business_id) {
-    // fallback: report manuel (query_id = null) pour ne pas casser ton flow
+    // fallback: report manuel (query_id = null)
     return prisma.report.create({
       data: {
         user_id: data.user_id,
@@ -78,7 +78,7 @@ export const createReportService = async (data: CreateReportInput) => {
   });
 
   if (existing) {
-    // ✅ fix: défense en profondeur, si jamais mismatch tenant
+    // fix: défense en profondeur, si jamais mismatch tenant
     if (existing.business_id !== data.business_id) {
       // on fallback: create manuel
       return prisma.report.create({
@@ -155,14 +155,14 @@ export const getReportsByUserService = async (userId: number, limit = 20) => {
   });
 };
 
-// ✅ fix: filtre tenant
+//  fix: filtre tenant
 export const getReportByIdService = async (reportId: number, businessId: number) => {
   return prisma.report.findFirst({
     where: { id_report: reportId, business_id: businessId },
   });
 };
 
-// ✅ fix: filtre tenant + check existence
+//  fix: filtre tenant + check existence
 export const toggleFavoriteReportService = async (
   reportId: number,
   businessId: number,

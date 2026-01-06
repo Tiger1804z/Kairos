@@ -137,7 +137,7 @@ export const deleteDocumentService = async (id_document: number, business_id: nu
   });
   if (!doc) return null;
 
-  // ✅ Amélioration: tenter suppression disque AVANT delete DB
+  //  Amélioration: tenter suppression disque AVANT delete DB
   const abs = toAbsoluteDiskPath(doc.storage_path);
   const disk = await safeUnlink(abs);
 

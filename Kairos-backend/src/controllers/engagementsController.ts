@@ -30,7 +30,7 @@ export const createMyEngagement = async (req: Request, res: Response) => {
     }
 
     const engagement = await createEngagementForBusinessService({
-      business_id: businessId, // 🔒 forcé
+      business_id: businessId, //  forcé
       client_id,
       title: title.trim(),
       description,
@@ -82,7 +82,7 @@ export const updateMyEngagement = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "INVALID_ENGAGEMENT_ID" });
     }
 
-    // 🔒 allowlist
+    //  allowlist
     const { title, description, status, start_date, end_date, total_amount } = req.body ?? {};
 
     const updated = await updateEngagementByIdService(engagementId, {
