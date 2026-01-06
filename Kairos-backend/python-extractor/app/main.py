@@ -41,7 +41,7 @@ app = FastAPI(title="Kairos Extractor", version="0.2.0")
 # -----------------------------------------------------------------------------
 class ExtractRequest(BaseModel):
     storage_path: str = Field(..., description="Chemin relatif ex: uploads/4/2026-01/test.csv")
-    file_type: Optional[str] = Field(None, description="txt|csv (pdf/xlsx plus tard)")
+    file_type: Optional[str] = Field(None, description="txt|csv|pdf| (xlsx plus tard)")
     max_chars: int = Field(35000, ge=1000, le=100000)
     mode: Literal["auto", "text_only", "tables_only"] = "auto"
 
