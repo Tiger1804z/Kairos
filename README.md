@@ -132,6 +132,14 @@ KAIROS_UPLOADS_ROOT=./uploads
 npx prisma migrate dev
 
 ```
+## Initialisation des données (seed)
+
+Après la migration de la base de données, il est recommandé d’exécuter le script de seed afin de créer les données initiales, notamment un **utilisateur administrateur**.
+
+```bash
+npx prisma db seed
+```
+
 5. Démarrer le serveur
 
 ```bash
