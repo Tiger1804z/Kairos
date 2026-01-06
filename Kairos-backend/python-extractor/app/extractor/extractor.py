@@ -27,7 +27,7 @@ def _extract_csv(file_path: Path, max_chars: int) -> tuple[str, list]:
     if not rows:
         return "", []
 
-    # text sample
+    
     lines = [",".join(r) for r in rows[:80]]
     text = "\n".join(lines)[:max_chars]
 

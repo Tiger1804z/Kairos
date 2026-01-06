@@ -13,3 +13,13 @@
 # OS / editor
 .DS_Store
 .vscode
+/.ve
+
+ Python
+.venv/
+venv/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo

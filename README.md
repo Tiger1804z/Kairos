@@ -64,6 +64,16 @@ Principes importants :
 8. Sauvegarde du résumé et des métadonnées d’extraction
 
 ---
+---
+Exemple de .env du python extractor: 
+```txt
+# Clé secrète pour sécuriser l’accès au service d’extraction
+KAIROS_EXTRACTOR_KEY=kairos_dev_secret
+
+# Racine du stockage (doit pointer vers le backend Node)
+KAIROS_STORAGE_ROOT=/chemin/vers/Kairos-backend
+
+```
 
 ## Lancement des services (développement)
 
@@ -83,11 +93,12 @@ Docker (non utilisé dans cette branche)
 
 Un Dockerfile est présent mais volontairement non utilisé dans cette branche.
 
+```
+
+
 
 
 ---
-
-# 🧭 Résumé du cheminement – Branche `feature/python-extractor`
 
 
 
