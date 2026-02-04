@@ -84,9 +84,10 @@ export default function AuthPage() {
           withCredentials: true,
         });
       }
-
+      const res = await axios.post(`${API_BASE}/auth/login`, result.data);
+      localStorage.setItem("token", res.data.token);
       // Après login/signup: redirect (à adapter plus tard)
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
