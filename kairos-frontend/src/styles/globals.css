@@ -1,0 +1,9 @@
+/* Exemple futur (pas obligatoire maintenant) */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-feature-settings: "ss01", "cv01";
+}

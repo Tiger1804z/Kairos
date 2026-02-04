@@ -19,6 +19,7 @@ import reportsRoutes from "./routes/reportsRoutes";
 import documentRoutes from "./routes/documentRoutes";
 import authRoutes from "./routes/authRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
+import cors from "cors";
 
 dotenv.config();
 
@@ -27,6 +28,14 @@ const app = express();
 
 app.use(express.json());
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 // Route de test
 app.get("/", (req, res) => {
   res.json({ message: "Kairos API is running" });
