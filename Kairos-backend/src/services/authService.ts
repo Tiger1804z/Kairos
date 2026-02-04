@@ -122,3 +122,23 @@ export const loginService = async (data: LoginInput) => {
   return { token, user: safeUser };
 };
 
+
+
+// me
+export const meService = async (userId: number) => {
+  
+  const user = await prisma.user.findUnique({
+    where: { id_user: userId },
+    select: {
+      id_user: true,
+      first_name: true,
+      last_name: true,
+      email: true,
+      role: true,
+      is_active: true,
+    },
+  });
+
+  return user;
+};
+  
