@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import axios from "axios";
+import { useAuth } from "../../auth/AuthContext";
 
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -25,24 +26,12 @@ const signupSchema = z.object({
 });
 
 export default function AuthPage() {
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
   const mode = (params.get("mode") as Mode) ?? "login";
   const isSignup = mode === "signup";
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const schema = useMemo(() => (isSignup ? signupSchema : loginSchema), [isSignup]);
-
-  const [values, setValues] = useState<Record<string, string>>({
-    first_name: "",
-    last_name: "",
-    email: "",
-    password: "",
-  });
-
   const fields = isSignup
     ? ([
         { name: "first_name", label: "First name", type: "text", autoComplete: "given-name" },
@@ -54,6 +43,18 @@ export default function AuthPage() {
         { name: "email", label: "Email", type: "email", autoComplete: "email" },
         { name: "password", label: "Password", type: "password", autoComplete: "current-password" },
       ] as const);
+
+  const schema = useMemo(() => (isSignup ? signupSchema : loginSchema), [isSignup]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [values, setValues] = useState<Record<string, string>>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+  });
 
   function setMode(next: Mode) {
     setParams({ mode: next });
@@ -73,28 +74,13 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (isSignup) {
-        // Ajuste ces endpoints selon ton backend:
-        // ex: POST /auth/signup  (first_name, last_name, email, password)
-        await axios.post(`${API_BASE}/auth/signup`, result.data, {
-          withCredentials: true,
-        });
+        await signup(result.data as z.infer<typeof signupSchema>);
       } else {
-        // ex: POST /auth/login (email, password)
-        await axios.post(`${API_BASE}/auth/login`, result.data, {
-          withCredentials: true,
-        });
+        await login(result.data.email, result.data.password);
       }
-      const res = await axios.post(`${API_BASE}/auth/login`, result.data);
-      localStorage.setItem("token", res.data.token);
-      // Après login/signup: redirect (à adapter plus tard)
       navigate("/dashboard");
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        "Request failed";
-      setError(String(msg));
+      setError(err?.response?.data?.error || err?.message || "Request failed");
     } finally {
       setLoading(false);
     }
