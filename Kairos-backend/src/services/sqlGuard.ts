@@ -106,7 +106,6 @@ export const isSafeSQL = (sql: string, businessId: number): boolean => {
 
     // Memo: complexité/contournement (V2 toujours strict)
     /\bunion\b/,
-    /\bjoin\b/,
     /\bwith\b/,
     /\bpg_sleep\b/,
     /\binformation_schema\b/,

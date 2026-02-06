@@ -4,6 +4,7 @@ import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge"; 
 import { useDashboard } from "../../hooks/useDashboard";
 import { useBusinessContext } from "../../business/BusinessContext";
+import { useAskKairos } from "../../hooks/useAskKairos";
 
 
 type MeUser = {
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const { selectedBusinessId, selectedBusiness, loading: loadingBusiness } = useBusinessContext();
   
   const { data,loading: dashboardLoading, error } = useDashboard(selectedBusinessId);
+  const {ask, response, loading: askLoading, error: askError,reset} = useAskKairos();
   const name =
     me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email : "—";
   
@@ -53,16 +55,89 @@ export default function DashboardPage() {
 
         <div className="mt-8">
           <AskKairosInput
-            onAsk={(q) => console.log("Ask:", q)}
+            onAsk={(q) => ask(q)}
             className="mx-auto max-w-3xl"
           />
 
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             {["Last month revenue", "Top 5 clients by growth", "Engagement efficiency", "Projected churn"].map((t) => (
-              <Badge key={t}>{t}</Badge>
+              <button
+                key={t}
+                onClick={() => ask(t)}
+                className="inline-block"
+              >
+                <Badge className="cursor-pointer hover:bg-white/10 transition">
+                  {t}
+                </Badge>
+              </button>
             ))}
           </div>
         </div>
+
+        {/* 🤖 Réponse de l'IA */}
+        {(response || askLoading || askError) && (
+          <Card className="mx-auto mt-6 max-w-3xl p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm font-semibold">Kairos AI Assistant</div>
+              {response && (
+                <button
+                  onClick={reset}
+                  className="text-xs text-white/60 hover:text-white"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {askLoading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-sm text-white/60">
+                  Analyzing your data...
+                </div>
+              </div>
+            )}
+
+            {askError && (
+              <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/20">
+                {askError}
+              </div>
+            )}
+
+            {response && !askLoading && (
+              <div className="space-y-4">
+                {/* Réponse de l'IA */}
+                <div className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
+                  <div className="text-xs text-white/60 mb-2">Answer</div>
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {response.aiText}
+                  </div>
+                </div>
+
+                {/* Métadonnées */}
+                <div className="flex items-center gap-3 text-xs text-white/50">
+                  <span>Business: {response.meta.business_name}</span>
+                  <span>•</span>
+                  <span>Period: {response.meta.period}</span>
+                  <span>•</span>
+                  <span>Query time: {response.meta.execution_time_ms}ms</span>
+                </div>
+
+                {/* SQL généré (optionnel, pour debug) */}
+                {response.sql && (
+                  <details className="rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
+                    <summary className="cursor-pointer text-xs text-white/60">
+                      Show generated SQL
+                    </summary>
+                    <pre className="mt-2 overflow-x-auto text-xs text-white/80">
+                      {response.sql}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
+        
 
         {/* Erreurs */}
         {error && (

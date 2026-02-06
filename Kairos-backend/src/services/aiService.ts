@@ -78,9 +78,23 @@ export const askKairos = async (input: {
   topCategories: Array<{ category: string; total: number }>;
   question: string;
   currencyLabel?: string; // ex: "$ CAD"
+  rawData?: NormalizedTable; // ✅ AJOUT: données brutes
 }) => {
   const currency = input.currencyLabel ?? "$ CAD";
   const fmt = (v: number | null) => (v === null ? "Non fourni" : String(v));
+
+  // ✅ Formatter les données brutes si elles existent
+  let rawDataSection = "";
+  if (input.rawData && input.rawData.rows.length > 0) {
+    const rows = input.rawData.rows.slice(0, 20); // Limiter à 20 lignes max
+    rawDataSection = `
+Données SQL retournées (${input.rawData.rows.length} lignes):
+Colonnes: ${input.rawData.columns.join(", ")}
+
+Extrait des données (max 20 lignes):
+${JSON.stringify(rows, null, 2)}
+`;
+  }
 
   const prompt = `
 Tu es Kairos, assistant financier.
@@ -89,7 +103,8 @@ Réponds en français.
 Règles strictes:
 - Pas de markdown, pas de **, pas de puces avec *
 - 2 petits paragraphes max + ensuite 2 actions numérotées (1. / 2.)
-- Ne pas inventer de chiffres: utiliser uniquement les données fournies
+- Ne pas inventer de chiffres: utiliser uniquement les données fournies ci-dessous
+- Si des données SQL sont fournies, ANALYSE-LES pour répondre à la question
 - IMPORTANT: si une valeur est "Non fourni", tu ne dois PAS conclure dessus
   (ex: ne pas dire "dépenses à zéro" ni calculer un bénéfice net)
 - Tous les montants sont en ${currency}
@@ -101,7 +116,7 @@ Revenus: ${fmt(input.income)}
 Dépenses: ${fmt(input.expenses)}
 Résultat net: ${fmt(input.net)}
 Top catégories: ${input.topCategories.map((c) => `${c.category}: ${c.total}`).join(", ")}
-
+${rawDataSection}
 Question utilisateur: ${input.question}
 `.trim();
 
@@ -301,6 +316,7 @@ export const askKairosFromSql = async (input: {
     topCategories,
     question: input.question,
     currencyLabel: input.currencyLabel ?? "$ CAD",
+    rawData: normalized, // ✅ AJOUT: passer les données brutes
   });
 
   return { aiText, normalized, income, expenses, net, topCategories };
@@ -329,7 +345,7 @@ export const generateSQLFromQuestion = async (input: SqlGenInput) => {
       : `- Aucun filtre de date si non fourni`;
 
   const intentRules = `
-RÈGLES INTENT (très important):
+RÈGLES INTENT (très important): 
 - Si l'intent = AGG_INCOME:
   -> Filtrer obligatoirement: transaction_type = 'income'
   -> Retourner: SUM(amount) as total_income
@@ -367,7 +383,8 @@ RÈGLES STRICTES (à respecter absolument):
 - Uniquement SELECT (READ ONLY)
 - AUCUN markdown, aucun backticks, aucun commentaire
 - AUCUN ';'
-- AUCUN JOIN, UNION, WITH
+- JOINs autorisés UNIQUEMENT avec la table "clients" (pour récupérer first_name, last_name)
+- AUCUN UNION, WITH
 - AUCUNE sous-requête (pas de SELECT dans SELECT)
 
 ALLOWLIST TABLES:
@@ -378,9 +395,12 @@ TENANT (OBLIGATOIRE):
 - Si table = businesses: DOIT contenir "id_business = ${input.businessId}"
 - Sinon: DOIT contenir "business_id = ${input.businessId}"
 
-LIMIT (OBLIGATOIRE):
-- DOIT contenir LIMIT
+⚠️ LIMIT (ABSOLUMENT OBLIGATOIRE - TOUJOURS REQUIS):
+- TOUJOURS ajouter LIMIT à la fin de CHAQUE requête
+- Même pour SUM/COUNT/AVG → ajouter LIMIT 1
 - LIMIT <= 200
+- Exemples: "... LIMIT 1", "... LIMIT 10", "... LIMIT 100"
+- ❌ INTERDIT d'oublier le LIMIT (requête rejetée sinon)
 
 SCHÉMA transactions:
 public.transactions(
@@ -392,6 +412,16 @@ public.transactions(
   category
 )
 
+SCHÉMA clients:
+public.clients(
+  id_client,
+  business_id,
+  first_name,
+  last_name,
+  email
+  phone
+)
+  
 INTENTION DÉTECTÉE:
 ${intent}
 
@@ -434,7 +464,7 @@ QUESTION UTILISATEUR:
 const guessIntent = (q: string) => {
   const s = q.toLowerCase();
 
-  if (s.includes("par catégorie") || s.includes("par categorie")) return "AGG_EXPENSES_BY_CATEGORY";
+  if (s.includes("par catégorie") || s.includes("par categorie") || s.includes("revenue")) return "AGG_EXPENSES_BY_CATEGORY";
   if (s.includes("revenu") || s.includes("income")) return "AGG_INCOME";
   if (s.includes("dépense") || s.includes("depense") || s.includes("expense")) return "AGG_EXPENSES";
   if (s.includes("profit") || s.includes("net") || s.includes("bénéfice") || s.includes("benefice"))

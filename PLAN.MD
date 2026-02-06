@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-02-05
-**Progression globale :** 65%
+**Dernière mise à jour :** 2026-02-06
+**Progression globale :** 75%
 **Type de projet :** Projet scolaire (MVP pour présentation)
-**Focus actuel :** 🎨 **FRONTEND** (Backend ~90% complété)
+**Focus actuel :** 🎨 **FRONTEND** - Dashboard graphiques (Backend 100% complété ✅)
 
 ---
 
@@ -107,8 +107,8 @@
   - [x] Loading states et error handling
   - [x] Formatage monétaire (CAD)
 
-### 🤖 Intelligence Artificielle (Backend COMPLET ✅)
-- [x] **Service `aiService.ts` complet avec OpenAI**
+### 🤖 Intelligence Artificielle (COMPLET ✅)
+- [x] **Backend : Service `aiService.ts` complet avec OpenAI**
 - [x] **Endpoint POST `/ai/ask`** - Questions naturelles → SQL → Réponses
 - [x] **Endpoint GET `/ai/daily-finance-summary`** - Résumé quotidien
 - [x] Génération de SQL sécurisé (`generateSQLFromQuestion`)
@@ -119,7 +119,10 @@
 - [x] Logging automatique des requêtes (`QueryLog`)
 - [x] Création automatique de rapports (`Report`)
 - [x] Support multi-intents (revenus, dépenses, net, par catégorie)
-- [ ] **Frontend : Connecter `AskKairosInput` à l'API** ⚠️ À FAIRE
+- [x] **Frontend : Hook `useAskKairos()` créé** ✅ NOUVEAU
+- [x] **Frontend : `AskKairosInput` connecté à l'API** ✅ NOUVEAU
+- [x] **Frontend : Affichage des réponses de l'IA dans le Dashboard** ✅ NOUVEAU
+- [x] **Frontend : Gestion des erreurs et loading states** ✅ NOUVEAU
 
 ### 📊 Rapports & Logs
 - [x] QueryLogs (historique des requêtes IA)
@@ -138,16 +141,16 @@ _Rien en cours actuellement_
 
 ### 🎯 PRIORITÉ MVP - À FAIRE POUR LA PRÉSENTATION
 
-#### 1. 🤖 Connecter l'Assistant IA (CRITIQUE)
-- [ ] **Frontend uniquement - Backend déjà fait ✅**
-  - [ ] Hook `useAskKairos()` pour appeler POST `/ai/ask`
-  - [ ] Connecter `AskKairosInput` au backend
-  - [ ] Afficher les réponses de l'IA dans une Card
-  - [ ] Loading state pendant la génération
-  - [ ] Afficher le SQL généré (optionnel)
-  - [ ] Gestion d'erreurs (unsafe SQL, erreur serveur)
+#### 1. 🤖 ~~Connecter l'Assistant IA~~ ✅ TERMINÉ (2026-02-06)
+- [x] **Frontend uniquement - Backend déjà fait ✅**
+  - [x] Hook `useAskKairos()` pour appeler POST `/ai/ask`
+  - [x] Connecter `AskKairosInput` au backend
+  - [x] Afficher les réponses de l'IA dans une Card
+  - [x] Loading state pendant la génération
+  - [x] Afficher le SQL généré (optionnel)
+  - [x] Gestion d'erreurs (unsafe SQL, erreur serveur)
 
-#### 2. 📊 Dashboard - Graphiques (IMPORTANT)
+#### 2. 📊 Dashboard - Graphiques (PRIORITÉ #1)
 - [ ] Installer Recharts
 - [ ] Graphique de croissance du revenu (line chart) - 2-3 mois
 - [ ] Graphique répartition revenus/dépenses (pie chart)
@@ -259,22 +262,19 @@ src/
 ## 🎯 Prochaines Actions Prioritaires (MVP)
 
 ### Session Suivante - ORDRE DE PRIORITÉ
-1. **🤖 Connecter Assistant IA Kairos** (CRITIQUE - Démo WOW)
-   - Backend déjà fait ✅
-   - Créer hook `useAskKairos()`
-   - Connecter `AskKairosInput` à POST `/ai/ask`
-   - Afficher réponse de l'IA
-   - Temps estimé : 1-2h
+1. **📝 Ajouter données de test** (PRIORITÉ #1 - REQUIS AVANT GRAPHIQUES)
+   - Créer des transactions pour janvier-février 2026
+   - Ajouter des revenus et dépenses variés
+   - Lier les transactions aux clients existants
+   - Objectif : Voir des vrais chiffres dans le dashboard
+   - Temps estimé : 30-45 min
 
-2. **📊 Ajouter graphiques au dashboard** (IMPORTANT - Visuel)
+2. **📊 Ajouter graphiques au dashboard** (PRIORITÉ #2 - Après les données)
    - Installer Recharts
-   - Line chart croissance revenu
+   - Line chart croissance revenu (2-3 mois)
    - Pie chart revenus vs dépenses
+   - Rendre responsive
    - Temps estimé : 2-3h
-
-3. **📝 Ajouter données de test** (OPTIONNEL)
-   - Transactions février 2026
-   - Pour avoir des graphiques avec data
 
 4. **💰 Page liste transactions** (NICE TO HAVE)
    - Si temps restant
@@ -293,7 +293,7 @@ src/
 | **Transactions** | 100% ✅ | 40% ❌ | ⚠️ Backend OK, UI liste manquante |
 | **Engagements** | 100% ✅ | 40% ❌ | ⚠️ Backend OK, UI liste manquante |
 | **Dashboard** | 100% ✅ | 60% ⚠️ | ⚠️ Métriques OK, graphiques à ajouter |
-| **IA Assistant** | 100% ✅ | 10% ❌ | ❌ **CRITIQUE** : À connecter au frontend |
+| **IA Assistant** | 100% ✅ | 100% ✅ | ✅ **COMPLET** : Frontend connecté! |
 | **Rapports** | 100% ✅ | 0% ❌ | ✅ OK (logs backend suffisants) |
 
 ### Légende
@@ -352,6 +352,13 @@ uvicorn app.main:app --reload --port 8001
 - Aucun bug critique actuellement
 
 ### Améliorations Techniques Future
+
+#### IA & Intelligence
+- [ ] **Améliorer la détection d'intent pour "analyse mes revenues"** : Quand l'utilisateur demande une analyse, automatiquement aller chercher AUSSI les dépenses pour fournir une analyse complète (revenus + dépenses + net) au lieu de juste les revenus. Actuellement, l'utilisateur doit explicitement demander "analyse financière complète" pour obtenir les deux.
+- [ ] Ajouter support pour les graphiques générés par l'IA
+- [ ] Historique des questions posées à l'IA (accessible via UI)
+
+#### Infrastructure & Tests
 - [ ] Migration vers React Query pour le state management serveur
 - [ ] Ajout de tests unitaires (Jest + React Testing Library)
 - [ ] Ajout de tests E2E (Playwright)
@@ -374,16 +381,26 @@ uvicorn app.main:app --reload --port 8001
 
 **Pour la présentation scolaire, on doit avoir :**
 1. ✅ Dashboard fonctionnel avec vraies données
-2. ⚠️ Graphiques de visualisation (en cours)
-3. ❌ **Assistant IA Kairos fonctionnel** (CRITIQUE - à faire en priorité)
+2. ⚠️ Graphiques de visualisation (PROCHAINE ÉTAPE)
+3. ✅ **Assistant IA Kairos fonctionnel** ✅ TERMINÉ (2026-02-06)
 4. ✅ Upload et analyse de documents
 5. ✅ Gestion des clients et business
 
-**Délai estimé pour MVP complet : 3-5h de travail frontend**
+**Délai estimé pour MVP complet : 2-3h de travail frontend (graphiques)**
 
 ---
 
-**🎯 Session actuelle : Dashboard backend + frontend implémenté avec succès ✅**
-**🎯 Prochaine session : Connecter Assistant IA au frontend (PRIORITÉ #1)**
+**🎯 Session actuelle : Assistant IA - SUCCÈS TOTAL ✅**
+- ✅ Hook `useAskKairos()` créé et connecté
+- ✅ JOINs avec table `clients` activés (affichage des noms!)
+- ✅ Fix du problème de LIMIT manquant (prompt renforcé)
+- ✅ Fix de la détection d'intent pour "revenue"
+- ✅ Toutes les requêtes fonctionnent parfaitement
+- ✅ SQL sécurisé avec sqlGuard
+- ✅ Affichage des vraies données de la base
 
-_Dernière mise à jour PLAN.MD : 2026-02-05 - Réajusté pour scope MVP scolaire_
+**🎯 Prochaine session : PLAN DÉFINI**
+1. **PRIORITÉ #1** : Ajouter des données de test (transactions récentes janvier-février 2026) pour voir des vrais chiffres dans le dashboard
+2. **PRIORITÉ #2** : Ajouter graphiques au Dashboard avec Recharts (line chart + pie chart)
+
+_Dernière mise à jour PLAN.MD : 2026-02-06 - Assistant IA 100% complété + notes améliorations futures_
