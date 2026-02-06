@@ -2,6 +2,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import { api } from "../../lib/api";
+import BusinessSelector from "../dashboard/BusinessSelector";
 
 type MeUser = {
   id_user: number;
@@ -68,9 +69,14 @@ export default function DashboardLayout() {
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
               <div className="text-sm text-white/70">Dashboard</div>
 
+
+
               <div className="flex items-center gap-3">
+                <BusinessSelector/>
                 {loadingMe ? (
                   <div className="text-xs text-white/50">Loading...</div>
+              
+                
                 ) : (
                   <>
                     <div className="hidden text-right leading-tight sm:block">

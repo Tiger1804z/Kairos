@@ -18,6 +18,7 @@ import queryLogsRoutes from "./routes/queryLogRoutes";
 import reportsRoutes from "./routes/reportsRoutes";
 import documentRoutes from "./routes/documentRoutes";
 import authRoutes from "./routes/authRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
 import cors from "cors";
 
@@ -58,6 +59,8 @@ app.use("/documents", documentRoutes);
 app.use("/query-logs", queryLogsRoutes);
 
 app.use("/ai", aiRoutes);
+
+app.use("/dashboard", dashboardRoutes);
 
 
 

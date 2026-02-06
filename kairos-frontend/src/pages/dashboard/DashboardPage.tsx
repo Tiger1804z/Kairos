@@ -1,7 +1,10 @@
 import { useOutletContext } from "react-router-dom";
 import AskKairosInput from "../../components/kairos/AskKairosInput";
 import { Card } from "../../components/ui/Card";
-// import { Badge } from "../../components/ui/Badge"; // ignore pour l’instant
+import { Badge } from "../../components/ui/Badge"; 
+import { useDashboard } from "../../hooks/useDashboard";
+import { useBusinessContext } from "../../business/BusinessContext";
+
 
 type MeUser = {
   id_user: number;
@@ -16,10 +19,21 @@ export default function DashboardPage() {
     me: MeUser | null;
     loadingMe: boolean;
   }>();
-
+  // utiliser le business context pour recuperer le businessId selectionne
+  const { selectedBusinessId, selectedBusiness, loading: loadingBusiness } = useBusinessContext();
+  
+  const { data,loading: dashboardLoading, error } = useDashboard(selectedBusinessId);
   const name =
     me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email : "—";
+  
+  const loading = loadingBusiness ||dashboardLoading;
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency: "CAD",
+    }).format(amount);
+  }
   return (
     <div className="relative">
       {/* Glow */}
@@ -43,76 +57,156 @@ export default function DashboardPage() {
             className="mx-auto max-w-3xl"
           />
 
-          {/* Badges (plus tard)
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             {["Last month revenue", "Top 5 clients by growth", "Engagement efficiency", "Projected churn"].map((t) => (
               <Badge key={t}>{t}</Badge>
             ))}
           </div>
-          */}
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          <Card className="p-6">
-            <div className="text-xs text-white/60">Total Revenue</div>
-            <div className="mt-2 text-2xl font-semibold">$428,500</div>
-            <div className="mt-2 text-xs text-emerald-300">+12.5%</div>
-          </Card>
+        {/* Erreurs */}
+        {error && (
+          <div className="mt-6 rounded-2xl bg-red-500/10 p-4 text-center text-sm text-red-300 ring-1 ring-red-500/20">
+            Error: {error}
+          </div>
+        )}
 
-          <Card className="p-6">
-            <div className="text-xs text-white/60">Active Engagements</div>
-            <div className="mt-2 text-2xl font-semibold">24</div>
-            <div className="mt-2 text-xs text-emerald-300">+3</div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="text-xs text-white/60">Client Retention</div>
-            <div className="mt-2 text-2xl font-semibold">98.2%</div>
-            <div className="mt-2 text-xs text-emerald-300">+0.4%</div>
-          </Card>
-        </div>
-
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <Card className="p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="text-sm font-semibold">Revenue Growth</div>
-              <div className="text-xs text-white/60">Last 6 months</div>
-            </div>
-            <div className="h-64 rounded-2xl bg-white/5 ring-1 ring-white/10" />
-          </Card>
-
-          <Card className="p-6">
-            <div className="mb-4 text-sm font-semibold">Top Clients</div>
-
-            <div className="space-y-3">
-              {[
-                ["Acme Corp", "$45,000", "ACTIVE"],
-                ["Global Industries", "$12,000", "PENDING"],
-                ["Stark Enterprises", "$89,000", "ACTIVE"],
-                ["Wayne Enterprises", "$0", "INACTIVE"],
-              ].map(([clientName, amount, status]) => (
-                <div
-                  key={clientName}
-                  className="flex items-center justify-between rounded-2xl bg-white/5 p-4 ring-1 ring-white/10"
-                >
-                  <div>
-                    <div className="text-sm font-medium">{clientName}</div>
-                    <div className="text-xs text-white/50">—</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold">{amount}</div>
-                    <div className="text-[11px] text-white/60">{status}</div>
-                  </div>
+        {/* Pas de business sélectionné */}
+        {!selectedBusinessId && !loadingBusiness && (
+          <div className="mt-6 rounded-2xl bg-yellow-500/10 p-4 text-center text-sm text-yellow-300 ring-1 ring-yellow-500/20">
+            Please select a business to view your dashboard
+          </div>
+        )}
+         {/* 📊 Métriques */}
+        {selectedBusinessId && (
+          <>
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              <Card className="p-6">
+                <div className="text-xs text-white/60">Total Clients</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {loading ? "..." : data.metrics?.totalClients ?? 0}
                 </div>
-              ))}
+                <div className="mt-2 text-xs text-blue-300">Active clients</div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="text-xs text-white/60">Active Engagements</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {loading ? "..." : data.metrics?.activeEngagements ?? 0}
+                </div>
+                <div className="mt-2 text-xs text-emerald-300">In progress</div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="text-xs text-white/60">Monthly Revenue</div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {loading
+                    ? "..."
+                    : formatCurrency(data.metrics?.monthlyRevenue ?? 0)}
+                </div>
+                <div className="mt-2 text-xs text-white/60">
+                  {loading
+                    ? "..."
+                    : data.revenueGrowth
+                    ? `${data.revenueGrowth.growth > 0 ? "+" : ""}${data.revenueGrowth.growth}%`
+                    : "—"}
+                </div>
+              </Card>
             </div>
 
-            <button className="mt-4 w-full rounded-2xl bg-white/5 py-3 text-sm text-white/70 ring-1 ring-white/10 hover:bg-white/10 hover:text-white">
-              View all clients
-            </button>
-          </Card>
-        </div>
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              {/* 📈 Revenue Growth */}
+              <Card className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="text-sm font-semibold">Revenue Growth</div>
+                  <div className="text-xs text-white/60">Last vs This Month</div>
+                </div>
+
+                {loading ? (
+                  <div className="flex h-32 items-center justify-center text-sm text-white/50">
+                    Loading...
+                  </div>
+                ) : data.revenueGrowth ? (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                      <div className="text-xs text-white/60">Last Month</div>
+                      <div className="mt-1 text-xl font-semibold">
+                        {formatCurrency(data.revenueGrowth.lastMonth)}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+                      <div className="text-xs text-white/60">This Month</div>
+                      <div className="mt-1 text-xl font-semibold">
+                        {formatCurrency(data.revenueGrowth.thisMonth)}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white/5 p-4 text-center ring-1 ring-white/10">
+                      <div className="text-xs text-white/60">Growth</div>
+                      <div
+                        className={`mt-1 text-2xl font-bold ${
+                          data.revenueGrowth.growth > 0
+                            ? "text-emerald-300"
+                            : data.revenueGrowth.growth < 0
+                            ? "text-red-300"
+                            : "text-white/60"
+                        }`}
+                      >
+                        {data.revenueGrowth.growth > 0 ? "+" : ""}
+                        {data.revenueGrowth.growth}%
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-32 items-center justify-center text-sm text-white/50">
+                    No data available
+                  </div>
+                )}
+              </Card>
+
+              {/* 👥 Top Clients */}
+              <Card className="p-6">
+                <div className="mb-4 text-sm font-semibold">Top Clients</div>
+
+                {loading ? (
+                  <div className="flex h-64 items-center justify-center text-sm text-white/50">
+                    Loading...
+                  </div>
+                ) : data.topClients && data.topClients.length > 0 ? (
+                  <div className="space-y-3">
+                    {data.topClients.map((client) => (
+                      <div
+                        key={client.id}
+                        className="flex items-center justify-between rounded-2xl bg-white/5 p-4 ring-1 ring-white/10"
+                      >
+                        <div>
+                          <div className="text-sm font-medium">{client.name}</div>
+                          <div className="text-xs text-white/50">ID: {client.id}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">
+                            {formatCurrency(client.revenue)}
+                          </div>
+                          <div className="text-[11px] text-emerald-300">
+                            {client.revenue > 0 ? "ACTIVE" : "INACTIVE"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-64 items-center justify-center text-sm text-white/50">
+                    No clients yet
+                  </div>
+                )}
+              </Card>
+            </div>
+          </>
+        )}
       </div>
     </div>
+
+
+          
+        
   );
 }
