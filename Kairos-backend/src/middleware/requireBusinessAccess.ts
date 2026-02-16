@@ -6,7 +6,7 @@ import prisma from "../prisma/prisma";
 export const requireBusinessAccess = (opts?: {
   from?: "query" | "params" | "body";
   key?: string;
- // ... dans opts.entity union:
+ 
   entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog";
 
 

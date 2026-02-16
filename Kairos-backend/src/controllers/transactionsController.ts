@@ -67,7 +67,7 @@ export const createMyTransaction = async (req: Request, res: Response) => {
   }
 };
 
-// GET /transactions?business_id=4
+
 export const listMyTransactions = async (req: Request, res: Response) => {
   try {
     const businessId = (req as any).businessId as number;
@@ -78,7 +78,7 @@ export const listMyTransactions = async (req: Request, res: Response) => {
   }
 };
 
-// GET /transactions/:id
+
 export const getMyTransactionById = async (req: Request, res: Response) => {
   try {
     const businessId = (req as any).businessId as number;
@@ -97,7 +97,7 @@ export const getMyTransactionById = async (req: Request, res: Response) => {
   }
 };
 
-// PATCH /transactions/:id
+
 export const updateMyTransactionById = async (req: Request, res: Response) => {
   try {
     const businessId = (req as any).businessId as number;
@@ -130,7 +130,7 @@ export const updateMyTransactionById = async (req: Request, res: Response) => {
     if (description !== undefined) patch.description = description;
     if (transaction_date !== undefined) patch.transaction_date = transaction_date;
 
-    // ✅ IMPORTANT: amount est NOT NULL => on refuse null si présent
+    //  IMPORTANT: amount est NOT NULL => on refuse null si présent
     if (amount !== undefined) {
       if (amount === null || Number.isNaN(Number(amount))) {
         return res.status(400).json({ error: "INVALID_AMOUNT" });
@@ -163,7 +163,7 @@ export const updateMyTransactionById = async (req: Request, res: Response) => {
   }
 };
 
-// DELETE /transactions/:id
+
 export const deleteMyTransactionById = async (req: Request, res: Response) => {
   try {
     const businessId = (req as any).businessId as number;

@@ -54,8 +54,8 @@ export const createQueryLogController = async (req: Request, res: Response) => {
     }
 
     const created = await createQueryLogService({
-      user_id: user.user_id,          // ✅ JWT (pas body)
-      business_id: businessId,        // ✅ middleware (pas body)
+      user_id: user.user_id,          // JWT (pas body)
+      business_id: businessId,        // middleware (pas body)
 
       client_id: client_id != null ? Number(client_id) : null,
       document_id: document_id != null ? Number(document_id) : null,
@@ -115,7 +115,7 @@ export const getQueryLogsByUserController = async (req: Request, res: Response) 
       return res.status(400).json({ error: "userId param must be a number" });
     }
 
-    // ✅ Fix sécurité: un user ne peut pas lire les logs d’un autre user (sauf admin)
+    // Fix sécurité: un user ne peut pas lire les logs d’un autre user (sauf admin)
     if (user.role !== "admin" && userId !== user.user_id) {
       return res.status(403).json({ error: "FORBIDDEN" });
     }

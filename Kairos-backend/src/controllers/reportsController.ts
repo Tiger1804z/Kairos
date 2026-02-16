@@ -54,8 +54,8 @@ export const createReportController = async (req: Request, res: Response) => {
     }
 
     const created = await createReportService({
-      user_id: user.user_id,          // ✅ depuis JWT
-      business_id: businessId,        // ✅ depuis middleware
+      user_id: user.user_id,          // depuis JWT
+      business_id: businessId,        //  depuis middleware
       query_id: queryId,
 
       title: String(title),
@@ -106,7 +106,7 @@ export const getReportsByUserController = async (req: Request, res: Response) =>
     return res.status(400).json({ error: "userId must be a number" });
   }
 
-  // ✅ Fix sécurité: un user ne peut pas lire les reports d’un autre user (sauf admin)
+  // Fix sécurité: un user ne peut pas lire les reports d’un autre user (sauf admin)
   if (user.role !== "admin" && userId !== user.user_id) {
     return res.status(403).json({ error: "FORBIDDEN" });
   }
@@ -137,7 +137,7 @@ export const toggleFavoriteReportController = async (req: Request, res: Response
     return res.status(400).json({ error: "Invalid report id" });
   }
 
-  // ✅ on lit le report en mode tenant-safe via service
+  //  on lit le report en mode tenant-safe via service
   const report = await getReportByIdService(reportId, businessId);
   if (!report) return res.status(404).json({ error: "Report not found" });
 

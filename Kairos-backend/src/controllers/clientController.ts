@@ -13,7 +13,7 @@ import {
 
 export const createMyClient = async (req: Request, res: Response) => {
   try {
-    const businessId = req.businessId!; // 🔒 forcé
+    const businessId = req.businessId!; // forcé
 
     const {
       first_name,
@@ -30,7 +30,7 @@ export const createMyClient = async (req: Request, res: Response) => {
     } = req.body ?? {};
 
     const client = await createClientForBusinessService({
-      business_id: businessId, // 🔒 forcé
+      business_id: businessId, // forcé
       first_name,
       last_name,
       company_name,
@@ -52,7 +52,7 @@ export const createMyClient = async (req: Request, res: Response) => {
 
 export const listMyClients = async (req: Request, res: Response) => {
   try {
-    const businessId = req.businessId!; // 🔒 forcé
+    const businessId = req.businessId!; // forcé
     const items = await listClientsByBusinessService(businessId);
     return res.json({ items });
   } catch {
@@ -70,7 +70,7 @@ export const getMyClientById = async (req: Request, res: Response) => {
     const client = await getClientByIdService(clientId);
     if (!client) return res.status(404).json({ error: "CLIENT_NOT_FOUND" });
 
-    // (Optionnel) Vérif business_id === req.businessId si tu veux double sécurité
+   
     return res.json({ client });
   } catch {
     return res.status(500).json({ error: "SERVER_ERROR" });
@@ -84,7 +84,7 @@ export const updateMyClient = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "INVALID_CLIENT_ID" });
     }
 
-    // 🔒 allowlist (PAS business_id)
+    // allowlist (PAS business_id)
     const {
       first_name,
       last_name,

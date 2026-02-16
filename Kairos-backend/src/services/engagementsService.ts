@@ -41,7 +41,7 @@ export const createEngagementForBusinessService = async (data: {
     client_id: data.client_id ?? null,
     title: data.title,
     description: data.description ?? null,
-    status: data.status ?? EngagementStatus.draft, // si ton Prisma enum est strict, on peut ajuster
+    status: data.status ?? EngagementStatus.draft, 
     start_date: data.start_date ?? null,
     end_date: data.end_date ?? null,
     total_amount: data.total_amount ?? null,
@@ -108,7 +108,6 @@ export const updateEngagementByIdService = async (
 };
 
 export const deleteEngagementByIdService = async (id_engagement: number) => {
-  // Si tu veux garder le pattern "message métier"
   const existing = await prisma.engagement.findUnique({
     where: { id_engagement },
     select: { id_engagement: true },

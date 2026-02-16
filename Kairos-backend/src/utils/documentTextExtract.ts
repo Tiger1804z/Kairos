@@ -90,7 +90,7 @@ async function sampleCsv(absPath: string, maxChars: number) {
     ...tailRows,
   ].join("\n");
 
-  // ✅ on garde les lignes
+  //  on garde les lignes
   return normalizeSoftKeepLines(sample).slice(0, maxChars);
 }
 
@@ -151,7 +151,6 @@ async function sampleXlsx(absPath: string, maxChars: number) {
  */
 async function sampleDocx(absPath: string, maxChars: number) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mammoth = require("mammoth");
 
     const result = await mammoth.extractRawText({ path: absPath });
@@ -175,7 +174,7 @@ export const extractTextSample = async (params: {
 
   await fs.promises.access(abs);
 
-  // ✅ déduction robuste
+  //  déduction robuste
   const ext = inferExt(params.file_type, params.storage_path);
 
   // Text-like
