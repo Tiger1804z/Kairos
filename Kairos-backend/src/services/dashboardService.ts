@@ -164,7 +164,7 @@ export const getMonthlyTrendService = async (businessId: number) => {
   const months = [];
   for (let i=5; i>=0 ;i--){
     const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999); //  + 1, 0, 23, 59, 59, 999 pour obtenir le dernier jour du mois à 23:59:59.999 sans  avoir à se soucier du nombre de jours dans le mois
 
     const transactions = await prisma.transaction.findMany({
       where: {
@@ -202,7 +202,7 @@ export const getMonthlyTrendService = async (businessId: number) => {
 export const getExpenseByCategoryService = async (businessId: number) => {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); //  + 1, 0, 23, 59, 59, 999 pour obtenir le dernier jour du mois à 23:59:59.999 sans  avoir à se soucier du nombre de jours dans le mois
 
   const transactions = await prisma.transaction.findMany({
     where: {
