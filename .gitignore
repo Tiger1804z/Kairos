@@ -15,6 +15,9 @@
 .vscode
 /.ve
 
+# Plan
+PLAN.MD
+
  Python
 .venv/
 venv/
@@ -23,3 +26,4 @@ venv/
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+

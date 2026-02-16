@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-02-06
-**Progression globale :** 75%
+**Dernière mise à jour :** 2026-02-15
+**Progression globale :** 85%
 **Type de projet :** Projet scolaire (MVP pour présentation)
-**Focus actuel :** 🎨 **FRONTEND** - Dashboard graphiques (Backend 100% complété ✅)
+**Focus actuel :** 🎨 **FRONTEND** - Finitions MVP (Dashboard graphiques TERMINÉS ✅)
 
 ---
 
@@ -41,7 +41,7 @@
 
 ---
 
-## ✅ Fonctionnalités Implémentées (65%)
+## ✅ Fonctionnalités Implémentées (85%)
 
 ### 🔐 Authentification & Autorisation
 - [x] Inscription utilisateur (signup)
@@ -89,16 +89,18 @@
 - [x] Items d'engagement (products, services, hourly, subscription)
 - [x] Calcul des totaux
 
-### 📈 Dashboard (NOUVEAU - Complété aujourd'hui)
+### 📈 Dashboard (COMPLET ✅)
 - [x] **Backend :**
-  - [x] Service `dashboardService.ts` avec 3 fonctions
+  - [x] Service `dashboardService.ts` avec 5 fonctions
   - [x] Controller `dashboardController.ts`
   - [x] Routes `dashboardRoutes.ts` protégées
   - [x] Endpoint GET `/dashboard/metrics` (clients, engagements, revenu)
   - [x] Endpoint GET `/dashboard/top-clients` (top 5 par revenu)
   - [x] Endpoint GET `/dashboard/revenue-growth` (croissance mois par mois)
+  - [x] Endpoint GET `/dashboard/monthly-trend` (revenu + dépenses sur 6 mois) ✅ NOUVEAU
+  - [x] Endpoint GET `/dashboard/expenses-by-category` (dépenses par catégorie) ✅ NOUVEAU
 - [x] **Frontend :**
-  - [x] Hook `useDashboard()` pour fetch les données
+  - [x] Hook `useDashboard()` pour fetch les données (5 endpoints en parallèle)
   - [x] Page `DashboardPage.tsx` avec vraies données API
   - [x] Composant `BusinessSelector` dans le header
   - [x] Affichage métriques principales
@@ -106,6 +108,9 @@
   - [x] Affichage croissance du revenu
   - [x] Loading states et error handling
   - [x] Formatage monétaire (CAD)
+  - [x] **Composant `RevenueLineChart`** - Line chart revenu vs dépenses (6 mois) ✅ NOUVEAU
+  - [x] **Composant `ExpensePieChart`** - Donut chart dépenses par catégorie ✅ NOUVEAU
+  - [x] **Librairie Recharts** installée et intégrée ✅ NOUVEAU
 
 ### 🤖 Intelligence Artificielle (COMPLET ✅)
 - [x] **Backend : Service `aiService.ts` complet avec OpenAI**
@@ -150,11 +155,12 @@ _Rien en cours actuellement_
   - [x] Afficher le SQL généré (optionnel)
   - [x] Gestion d'erreurs (unsafe SQL, erreur serveur)
 
-#### 2. 📊 Dashboard - Graphiques (PRIORITÉ #1)
-- [ ] Installer Recharts
-- [ ] Graphique de croissance du revenu (line chart) - 2-3 mois
-- [ ] Graphique répartition revenus/dépenses (pie chart)
-- [ ] Rendre responsive
+#### 2. 📊 ~~Dashboard - Graphiques~~ ✅ TERMINÉ (2026-02-15)
+- [x] Installer Recharts
+- [x] Graphique de croissance du revenu (line chart) - 6 mois
+- [x] Graphique répartition dépenses par catégorie (donut chart)
+- [x] Responsive via ResponsiveContainer
+- [x] Données de test ajoutées (20 transactions seed)
 
 #### 3. 💰 Page Liste des Transactions (NICE TO HAVE)
 - [ ] Page `/dashboard/transactions`
@@ -238,7 +244,7 @@ src/
 │   ├── dashboard/  # Dashboard principal ✅ UPDATED
 │   └── landing/    # Page d'accueil
 ├── components/     # Composants réutilisables
-│   ├── dashboard/  # BusinessSelector ✅ NOUVEAU
+│   ├── dashboard/  # BusinessSelector, RevenueLineChart, ExpensePieChart ✅ UPDATED
 │   ├── layout/     # Layout (Sidebar, Header)
 │   ├── ui/         # Composants UI de base
 │   └── kairos/     # AskKairosInput
@@ -261,23 +267,11 @@ src/
 
 ## 🎯 Prochaines Actions Prioritaires (MVP)
 
-### Session Suivante - ORDRE DE PRIORITÉ
-1. **📝 Ajouter données de test** (PRIORITÉ #1 - REQUIS AVANT GRAPHIQUES)
-   - Créer des transactions pour janvier-février 2026
-   - Ajouter des revenus et dépenses variés
-   - Lier les transactions aux clients existants
-   - Objectif : Voir des vrais chiffres dans le dashboard
-   - Temps estimé : 30-45 min
-
-2. **📊 Ajouter graphiques au dashboard** (PRIORITÉ #2 - Après les données)
-   - Installer Recharts
-   - Line chart croissance revenu (2-3 mois)
-   - Pie chart revenus vs dépenses
-   - Rendre responsive
-   - Temps estimé : 2-3h
-
-4. **💰 Page liste transactions** (NICE TO HAVE)
-   - Si temps restant
+### Prochaine Session (optionnel)
+1. ~~**📝 Ajouter données de test**~~ ✅ FAIT (seed.ts avec 20 transactions)
+2. ~~**📊 Ajouter graphiques au dashboard**~~ ✅ FAIT (Recharts line + pie chart)
+3. **💰 Page liste transactions** (NICE TO HAVE)
+   - Si temps restant avant la présentation
    - Pour compléter le MVP
 
 ---
@@ -292,7 +286,7 @@ src/
 | **Documents** | 100% ✅ | 80% ⚠️ | ✅ SUFFISANT (Upload/Analyse OK) |
 | **Transactions** | 100% ✅ | 40% ❌ | ⚠️ Backend OK, UI liste manquante |
 | **Engagements** | 100% ✅ | 40% ❌ | ⚠️ Backend OK, UI liste manquante |
-| **Dashboard** | 100% ✅ | 60% ⚠️ | ⚠️ Métriques OK, graphiques à ajouter |
+| **Dashboard** | 100% ✅ | 100% ✅ | ✅ **COMPLET** : Métriques + Graphiques Recharts |
 | **IA Assistant** | 100% ✅ | 100% ✅ | ✅ **COMPLET** : Frontend connecté! |
 | **Rapports** | 100% ✅ | 0% ❌ | ✅ OK (logs backend suffisants) |
 
@@ -381,26 +375,25 @@ uvicorn app.main:app --reload --port 8001
 
 **Pour la présentation scolaire, on doit avoir :**
 1. ✅ Dashboard fonctionnel avec vraies données
-2. ⚠️ Graphiques de visualisation (PROCHAINE ÉTAPE)
+2. ✅ **Graphiques de visualisation** ✅ TERMINÉ (2026-02-15)
 3. ✅ **Assistant IA Kairos fonctionnel** ✅ TERMINÉ (2026-02-06)
 4. ✅ Upload et analyse de documents
 5. ✅ Gestion des clients et business
 
-**Délai estimé pour MVP complet : 2-3h de travail frontend (graphiques)**
+**MVP presque complet ! Reste : page liste transactions (nice to have)**
 
 ---
 
-**🎯 Session actuelle : Assistant IA - SUCCÈS TOTAL ✅**
-- ✅ Hook `useAskKairos()` créé et connecté
-- ✅ JOINs avec table `clients` activés (affichage des noms!)
-- ✅ Fix du problème de LIMIT manquant (prompt renforcé)
-- ✅ Fix de la détection d'intent pour "revenue"
-- ✅ Toutes les requêtes fonctionnent parfaitement
-- ✅ SQL sécurisé avec sqlGuard
-- ✅ Affichage des vraies données de la base
+**🎯 Session 2026-02-15 : Dashboard Graphiques - SUCCÈS ✅**
+- ✅ Données de test ajoutées (20 transactions seed : 10 income + 10 expense)
+- ✅ 2 nouveaux endpoints backend : `monthly-trend` + `expenses-by-category`
+- ✅ Hook `useDashboard()` mis à jour (5 appels API en parallèle)
+- ✅ Composant `RevenueLineChart` : Line chart revenu vs dépenses sur 6 mois
+- ✅ Composant `ExpensePieChart` : Donut chart dépenses par catégorie
+- ✅ Intégration dans DashboardPage avec loading states
+- ✅ Recharts installé et configuré
 
-**🎯 Prochaine session : PLAN DÉFINI**
-1. **PRIORITÉ #1** : Ajouter des données de test (transactions récentes janvier-février 2026) pour voir des vrais chiffres dans le dashboard
-2. **PRIORITÉ #2** : Ajouter graphiques au Dashboard avec Recharts (line chart + pie chart)
+**🎯 Prochaine session (optionnel)**
+1. **💰 Page liste transactions** (NICE TO HAVE) - Table avec filtres et pagination
 
-_Dernière mise à jour PLAN.MD : 2026-02-06 - Assistant IA 100% complété + notes améliorations futures_
+_Dernière mise à jour PLAN.MD : 2026-02-15 - Dashboard graphiques 100% complétés_

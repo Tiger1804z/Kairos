@@ -3,6 +3,8 @@ import {
   getDashboardMetrics,
   getTopClients,
   getRevenueGrowth,
+  getMonthlyTrend,
+  getExpenseByCategory,
 } from "../controllers/dashboardController";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 
@@ -28,5 +30,22 @@ router.get(
   requireBusinessAccess({ from: "query" }),
   getRevenueGrowth
 );
+
+// GET /dashboard/monthly-trend?business_id=1
+router.get(
+  "/monthly-trend",
+  requireBusinessAccess({ from: "query" }),
+  getMonthlyTrend
+);
+
+// 🥧 GET /dashboard/expenses-by-category?business_id=1
+router.get(
+  "/expenses-by-category",
+  requireBusinessAccess({ from: "query" }),
+  getExpenseByCategory
+);
+
+
+
 
 export default router;

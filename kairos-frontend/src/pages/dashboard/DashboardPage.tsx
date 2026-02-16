@@ -5,6 +5,8 @@ import { Badge } from "../../components/ui/Badge";
 import { useDashboard } from "../../hooks/useDashboard";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { useAskKairos } from "../../hooks/useAskKairos";
+import { RevenueLineChart } from "../../components/dashboard/RevenueLineChart";
+import ExpensePieChart from "../../components/dashboard/ExpensePieChart";
 
 
 type MeUser = {
@@ -190,49 +192,20 @@ export default function DashboardPage() {
             </div>
 
             <div className="mt-6 grid gap-6 md:grid-cols-2">
-              {/* 📈 Revenue Growth */}
+              {/* 📈 Revenue Trend - Line Chart */}
               <Card className="p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <div className="text-sm font-semibold">Revenue Growth</div>
-                  <div className="text-xs text-white/60">Last vs This Month</div>
+                  <div className="text-sm font-semibold">Revenue Trend</div>
+                  <div className="text-xs text-white/60">Last 6 months</div>
                 </div>
-
                 {loading ? (
-                  <div className="flex h-32 items-center justify-center text-sm text-white/50">
+                  <div className="flex h-[300px] items-center justify-center text-sm text-white/50">
                     Loading...
                   </div>
-                ) : data.revenueGrowth ? (
-                  <div className="space-y-4">
-                    <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-                      <div className="text-xs text-white/60">Last Month</div>
-                      <div className="mt-1 text-xl font-semibold">
-                        {formatCurrency(data.revenueGrowth.lastMonth)}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-                      <div className="text-xs text-white/60">This Month</div>
-                      <div className="mt-1 text-xl font-semibold">
-                        {formatCurrency(data.revenueGrowth.thisMonth)}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-white/5 p-4 text-center ring-1 ring-white/10">
-                      <div className="text-xs text-white/60">Growth</div>
-                      <div
-                        className={`mt-1 text-2xl font-bold ${
-                          data.revenueGrowth.growth > 0
-                            ? "text-emerald-300"
-                            : data.revenueGrowth.growth < 0
-                            ? "text-red-300"
-                            : "text-white/60"
-                        }`}
-                      >
-                        {data.revenueGrowth.growth > 0 ? "+" : ""}
-                        {data.revenueGrowth.growth}%
-                      </div>
-                    </div>
-                  </div>
+                ) : data.monthlyTrend && data.monthlyTrend.length > 0 ? (
+                  <RevenueLineChart data={data.monthlyTrend} />
                 ) : (
-                  <div className="flex h-32 items-center justify-center text-sm text-white/50">
+                  <div className="flex h-[300px] items-center justify-center text-sm text-white/50">
                     No data available
                   </div>
                 )}
@@ -274,6 +247,23 @@ export default function DashboardPage() {
                   </div>
                 )}
               </Card>
+              {/* 🥧 Expenses by Category - Pie Chart */}
+              <Card className="p-6">
+                <div className="mb-4 text-sm font-semibold">Expenses by Category</div>
+                {loading ? (
+                  <div className="flex h-[300px] items-center justify-center text-sm text-white/50">
+                    Loading...
+                  </div>
+                ) : data.expenseByCategory && data.expenseByCategory.length > 0 ? (
+                  <ExpensePieChart data={data.expenseByCategory} />
+                ) : (
+                  <div className="flex h-[300px] items-center justify-center text-sm text-white/50">
+                    No expenses this month
+                  </div>
+                )}
+              </Card>
+
+
             </div>
           </>
         )}

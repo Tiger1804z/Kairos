@@ -27,13 +27,29 @@ type DashboardData = {
     metrics: DashboardMetrics | null;
     topClients: TopClient[] | null;
     revenueGrowth: RevenueGrowth | null;
+    monthlyTrend: MonthlyTrend[] | null;
+    expenseByCategory: ExpenseByCategory[] | null;
 };
+
+type MonthlyTrend = {
+    month: string;
+    income: number;
+    expenses: number;
+};
+
+type ExpenseByCategory = {
+    category: string;
+    amount: number;
+};
+
 
 export function useDashboard(businessId: number | null) {
     const [data, setData] = useState<DashboardData>({
         metrics: null,
         topClients: null,
         revenueGrowth: null,
+        monthlyTrend: null,
+        expenseByCategory: null,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -50,15 +66,19 @@ export function useDashboard(businessId: number | null) {
             setError(null);
             try {
                 // apeller les 3 metrics en parallele
-                const [metricsRes, topClientsRes, revenueGrowthRes] = await Promise.all([
+                const [metricsRes, topClientsRes, revenueGrowthRes, monthlyTrendRes, expenseByCategoryRes] = await Promise.all([
                     api.get( `/dashboard/metrics?business_id=${businessId}`),
                     api.get( `/dashboard/top-clients?business_id=${businessId}`),
                     api.get( `/dashboard/revenue-growth?business_id=${businessId}`),
+                    api.get( `/dashboard/monthly-trend?business_id=${businessId}`),
+                    api.get( `/dashboard/expenses-by-category?business_id=${businessId}`),
                 ]);
                 setData({
                     metrics: metricsRes.data,
                     topClients: topClientsRes.data,
                     revenueGrowth: revenueGrowthRes.data,
+                    monthlyTrend: monthlyTrendRes.data,
+                    expenseByCategory: expenseByCategoryRes.data,
                 });
             } catch (err: any) {
                 console.error("Error fetching dashboard data:", err);

@@ -152,6 +152,85 @@ export const getRevenueGrowthService = async (businessId: number) => {
     };
 }
 
+
+
+// === DONNEES POUR LES GRAPHIQUES ===
+
+// REVENU et DEPENSES par mois (6 last) pour le line chart du dashboard
+
+export const getMonthlyTrendService = async (businessId: number) => {
+  const now = new Date();
+
+  const months = [];
+  for (let i=5; i>=0 ;i--){
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999);
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        business_id: businessId,
+        transaction_date: { gte: start, lte: end },
+      },
+      select: {
+        amount: true,
+        transaction_type: true,
+      },
+    });
+
+    const income = transactions
+      .filter(t => t.transaction_type === "income")
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const expenses = transactions
+      .filter(t => t.transaction_type === "expense")
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      // Nom du mois abrégé (ex: "Jan", "Feb", etc.)
+      const monthName = start.toLocaleString("default", { month: "short" });
+
+      months.push({
+        month: monthName,
+        income,
+        expenses,
+      });
+  }
+
+  return months;
+};
+
+// Depenses regroupe par catégorie pour le  pie chart
+export const getExpenseByCategoryService = async (businessId: number) => {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      business_id: businessId,
+      transaction_type: "expense",
+      transaction_date: { gte: startOfMonth, lte: endOfMonth },
+    },
+    select: {
+      amount: true,
+      category: true,
+    },
+  });
+
+  // Regrouper les dépenses par catégorie
+  const categoryMap: Record<string, number> = {};
+  for (const t of transactions) {
+    const category = t.category || "other";
+    categoryMap[category] = (categoryMap[category] || 0) + Number(t.amount);
+  }
+
+  // Convertir en tableau pour le frontend
+  return Object.entries(categoryMap).map(([category, amount]) => ({
+    category,
+    amount,
+  }));
+};
+
+
         
     
     
