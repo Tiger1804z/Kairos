@@ -7,12 +7,15 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 
 import RequireAuth from "../auth/RequireAuth";
 
+import OnboardingPage from "../pages/onboarding/OnboardingPage";
+
 export const router = createBrowserRouter([
   {path: "/", element: <LandingPage />},
   {path: "/auth", element: <AuthPage />},
   {
     element: <RequireAuth />,
     children: [
+      {path: "/onboarding", element: <OnboardingPage />},
       {
         path: "/dashboard",
         element: <DashboardLayout />,

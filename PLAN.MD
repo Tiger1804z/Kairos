@@ -1,21 +1,24 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-02-15
-**Progression globale :** 85%
+**Dernière mise à jour :** 2026-02-17
+**Progression globale :** 70%
 **Type de projet :** Projet scolaire (MVP pour présentation)
-**Focus actuel :** 🎨 **FRONTEND** - Finitions MVP (Dashboard graphiques TERMINÉS ✅)
+**Focus actuel :** 📦 **MVP Data-first** - Onboarding & Import CSV Intelligent assisté par IA
 
 ---
 
 ## 🎯 Vue d'ensemble du projet
 
 **Kairos** est une plateforme MVP de gestion d'entreprise avec intelligence artificielle qui permet aux propriétaires de PME de :
-- Gérer leurs clients, engagements et transactions
+- Importer leurs données financières via un CSV intelligent assisté par IA
+- Visualiser leurs clients, transactions et engagements (lecture seule)
 - Analyser leurs documents financiers automatiquement (OpenAI)
-- Obtenir des insights via un assistant IA (**backend déjà fait**, à connecter au frontend)
+- Obtenir des insights via un assistant IA
 - Visualiser leurs données via un dashboard interactif
 
-**🎓 Objectif scolaire :** Présenter un MVP fonctionnel avec les fonctionnalités principales
+**🎓 Objectif scolaire :** Présenter un MVP fonctionnel avec import de données intelligent et pages read-only
+
+**📌 Nouveau scope MVP :** Les pages (Clients, Transactions, Engagements, Reports, Settings) sont **read-only** : elles affichent les items et leurs détails, mais pas de CRUD complet. Le seul "create" côté produit est l'**onboarding + import CSV intelligent**.
 
 ---
 
@@ -41,7 +44,7 @@
 
 ---
 
-## ✅ Fonctionnalités Implémentées (85%)
+## ✅ Fonctionnalités Implémentées (85% backend)
 
 ### 🔐 Authentification & Autorisation
 - [x] Inscription utilisateur (signup)
@@ -97,8 +100,8 @@
   - [x] Endpoint GET `/dashboard/metrics` (clients, engagements, revenu)
   - [x] Endpoint GET `/dashboard/top-clients` (top 5 par revenu)
   - [x] Endpoint GET `/dashboard/revenue-growth` (croissance mois par mois)
-  - [x] Endpoint GET `/dashboard/monthly-trend` (revenu + dépenses sur 6 mois) ✅ NOUVEAU
-  - [x] Endpoint GET `/dashboard/expenses-by-category` (dépenses par catégorie) ✅ NOUVEAU
+  - [x] Endpoint GET `/dashboard/monthly-trend` (revenu + dépenses sur 6 mois)
+  - [x] Endpoint GET `/dashboard/expenses-by-category` (dépenses par catégorie)
 - [x] **Frontend :**
   - [x] Hook `useDashboard()` pour fetch les données (5 endpoints en parallèle)
   - [x] Page `DashboardPage.tsx` avec vraies données API
@@ -108,9 +111,9 @@
   - [x] Affichage croissance du revenu
   - [x] Loading states et error handling
   - [x] Formatage monétaire (CAD)
-  - [x] **Composant `RevenueLineChart`** - Line chart revenu vs dépenses (6 mois) ✅ NOUVEAU
-  - [x] **Composant `ExpensePieChart`** - Donut chart dépenses par catégorie ✅ NOUVEAU
-  - [x] **Librairie Recharts** installée et intégrée ✅ NOUVEAU
+  - [x] **Composant `RevenueLineChart`** - Line chart revenu vs dépenses (6 mois)
+  - [x] **Composant `ExpensePieChart`** - Donut chart dépenses par catégorie
+  - [x] **Librairie Recharts** installée et intégrée
 
 ### 🤖 Intelligence Artificielle (COMPLET ✅)
 - [x] **Backend : Service `aiService.ts` complet avec OpenAI**
@@ -124,10 +127,10 @@
 - [x] Logging automatique des requêtes (`QueryLog`)
 - [x] Création automatique de rapports (`Report`)
 - [x] Support multi-intents (revenus, dépenses, net, par catégorie)
-- [x] **Frontend : Hook `useAskKairos()` créé** ✅ NOUVEAU
-- [x] **Frontend : `AskKairosInput` connecté à l'API** ✅ NOUVEAU
-- [x] **Frontend : Affichage des réponses de l'IA dans le Dashboard** ✅ NOUVEAU
-- [x] **Frontend : Gestion des erreurs et loading states** ✅ NOUVEAU
+- [x] **Frontend : Hook `useAskKairos()` créé**
+- [x] **Frontend : `AskKairosInput` connecté à l'API**
+- [x] **Frontend : Affichage des réponses de l'IA dans le Dashboard**
+- [x] **Frontend : Gestion des erreurs et loading states**
 
 ### 📊 Rapports & Logs
 - [x] QueryLogs (historique des requêtes IA)
@@ -136,15 +139,207 @@
 
 ---
 
-## 🚧 En Cours de Développement (0%)
+## 📦 Onboarding & Import CSV Intelligent (MVP Data-first)
 
-_Rien en cours actuellement_
+### 🎯 Concept
+
+Le MVP adopte une approche **"Data-first"** : plutôt que de proposer un CRUD complet sur chaque entité, l'utilisateur importe ses données existantes via un **import CSV intelligent assisté par IA**, puis navigue dans ses données en **lecture seule** via les différentes pages.
+
+Le seul flux de création est l'**onboarding** (création du business + import des données).
+
+### 🔄 Flow UX complet
+
+#### Step 0 : Redirect automatique
+- Si l'utilisateur est authentifié mais n'a **aucun business** ou **aucune donnée**, redirection automatique vers `/onboarding`
+- Vérification côté frontend via `BusinessContext`
+
+#### Step 1 : Formulaire Business Info
+- **Champs obligatoires :**
+  - `name` : Nom de l'entreprise
+  - `currency` : Devise (CAD, USD, EUR...)
+- **Champs optionnels :**
+  - `industry` : Secteur d'activité (dropdown)
+  - `timezone` : Fuseau horaire (défaut : America/Montreal)
+
+#### Step 2 : Choix du mode d'import
+- **Option A : Import CSV intelligent** (recommandé) → Step 3
+- **Option B : Données de démonstration** (seed) → Insertion des données de test existantes → Step 4
+
+#### Step 3 : Wizard d'import CSV
+1. **Upload du fichier CSV** : Drag & drop ou sélection de fichier
+2. **Preview** : Affichage des 10 premières lignes du CSV dans un tableau
+3. **Détection automatique** : Matching heuristique des colonnes (voir section Import Intelligent)
+4. **Suggestion de mapping IA** : Si colonnes ambiguës, appel à OpenAI pour suggérer le mapping
+5. **Édition manuelle du mapping** : L'utilisateur peut corriger/modifier les associations proposées
+6. **Validation** : Vérification des données avant import (types, formats, champs requis)
+7. **Import** : Lancement de l'import en backend avec barre de progression
+
+#### Step 4 : Résultat de l'import
+- Nombre de lignes importées avec succès
+- Nombre de lignes ignorées (doublons, données invalides)
+- Erreurs détaillées (numéro de ligne + message d'erreur)
+- Bouton **"Aller au Dashboard"** pour accéder à l'application
 
 ---
 
-## 📝 Fonctionnalités à Implémenter - MVP SCOLAIRE (35%)
+### 📄 Format CSV MVP
 
-### 🎯 PRIORITÉ MVP - À FAIRE POUR LA PRÉSENTATION
+#### Colonnes minimum requises
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `date` | string | Date de la transaction (formats acceptés ci-dessous) |
+| `type` | string | Type : `income`, `expense` (ou synonymes détectés automatiquement) |
+| `amount` | number | Montant (positif) |
+
+#### Colonnes optionnelles
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `category` | string | Catégorie (ex: "Marketing", "Salaire", "Vente") |
+| `client_name` | string | Nom du client associé |
+| `description` | string | Description / libellé |
+| `payment_method` | string | Méthode de paiement (cash, card, transfer, other) |
+| `reference_number` | string | Numéro de référence / facture |
+
+#### Formats de date acceptés
+- `YYYY-MM-DD` (ISO 8601)
+- `DD/MM/YYYY`
+- `MM/DD/YYYY`
+- `YYYY/MM/DD`
+
+---
+
+### 🧠 Système d'Import Intelligent
+
+#### Étape 1 : Détection automatique des colonnes (heuristique)
+
+Matching basé sur lowercase + trim + synonymes connus :
+
+| Header CSV détecté | Mapping Kairos |
+|-------------------|----------------|
+| `date`, `transaction_date`, `trans_date` | `date` |
+| `revenue`, `income`, `revenu`, `entrée` | `type: income` |
+| `cost`, `expense`, `dépense`, `sortie` | `type: expense` |
+| `amount`, `montant`, `total`, `sum` | `amount` |
+| `category`, `catégorie`, `cat` | `category` |
+| `client`, `client_name`, `customer`, `nom_client` | `client_name` |
+| `description`, `desc`, `libellé`, `label`, `memo` | `description` |
+| `payment`, `payment_method`, `mode_paiement` | `payment_method` |
+| `reference`, `ref`, `reference_number`, `invoice` | `reference_number` |
+
+#### Étape 2 : Appel IA pour colonnes ambiguës
+
+Si certaines colonnes du CSV ne sont pas reconnues par l'heuristique :
+- **Envoi à OpenAI** : uniquement les **headers + 5 premières lignes** du CSV (jamais la base complète)
+- **Prompt structuré** : demander à l'IA de retourner un mapping JSON `{ csvColumn → kairosField }`
+- **Validation backend** : le mapping suggéré par l'IA est **validé côté backend** avant toute application
+- L'IA ne touche **jamais** directement à la base de données
+
+#### Étape 3 : Normalisation en TypeScript (backend Node.js)
+
+Toute la normalisation est faite côté backend, jamais par l'IA :
+
+1. **Parsing des dates** : Détection du format parmi les formats acceptés, conversion en `Date` ISO
+2. **Parsing des montants** : Gestion des virgules (`1 234,56` → `1234.56`), points, espaces
+3. **Mapping du type** : Normalisation vers l'enum `income` / `expense` (synonymes supportés)
+4. **Normalisation des catégories** : lowercase, trim, fallback vers `"other"` si vide ou inconnu
+5. **Création automatique des clients** : Si `client_name` fourni et client inexistant dans le business → création automatique (déduplication case-insensitive)
+6. **Scoping business** : Toutes les insertions incluent le `business_id` de l'utilisateur
+7. **Déduplication** : Vérification case-insensitive pour éviter les doublons (même date + même montant + même description = doublon potentiel → marqué comme skipped)
+
+---
+
+### 🔌 Endpoints Backend
+
+#### Onboarding
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `POST` | `/onboarding/business` | Création du business pendant l'onboarding (name, currency, industry?, timezone?) |
+
+#### Import CSV
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `POST` | `/import/transactions/preview` | Upload CSV + retourne preview (10 lignes) + mapping suggéré (heuristique + IA si nécessaire) |
+| `POST` | `/import/transactions` | Lancement de l'import avec le mapping validé par l'utilisateur |
+| `GET` | `/import/jobs` | Liste des jobs d'import pour le business courant |
+| `GET` | `/import/jobs/:id` | Détail d'un job d'import (statut, compteurs, erreurs) |
+
+Tous les endpoints sont protégés par `requireAuth` + `requireBusinessAccess`.
+
+---
+
+### 🗃️ Nouveaux Modèles Prisma
+
+```prisma
+model ImportJob {
+  id             String           @id @default(uuid())
+  business_id    String
+  business       Business         @relation(fields: [business_id], references: [id])
+  filename       String
+  status         ImportJobStatus  @default(PENDING)
+  inserted_count Int              @default(0)
+  skipped_count  Int              @default(0)
+  error_count    Int              @default(0)
+  created_at     DateTime         @default(now())
+  errors         ImportRowError[]
+}
+
+model ImportRowError {
+  id           String    @id @default(uuid())
+  job_id       String
+  job          ImportJob @relation(fields: [job_id], references: [id])
+  row_number   Int
+  message      String
+  raw_row_json Json
+}
+
+enum ImportJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+```
+
+---
+
+### 📱 Mise à jour des Pages (Read-Only)
+
+Les pages passent en mode **lecture seule** : affichage des données importées, pas de formulaires de création/édition.
+
+| Page | Route | Contenu |
+|------|-------|---------|
+| **Clients** | `/dashboard/clients` | Table des clients + page détail client (historique transactions associées) |
+| **Transactions** | `/dashboard/transactions` | Table des transactions + filtres (date, type, catégorie) + totaux income/expense/net |
+| **Engagements** | `/dashboard/engagements` | Liste des engagements + badges de statut (draft, active, completed, cancelled) |
+| **Reports** | `/dashboard/reports` | Historique des QueryLogs + rapports générés par l'IA |
+| **Settings** | `/dashboard/settings` | Infos business (read-only) + actions : "Re-import CSV" + "Réinitialiser données démo" |
+
+---
+
+### 🔒 Sécurité & Isolation
+
+1. **L'IA ne reçoit jamais la base complète** : seuls les headers + un échantillon de 5 lignes du CSV sont envoyés à OpenAI
+2. **L'IA ne touche jamais la base de données** : elle retourne un mapping JSON, le backend valide et applique
+3. **Validation stricte côté backend** : tous les champs sont validés (types, formats, longueurs) avant insertion
+4. **Scoping par `business_id`** : toutes les données sont isolées par business, aucun accès croisé possible
+5. **Middleware `requireBusinessAccess`** : vérifie que l'utilisateur a accès au business ciblé sur chaque endpoint
+6. **Pas de données sensibles envoyées à l'IA** : aucun montant réel, aucune info client n'est envoyée lors du mapping
+
+---
+
+## 🚧 En Cours de Développement
+
+**Phase 2 : Frontend Onboarding (wizard multi-étapes + import CSV)**
+
+---
+
+## 📝 Fonctionnalités à Implémenter - MVP Data-first
+
+### 🎯 PRIORITÉ MVP - À FAIRE
 
 #### 1. 🤖 ~~Connecter l'Assistant IA~~ ✅ TERMINÉ (2026-02-06)
 - [x] **Frontend uniquement - Backend déjà fait ✅**
@@ -162,11 +357,19 @@ _Rien en cours actuellement_
 - [x] Responsive via ResponsiveContainer
 - [x] Données de test ajoutées (20 transactions seed)
 
-#### 3. 💰 Page Liste des Transactions (NICE TO HAVE)
-- [ ] Page `/dashboard/transactions`
-- [ ] Table avec filtres (date, type, catégorie)
-- [ ] Pagination simple
-- [ ] Lien depuis le dashboard
+#### 3. 📦 Onboarding & Import CSV Intelligent (À FAIRE)
+- [ ] Step 0 : Redirect vers `/onboarding` si aucun business/données
+- [ ] Step 1 : Formulaire Business Info
+- [ ] Step 2 : Choix du mode (CSV / Demo data)
+- [ ] Step 3 : Wizard d'import CSV complet
+- [ ] Step 4 : Page résultat d'import
+
+#### 4. 📖 Pages Read-Only (À FAIRE)
+- [ ] Page Clients (table + détail)
+- [ ] Page Transactions (table + filtres + totaux)
+- [ ] Page Engagements (list + badges statut)
+- [ ] Page Reports (historique QueryLog + rapports)
+- [ ] Page Settings (infos business + actions re-import)
 
 ### 🔮 HORS SCOPE MVP - Pour release future
 _Ces fonctionnalités ne sont PAS nécessaires pour la présentation scolaire_
@@ -174,16 +377,16 @@ _Ces fonctionnalités ne sont PAS nécessaires pour la présentation scolaire_
 <details>
 <summary>Fonctionnalités post-MVP (cliquer pour voir)</summary>
 
-#### Clients
-- [ ] Page détail client avec historique
-- [ ] Notes et timeline des interactions
+#### CRUD complet
+- [ ] Formulaires de création/édition clients
+- [ ] Formulaires de création/édition transactions
+- [ ] Formulaires de création/édition engagements
 
 #### Documents
 - [ ] Preview et téléchargement
 - [ ] Recherche full-text
 
 #### Transactions
-- [ ] Import CSV
 - [ ] Réconciliation bancaire
 
 #### Engagements
@@ -195,7 +398,6 @@ _Ces fonctionnalités ne sont PAS nécessaires pour la présentation scolaire_
 - [ ] Export multi-formats
 
 #### Paramètres
-- [ ] Page paramètres complète
 - [ ] Changement de mot de passe
 
 #### Notifications
@@ -205,6 +407,9 @@ _Ces fonctionnalités ne sont PAS nécessaires pour la présentation scolaire_
 #### Multi-utilisateurs
 - [ ] Invitation d'équipe
 - [ ] Gestion permissions avancée
+
+#### Déploiement
+- [ ] Déploiement Vercel (hors scope pour l'instant)
 </details>
 
 ---
@@ -216,18 +421,26 @@ _Ces fonctionnalités ne sont PAS nécessaires pour la présentation scolaire_
 src/
 ├── controllers/     # Logique HTTP (req/res)
 │   ├── authController.ts
-│   ├── dashboardController.ts ✅ NOUVEAU
+│   ├── dashboardController.ts
 │   ├── clientController.ts
+│   ├── onboardingController.ts    ← NOUVEAU
+│   ├── importController.ts        ← NOUVEAU
 │   └── ...
 ├── services/       # Logique métier + DB
 │   ├── authService.ts
-│   ├── dashboardService.ts ✅ NOUVEAU
+│   ├── dashboardService.ts
 │   ├── clientsService.ts
+│   ├── onboardingService.ts       ← NOUVEAU
+│   ├── importService.ts           ← NOUVEAU
+│   ├── csvParserService.ts        ← NOUVEAU
+│   ├── columnMappingService.ts    ← NOUVEAU
 │   └── ...
 ├── routes/         # Définition des endpoints
 │   ├── authRoutes.ts
-│   ├── dashboardRoutes.ts ✅ NOUVEAU
+│   ├── dashboardRoutes.ts
 │   ├── clientRoutes.ts
+│   ├── onboardingRoutes.ts        ← NOUVEAU
+│   ├── importRoutes.ts            ← NOUVEAU
 │   └── ...
 ├── middleware/     # Middlewares Express
 │   ├── authMiddleware.ts
@@ -241,16 +454,29 @@ src/
 src/
 ├── pages/          # Pages React
 │   ├── auth/       # Login/Signup
-│   ├── dashboard/  # Dashboard principal ✅ UPDATED
+│   ├── dashboard/  # Dashboard principal
+│   ├── onboarding/ # Wizard onboarding + import     ← NOUVEAU
+│   │   ├── OnboardingPage.tsx
+│   │   ├── BusinessInfoStep.tsx
+│   │   ├── ImportModeStep.tsx
+│   │   ├── CsvWizardStep.tsx
+│   │   └── ImportResultStep.tsx
+│   ├── clients/    # Page clients read-only          ← NOUVEAU
+│   ├── transactions/ # Page transactions read-only   ← NOUVEAU
+│   ├── engagements/  # Page engagements read-only    ← NOUVEAU
+│   ├── reports/    # Page reports read-only           ← NOUVEAU
+│   ├── settings/   # Page settings                    ← NOUVEAU
 │   └── landing/    # Page d'accueil
 ├── components/     # Composants réutilisables
-│   ├── dashboard/  # BusinessSelector, RevenueLineChart, ExpensePieChart ✅ UPDATED
+│   ├── dashboard/  # BusinessSelector, RevenueLineChart, ExpensePieChart
+│   ├── import/     # CsvUploader, ColumnMapper, PreviewTable  ← NOUVEAU
 │   ├── layout/     # Layout (Sidebar, Header)
 │   ├── ui/         # Composants UI de base
 │   └── kairos/     # AskKairosInput
 ├── hooks/          # Custom hooks
-│   └── useDashboard.ts ✅ NOUVEAU
-├── business/       # BusinessContext ✅ NOUVEAU
+│   ├── useDashboard.ts
+│   └── useImport.ts   ← NOUVEAU
+├── business/       # BusinessContext
 │   └── BusinessContext.tsx
 ├── auth/           # AuthContext
 │   └── AuthContext.tsx
@@ -260,19 +486,59 @@ src/
 └── app/            # Config app
     ├── App.tsx
     ├── router.tsx
-    └── providers.tsx ✅ UPDATED
+    └── providers.tsx
 ```
 
 ---
 
-## 🎯 Prochaines Actions Prioritaires (MVP)
+## ✅ Checklist MVP Data-first – Import Intelligent
 
-### Prochaine Session (optionnel)
-1. ~~**📝 Ajouter données de test**~~ ✅ FAIT (seed.ts avec 20 transactions)
-2. ~~**📊 Ajouter graphiques au dashboard**~~ ✅ FAIT (Recharts line + pie chart)
-3. **💰 Page liste transactions** (NICE TO HAVE)
-   - Si temps restant avant la présentation
-   - Pour compléter le MVP
+### Phase 1 : Backend Import (Priorité haute) ✅ TERMINÉ (2026-02-17)
+- [x] 1. Créer les modèles Prisma `ImportJob` + `ImportRowError` + migration
+- [x] 2. Créer `csvParserService.ts` : parsing CSV + preview 10 lignes
+- [x] 3. Créer `columnMappingService.ts` : heuristique de matching des colonnes
+- [x] 4. Intégrer l'appel OpenAI pour le mapping IA des colonnes ambiguës
+- [x] 5. Créer `importService.ts` : normalisation + validation + insertion en base
+- [x] 6. `onboardingService.ts` : skip — `businessService.ts` fait déjà le job
+- [x] 7. Créer les controllers + routes (`/onboarding/*`, `/import/*`)
+- [x] 8. Tester les endpoints avec curl (preview + import : 5/5 lignes importées, 0 erreurs)
+
+### Phase 2 : Frontend Onboarding (Priorité haute) ✅ TERMINÉ (2026-02-17)
+- [x] 9. Créer la page `/onboarding` avec wizard multi-étapes (3 steps : Business → Import → Résultat)
+- [x] 10. Step 1 : Formulaire Business Info (nom, devise, secteur)
+- [x] 11. Step 2 : Wizard CSV (upload, preview, mapping, import) — mode démo retiré
+- [x] 12. Step 2 : Upload CSV + Preview tableau
+- [x] 13. Step 2 : Affichage mapping suggéré + édition manuelle
+- [x] 14. Step 2 : Validation + lancement import
+- [x] 15. Step 3 : Page résultat (compteurs + erreurs + bouton dashboard)
+- [x] 16. Redirect automatique vers `/onboarding` si nouvel utilisateur (RequireAuth)
+
+### Phase 3 : Pages Read-Only (Priorité moyenne)
+- [ ] 17. Page Clients : table + page détail client avec historique transactions
+- [ ] 18. Page Transactions : table + filtres (date, type, catégorie) + totaux income/expense/net
+- [ ] 19. Page Engagements : liste + badges de statut
+- [ ] 20. Page Reports : historique QueryLog + rapports générés
+- [ ] 21. Page Settings : infos business + bouton "Re-import CSV" + "Reset demo data"
+
+### Phase 4 : Polish (Priorité basse)
+- [ ] 22. Gestion d'erreurs globale (toasts, messages d'erreur)
+- [ ] 23. Loading states et skeleton screens
+- [ ] 24. Responsive design vérification
+- [ ] 25. Test end-to-end du flow complet (signup → onboarding → import → dashboard)
+
+---
+
+## 🎯 Prochaines Actions Prioritaires (MVP Data-first)
+
+### ~~Session 2026-02-17~~ ✅ FAIT
+1. ~~**🗃️ Modèles Prisma**~~ ✅
+2. ~~**📦 Backend Import**~~ ✅
+3. ~~**🔌 Endpoints**~~ ✅
+4. ~~**🧪 Tests manuels**~~ ✅
+
+### Prochaine Session
+5. **🎨 Frontend Onboarding** : Wizard multi-étapes complet (Steps 0-4)
+6. **📖 Pages Read-Only** : Clients, Transactions, Engagements, Reports, Settings
 
 ---
 
@@ -282,13 +548,15 @@ src/
 |-----------|---------|----------|------------|
 | **Authentification** | 100% ✅ | 100% ✅ | ✅ COMPLET |
 | **Gestion Business** | 100% ✅ | 100% ✅ | ✅ COMPLET |
-| **Gestion Clients** | 100% ✅ | 70% ⚠️ | ⚠️ OK pour MVP (CRUD fait) |
-| **Documents** | 100% ✅ | 80% ⚠️ | ✅ SUFFISANT (Upload/Analyse OK) |
-| **Transactions** | 100% ✅ | 40% ❌ | ⚠️ Backend OK, UI liste manquante |
-| **Engagements** | 100% ✅ | 40% ❌ | ⚠️ Backend OK, UI liste manquante |
-| **Dashboard** | 100% ✅ | 100% ✅ | ✅ **COMPLET** : Métriques + Graphiques Recharts |
-| **IA Assistant** | 100% ✅ | 100% ✅ | ✅ **COMPLET** : Frontend connecté! |
-| **Rapports** | 100% ✅ | 0% ❌ | ✅ OK (logs backend suffisants) |
+| **Dashboard** | 100% ✅ | 100% ✅ | ✅ COMPLET |
+| **IA Assistant** | 100% ✅ | 100% ✅ | ✅ COMPLET |
+| **Onboarding** | 100% ✅ | 100% ✅ | ✅ COMPLET |
+| **Import CSV Intelligent** | 100% ✅ | 100% ✅ | ✅ COMPLET |
+| **Page Clients (read-only)** | 100% ✅ | 0% ❌ | ❌ Frontend manquant |
+| **Page Transactions (read-only)** | 100% ✅ | 0% ❌ | ❌ Frontend manquant |
+| **Page Engagements (read-only)** | 100% ✅ | 0% ❌ | ❌ Frontend manquant |
+| **Page Reports (read-only)** | 100% ✅ | 0% ❌ | ❌ Frontend manquant |
+| **Page Settings** | 100% ✅ | 0% ❌ | ❌ Frontend manquant |
 
 ### Légende
 - ✅ **COMPLET** : Prêt pour MVP
@@ -304,6 +572,7 @@ src/
 DATABASE_URL=postgresql://...
 JWT_SECRET=...
 PORT=3000
+OPENAI_API_KEY=...
 KAIROS_EXTRACTOR_KEY=kairos_dev_secret
 KAIROS_EXTRACTOR_URL=http://localhost:8001
 ```
@@ -343,7 +612,23 @@ uvicorn app.main:app --reload --port 8001
 - **Sécurité :** Toujours utiliser `requireAuth` + `requireBusinessAccess` pour les endpoints sensibles
 
 ### Bugs Connus
-- Aucun bug critique actuellement
+
+#### Bug 1 : IA ne voit pas les noms de clients après import CSV
+- **Symptôme :** La query "Top 5 clients by growth" répond "les noms des clients ne sont pas disponibles"
+- **Cause probable :** Le SQL généré fait `JOIN public.clients` mais les transactions importées stockent `client_name` comme string dans la table `transactions`, sans créer de vrais enregistrements dans la table `clients`
+- **À investiguer :** Vérifier si `importService.ts` crée bien des clients dans la table `clients` lors de l'import, et si le SQL généré par l'IA cible la bonne colonne (`transactions.client_name` vs `clients.first_name + last_name`)
+
+#### Bug 2 : Graphiques ne s'affichent pas après import CSV
+- **Symptôme :** RevenueLineChart et ExpensePieChart vides après import des données
+- **À investiguer :** Vérifier si les endpoints `/dashboard/monthly-trend` et `/dashboard/expenses-by-category` retournent des données non-vides après import, et si le format de date/montant des données importées correspond à ce qu'attendent les requêtes dashboard
+
+#### CSV de test (tech/SaaS, Jan-Mar 2025, Québec)
+```
+date,type,amount,category,client_name,description,payment_method
+2025-01-01,expense,7754.0,Taxes,,Frais de consultation juridique,transfer
+2025-01-01,income,849.0,Abonnements,Ville de Laval,Intégration API + formation,transfer
+...clients: Ville de Laval, ÉcoTrans Logistique, Manufacture Atlas, Assurance Boréale, Studio Pixel&Co, Groupe Immobilier Horizon, Université du Québec, Clinique Nova Santé, Startup Météore, Cabinet Lavoie & Associés, Nordik Finance Inc.
+```
 
 ### Améliorations Techniques Future
 
@@ -367,7 +652,7 @@ uvicorn app.main:app --reload --port 8001
 - [Documentation Prisma](https://www.prisma.io/docs)
 - [Documentation React Router](https://reactrouter.com/)
 - [Documentation TailwindCSS](https://tailwindcss.com/docs)
-- [API Claude (Anthropic)](https://docs.anthropic.com/)
+- [API OpenAI](https://platform.openai.com/docs)
 
 ---
 
@@ -379,8 +664,8 @@ uvicorn app.main:app --reload --port 8001
 3. ✅ **Assistant IA Kairos fonctionnel** ✅ TERMINÉ (2026-02-06)
 4. ✅ Upload et analyse de documents
 5. ✅ Gestion des clients et business
-
-**MVP presque complet ! Reste : page liste transactions (nice to have)**
+6. ✅ **Onboarding + Import CSV Intelligent** ✅ TERMINÉ (2026-02-17)
+7. ❌ **Pages read-only** : Clients, Transactions, Engagements, Reports, Settings (À FAIRE)
 
 ---
 
@@ -393,7 +678,31 @@ uvicorn app.main:app --reload --port 8001
 - ✅ Intégration dans DashboardPage avec loading states
 - ✅ Recharts installé et configuré
 
-**🎯 Prochaine session (optionnel)**
-1. **💰 Page liste transactions** (NICE TO HAVE) - Table avec filtres et pagination
+**🎯 Session 2026-02-17 : Pivot MVP Data-first + Backend Import - SUCCÈS ✅**
+- Nouveau scope : Import CSV Intelligent assisté par IA
+- Pages read-only (pas de CRUD complet)
+- Abandon du déploiement Vercel pour l'instant
+- Phase 1 Backend complétée :
+  - ✅ Modèles Prisma `ImportJob` + `ImportRowError` + migration
+  - ✅ `csvParserService.ts` : parsing CSV + preview
+  - ✅ `columnMappingService.ts` : heuristique + appel IA OpenAI
+  - ✅ `importService.ts` + `importHelpers.ts` : normalisation + validation + insertion
+  - ✅ Controllers + Routes (`/onboarding/*`, `/import/*`)
+  - ✅ Tests curl : preview OK, import 5/5 lignes, 0 erreurs
 
-_Dernière mise à jour PLAN.MD : 2026-02-15 - Dashboard graphiques 100% complétés_
+**🎯 Session 2026-02-17 : Frontend Onboarding - SUCCÈS ✅**
+- ✅ Wizard 3 étapes : Business → CSV Import → Résultat
+- ✅ `BusinessInfoStep.tsx` : formulaire business + appel `/onboarding/business`
+- ✅ `CsvWizardStep.tsx` : upload + preview + mapping IA + import
+- ✅ `ImportResultStep.tsx` : compteurs + erreurs + redirect dashboard
+- ✅ `OnboardingPage.tsx` : wizard parent avec progress bar 3 steps
+- ✅ `RequireAuth.tsx` : redirect auto vers `/onboarding` si 0 businesses
+- ✅ Mode démo retiré, texte blanc (text-white sur wrapper)
+- ✅ Bugs backend corrigés : `user_id` (pas `id_user`), `mappings` (pluriel), clé `preview`
+
+**🎯 Prochaine session**
+1. **🐛 Corriger Bug IA clients** : vérifier pourquoi "Top 5 clients by growth" ne trouve pas les noms
+2. **🐛 Corriger Bug graphiques** : vérifier pourquoi les charts sont vides après import
+3. **📖 Pages Read-Only** : Clients, Transactions, Engagements, Reports, Settings
+
+_Dernière mise à jour PLAN.MD : 2026-02-17 - Phase 2 Frontend Onboarding terminée_

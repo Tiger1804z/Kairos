@@ -21,6 +21,8 @@ import authRoutes from "./routes/authRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
 import cors from "cors";
+import importRoutes from "./routes/importRoutes";
+import onboardingRoutes from "./routes/onboardingRoutes";
 
 dotenv.config();
 
@@ -61,6 +63,10 @@ app.use("/query-logs", queryLogsRoutes);
 app.use("/ai", aiRoutes);
 
 app.use("/dashboard", dashboardRoutes);
+
+// routes d'import CSV et d'onboarding
+app.use("/onboarding", onboardingRoutes);
+app.use("/import", importRoutes);
 
 
 

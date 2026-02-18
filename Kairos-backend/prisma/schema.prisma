@@ -47,6 +47,7 @@ model Business {
   queries       QueryLog[]
   reports       Report[]
   transactions  Transaction[]
+  import_jobs   ImportJob[]
 
   @@index([owner_id])
   @@index([is_active])
@@ -298,4 +299,33 @@ enum ReportType {
   sales
   summary
   custom
+}
+
+enum ImportJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model ImportJob {
+  id             String           @id @default(uuid())
+  id_business    Int
+  business       Business         @relation(fields: [id_business], references: [id_business])
+  filename       String
+  status         ImportJobStatus  @default(PENDING)
+  inserted_count Int              @default(0)
+  skipped_count  Int              @default(0)
+  error_count    Int              @default(0)
+  created_at     DateTime         @default(now())
+  errors         ImportRowError[]
+}
+
+model ImportRowError {
+  id           String    @id @default(uuid())
+  job_id       String
+  job          ImportJob @relation(fields: [job_id], references: [id])
+  row_number   Int
+  message      String
+  raw_row_json Json
 }
