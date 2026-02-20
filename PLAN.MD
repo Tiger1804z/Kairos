@@ -536,9 +536,138 @@ src/
 3. ~~**🔌 Endpoints**~~ ✅
 4. ~~**🧪 Tests manuels**~~ ✅
 
-### Prochaine Session
-5. **🎨 Frontend Onboarding** : Wizard multi-étapes complet (Steps 0-4)
-6. **📖 Pages Read-Only** : Clients, Transactions, Engagements, Reports, Settings
+### ~~Session 2026-02-17 (Frontend Onboarding)~~ ✅ FAIT
+
+### Session 2026-02-19 — Pages Read-Only (en cours)
+> 🎓 Mode guidé : Claude explique quoi faire, pourquoi et comment. L'étudiant code.
+
+- [x] 1. Setup `router.tsx` — brancher toutes les nouvelles routes
+- [x] 2. Setup `Sidebar.tsx` — remplacer "Businesses" par "Transactions"
+- [x] 3. Hook `useTransactions.ts` — fetch GET /transactions (`response.data.items` ⚠️)
+- [x] 4. Page `TransactionsPage.tsx` — cards résumé + filtre + table ✅ FONCTIONNEL
+- [ ] 5. Hook `useClients.ts` — fetch GET /clients
+- [ ] 6. Page `ClientPage.tsx` — table cliquable
+- [ ] 7. Hook `useClientDetail.ts` — fetch GET /clients/:id + ses transactions + ses engagements
+- [ ] 8. Page `ClientDetailPage.tsx` — infos + engagements + transactions du client
+- [ ] 9. Hook `useEngagements.ts` — fetch GET /engagements
+- [ ] 10. Page `EngagementPage.tsx` — table cliquable
+- [ ] 11. Hook `useEngagementDetail.ts` — fetch GET /engagements/:id + ses items + ses transactions
+- [ ] 12. Page `EngagementDetailPage.tsx` — items + transactions liées
+- [ ] 13. Page `ReportsPage.tsx` — query logs + rapports IA
+- [ ] 14. Page `SettingsPage.tsx` — infos business + bouton re-import
+
+### ⚠️ Leçon apprise (2026-02-19)
+Le backend enveloppe ses réponses dans un objet — toujours vérifier le controller avant d'écrire le hook :
+- `GET /transactions` → retourne `{ items: [...] }` → utiliser `response.data.items`
+- Vérifier le pattern pour chaque endpoint avant de coder le hook correspondant
+
+---
+
+## 📚 Notes Pédagogiques — Comprendre ce qu'on construit
+
+> Cette section explique les concepts clés utilisés dans le projet.
+> À lire pour comprendre les décisions d'architecture.
+
+---
+
+### 🔄 Le pattern qu'on répète sur chaque page
+
+Chaque page read-only suit **toujours le même schéma** en 3 couches :
+
+```
+Hook (useXxx.ts)         → fetch les données depuis l'API backend
+Page (XxxPage.tsx)       → affiche les données, gère loading/erreur
+Composant UI (Card, Badge) → mise en forme visuelle
+```
+
+**Pourquoi séparer le hook de la page ?**
+Le hook s'occupe de la logique (appel API, état loading, erreurs).
+La page s'occupe uniquement de l'affichage.
+→ Plus facile à relire, tester, et réutiliser.
+
+---
+
+### 🛣️ Comment fonctionne le routing (React Router)
+
+```
+router.tsx définit les URLs de l'application :
+
+/dashboard                → DashboardPage
+/dashboard/transactions   → TransactionsPage
+/dashboard/clients        → ClientsPage
+/dashboard/clients/:id    → ClientDetailPage   ← :id = variable dans l'URL
+/dashboard/engagements    → EngagementsPage
+/dashboard/engagements/:id → EngagementDetailPage
+/dashboard/reports        → ReportsPage
+/dashboard/settings       → SettingsPage
+```
+
+**Qu'est-ce que `:id` ?**
+C'est un paramètre dynamique dans l'URL.
+Ex: `/dashboard/clients/42` → `:id` = 42
+Dans le composant, on récupère ça avec `useParams()` de React Router.
+
+```tsx
+const { id } = useParams(); // id = "42"
+```
+
+---
+
+### 🪝 Ce qu'est un Hook React (useXxx)
+
+Un hook est une **fonction réutilisable** qui encapsule de la logique React.
+
+```ts
+// Exemple : useClients.ts
+export function useClients(businessId) {
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // fetch les clients depuis l'API quand businessId change
+    api.get(`/clients?business_id=${businessId}`)
+      .then(res => setClients(res.data));
+  }, [businessId]);
+
+  return { clients, loading };
+}
+
+// Dans la page :
+const { clients, loading } = useClients(selectedBusinessId);
+```
+
+**Pourquoi `useEffect` ?**
+`useEffect` s'exécute après le rendu.
+Le tableau `[businessId]` = "relance l'effet si businessId change".
+
+---
+
+### 🏗️ Différence Engagement vs Transaction (rappel)
+
+| Concept | Analogie boutique Michael | Dans le code |
+|---------|--------------------------|--------------|
+| **Engagement** | Une commande client (contrat) | `Engagement` avec statut draft/active/completed |
+| **EngagementItem** | Les produits dans la commande | `EngagementItem` avec qty × prix |
+| **Transaction** | L'argent reçu/payé réellement | `Transaction` income/expense |
+
+Un engagement = la **promesse**. Une transaction = l'**argent qui bouge**.
+
+---
+
+### 🎨 Composants UI réutilisés
+
+```tsx
+<Card className="p-6">          // conteneur arrondi avec fond semi-transparent
+<Badge className="...">         // petit label coloré (statut, type)
+```
+
+Pour les couleurs de badge selon le contexte :
+- `income` → vert  (`text-emerald-300 bg-emerald-500/10`)
+- `expense` → rouge (`text-red-300 bg-red-500/10`)
+- `active`  → bleu  (`text-blue-300 bg-blue-500/10`)
+- `draft`   → gris  (`text-white/50 bg-white/5`)
+- `completed` → vert (`text-emerald-300 bg-emerald-500/10`)
+- `cancelled` → rouge (`text-red-300 bg-red-500/10`)
 
 ---
 

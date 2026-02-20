@@ -1,18 +1,18 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  BriefcaseBusiness,
   Users,
   ClipboardList,
   FileText,
   Settings,
   LogOut,
-} from "lucide-react";
+  ArrowLeftRight,
+} from "lucide-react";  // icônes provenant de la librairie lucide-react 
 import { cn } from "../../lib/cn";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/dashboard/businesses", label: "Businesses", icon: BriefcaseBusiness },
+  { to: "/dashboard/transactions", label: "Transactions", icon: ArrowLeftRight },
   { to: "/dashboard/clients", label: "Clients", icon: Users },
   { to: "/dashboard/engagements", label: "Engagements", icon: ClipboardList },
   { to: "/dashboard/reports", label: "Reports", icon: FileText },

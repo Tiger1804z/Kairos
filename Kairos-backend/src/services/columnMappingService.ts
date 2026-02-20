@@ -1,5 +1,5 @@
-import { OpenAI } from "openai";
-import client from "./aiService";
+
+import client  from "./aiService" ;
 
 const KAIROS_FIELDS = [ 
     "date",
