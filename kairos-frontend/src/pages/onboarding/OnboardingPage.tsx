@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import BusinessInfoStep from "./BusinessInfoStep";
 import CsvWizardStep from "./CsvWizardStep";
 import ImportResultStep from "./ImportResultStep";
@@ -11,13 +12,18 @@ import ImportResultStep from "./ImportResultStep";
 // quand un step est fini, il appelle le callback et le parent change d'etape
 
 export default function OnboardingPage() {
+  // si on arrive depuis Settings avec { reimport: true, businessId }, on saute le step 0
+  const location = useLocation();
+  const isReimport = location.state?.reimport === true;
+  const initialBusinessId = location.state?.businessId ?? null;
+
   // step = numero de l'etape courante (0 a 2)
   // 0 = creer le business, 1 = wizard CSV, 2 = resultat
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(isReimport ? 1 : 0);
 
-  // l'id du business cree au step 0
+  // l'id du business cree au step 0 (ou passé via state si reimport)
   // on en a besoin aux etapes suivantes pour savoir dans quel business importer
-  const [businessId, setBusinessId] = useState<number | null>(null);
+  const [businessId, setBusinessId] = useState<number | null>(initialBusinessId);
 
   // le resultat de l'import (compteurs + erreurs) retourne par le backend
   // on le stocke ici pour l'afficher au step 2 (page resultat)

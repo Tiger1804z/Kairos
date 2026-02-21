@@ -513,12 +513,12 @@ src/
 - [x] 15. Step 3 : Page résultat (compteurs + erreurs + bouton dashboard)
 - [x] 16. Redirect automatique vers `/onboarding` si nouvel utilisateur (RequireAuth)
 
-### Phase 3 : Pages Read-Only (Priorité moyenne)
-- [ ] 17. Page Clients : table + page détail client avec historique transactions
-- [ ] 18. Page Transactions : table + filtres (date, type, catégorie) + totaux income/expense/net
-- [ ] 19. Page Engagements : liste + badges de statut
-- [ ] 20. Page Reports : historique QueryLog + rapports générés
-- [ ] 21. Page Settings : infos business + bouton "Re-import CSV" + "Reset demo data"
+### Phase 3 : Pages Read-Only (Priorité moyenne) ✅ TERMINÉ (2026-02-21)
+- [x] 17. Page Clients : table + page détail client avec historique transactions
+- [x] 18. Page Transactions : table + filtres (date, type, catégorie) + totaux income/expense/net
+- [x] 19. Page Engagements : liste + badges de statut
+- [x] 20. Page Reports : historique QueryLog + rapports générés
+- [x] 21. Page Settings : infos business + bouton "Re-import CSV"
 
 ### Phase 4 : Polish (Priorité basse)
 - [ ] 22. Gestion d'erreurs globale (toasts, messages d'erreur)
@@ -829,9 +829,17 @@ date,type,amount,category,client_name,description,payment_method
 - ✅ Mode démo retiré, texte blanc (text-white sur wrapper)
 - ✅ Bugs backend corrigés : `user_id` (pas `id_user`), `mappings` (pluriel), clé `preview`
 
-**🎯 Prochaine session**
-1. **🐛 Corriger Bug IA clients** : vérifier pourquoi "Top 5 clients by growth" ne trouve pas les noms
-2. **🐛 Corriger Bug graphiques** : vérifier pourquoi les charts sont vides après import
-3. **📖 Pages Read-Only** : Clients, Transactions, Engagements, Reports, Settings
+**🎯 Session 2026-02-21 — Pages Read-Only - SUCCÈS ✅**
+- ✅ `useClients` + `ClientPage` + `useClientDetail` + `ClientDetailPage`
+- ✅ `useEngagements` + `EngagementPage` + `useEngagementsDetails` + `EngagementDetailPage`
+- ✅ `useReports` + `ReportsPage`
+- ✅ `SettingsPage` + re-import CSV (saute le step Business via router state)
+- ✅ Convention établie : tous les GET API dans des hooks (useXxx)
 
-_Dernière mise à jour PLAN.MD : 2026-02-17 - Phase 2 Frontend Onboarding terminée_
+**🎯 Prochaine session**
+1. **🔘 Bouton Logout** : ajouter un bouton de déconnexion visible dans la sidebar ou le header
+2. **🐛 Corriger Bug graphiques** : vérifier pourquoi les charts sont vides après import CSV (endpoints `/dashboard/monthly-trend` et `/dashboard/expenses-by-category`)
+3. **🐛 Corriger Bug IA clients** : vérifier pourquoi "Top 5 clients by growth" ne trouve pas les noms (`transactions.client_name` vs table `clients`)
+4. **🎨 Phase 4 Polish** (optionnel) : toasts d'erreur, skeleton screens, test E2E
+
+_Dernière mise à jour PLAN.MD : 2026-02-21 - Phase 3 Pages Read-Only terminée_

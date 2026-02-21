@@ -73,7 +73,7 @@ export default function TransactionsPage() {
             key={f}
             onClick={() => setFilter(f)} // met à jour le filtre actif au clic
             // Template literal avec ternaire :
-            // si ce bouton EST le filtre actif → fond blanc + ring
+            // si ce bouton est le filtre actif → fond blanc + ring
             // sinon → texte semi-transparent
             className={`px-4 py-1.5 rounded-full text-sm capitalize transition
               ${filter === f
