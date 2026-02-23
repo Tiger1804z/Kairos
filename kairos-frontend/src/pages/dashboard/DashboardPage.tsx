@@ -1,4 +1,5 @@
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import AskKairosInput from "../../components/kairos/AskKairosInput";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge"; 
@@ -23,14 +24,23 @@ export default function DashboardPage() {
     loadingMe: boolean;
   }>();
   // utiliser le business context pour recuperer le businessId selectionne
-  const { selectedBusinessId, selectedBusiness, loading: loadingBusiness } = useBusinessContext();
-  
-  const { data,loading: dashboardLoading, error } = useDashboard(selectedBusinessId);
+  const { selectedBusinessId, loading: loadingBusiness } = useBusinessContext();
+
+  const { data, loading: dashboardLoading, error, refresh } = useDashboard(selectedBusinessId);
   const {ask, response, loading: askLoading, error: askError,reset} = useAskKairos();
+  const location = useLocation();
   const name =
     me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email : "—";
-  
-  const loading = loadingBusiness ||dashboardLoading;
+
+  // Si on arrive ici après un import CSV (signal fromImport dans location.state),
+  // on force un re-fetch du dashboard pour afficher les nouvelles données importées
+  useEffect(() => {
+    if (location.state?.fromImport) {
+      refresh();
+    }
+  }, []);
+
+  const loading = loadingBusiness || dashboardLoading;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-CA", {

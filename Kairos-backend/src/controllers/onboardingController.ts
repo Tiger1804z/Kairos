@@ -10,7 +10,7 @@ export const createOnboardingBusiness = async (req: Request, res: Response) => {
     try{
         // le user vient du middleware requireAuth (dans req.user)
         const user = (req as any).user.user_id;
-        const {name,currency,buisness_type, timezone} = req.body;
+        const {name, currency, business_type, timezone} = req.body;
 
         // validation: name et currency obligatoires
         if (!name || !currency) {
@@ -22,7 +22,7 @@ export const createOnboardingBusiness = async (req: Request, res: Response) => {
             owner_id: user,
             name,
             currency,
-            business_type: buisness_type ?? null,
+            business_type: business_type ?? null,
             timezone: timezone ??  "America/Montreal",
         });
 

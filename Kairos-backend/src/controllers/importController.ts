@@ -3,7 +3,6 @@ import { parseCsvBuffer, getPreview } from "../services/csvParserService";
 import { autoMapColumns, getUnmappedColumns, aiMapColumns } from "../services/columnMappingService";
 import { importTransactions } from "../services/importService";
 import prisma from "../prisma/prisma";
-import { me } from "./authController";
 
 
 /**

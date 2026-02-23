@@ -1,3 +1,12 @@
+/**
+ * useAskKairos — Hook pour interroger l'IA Kairos via /ai/ask
+ *
+ * Gère le cycle complet d'une question:
+ *   1. Valide qu'un business est sélectionné
+ *   2. Envoie la question (+ période optionnelle) au backend
+ *   3. Expose la réponse IA, le SQL généré et les métadonnées
+ *   4. Expose reset() pour effacer la réponse précédente
+ */
 import {useState} from 'react';
 import {api} from '../lib/api';
 import { useBusinessContext } from '../business/BusinessContext';
@@ -25,7 +34,7 @@ export function useAskKairos() {
 
     async function ask(question: string,options?: {start?: string, end?: string}) {
 
-        // valider qun business est selectionné
+        // valider qu'un business est selectionné
         if (!selectedBusiness) {
             setError("No business selected");
             return;
@@ -41,6 +50,7 @@ export function useAskKairos() {
                 business_id: selectedBusiness.id_business,  // requis par requireBusinessAccess (backend)
                 question,
             };
+            // est ce que options est fourni et contient start/end ?(une période) si oui on les ajoute au payload pour le backend
             if(options?.start) payload.start = options.start;
             if(options?.end) payload.end = options.end;
 
@@ -48,7 +58,7 @@ export function useAskKairos() {
             const res = await api.post<AskKairosResponse>("/ai/ask", payload);
             setResponse(res.data); // stocker la reponse dans le state
         } catch (err: any) {
-            // gestions des erreurs selon lt type
+            // gestions des erreurs selon le type
             const errorData = err?.response?.data;
             if (errorData?.error === "UNSAFE_SQL") {
                 // SQL NON SAFE provenant de l'API

@@ -1,0 +1,21 @@
+date,type,amount,category,client_name,description
+2026-01-05,income,3500.00,consulting,Entreprise GlobaTech,Consultation stratégique janvier
+2026-01-08,income,1200.00,services,Café Maple Leaf,Refonte site web
+2026-01-10,expense,450.00,software,,Abonnement Adobe
+2026-01-12,income,8900.00,consulting,Hôtel Montréal Plaza,Audit financier Q4
+2026-01-15,income,2200.00,services,Restaurant Le Vieux Port,Développement application mobile
+2026-01-18,expense,320.00,marketing,,Publicité Google Ads
+2026-01-20,income,5600.00,consulting,Entreprise GlobaTech,Projet optimisation ERP
+2026-01-22,income,1800.00,services,Boutique Atelier Nord,Formation équipe
+2026-01-25,expense,780.00,operations,,Équipement bureau
+2026-01-28,income,4100.00,consulting,Festival Montréal Jazz,Planification événement
+2026-02-01,income,6700.00,consulting,Hôtel Montréal Plaza,Mise en place CRM
+2026-02-03,income,950.00,services,Café Maple Leaf,Maintenance mensuelle
+2026-02-05,expense,290.00,software,,Hébergement serveur
+2026-02-08,income,3300.00,consulting,Entreprise GlobaTech,Sprint développement
+2026-02-10,income,2700.00,services,Restaurant Le Vieux Port,Campagne marketing
+2026-02-12,expense,1100.00,operations,,Déplacement client
+2026-02-14,income,4500.00,consulting,Boutique Atelier Nord,Refonte identité visuelle
+2026-02-17,income,7200.00,consulting,Hôtel Montréal Plaza,Formation management
+2026-02-19,income,1650.00,services,Festival Montréal Jazz,Coordination logistique
+2026-02-20,expense,560.00,marketing,,Impression matériel promotionnel

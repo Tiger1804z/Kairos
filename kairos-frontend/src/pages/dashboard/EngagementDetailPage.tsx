@@ -74,10 +74,10 @@ export default function EngagementDetailPage() {
                             ) : (
                                 engagement.items.map((item) => (
                                     <tr key={item.id_item} className="border-b border-white/5">
-                                        <td className="px-6 py-4 font-medium">{item.description}</td>
+                                        <td className="px-6 py-4 font-medium">{item.item_name}</td>
                                         <td className="px-6 py-4 text-white/60">{item.quantity}</td>
                                         <td className="px-6 py-4 text-white/60">{formatCurrency(Number(item.unit_price))}</td>
-                                        <td className="px-6 py-4 font-medium">{formatCurrency(Number(item.total_price))}</td>
+                                        <td className="px-6 py-4 font-medium">{formatCurrency(Number(item.line_total))}</td>
                                     </tr>
                                 ))
                             )}

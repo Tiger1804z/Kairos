@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -7,8 +7,9 @@ import {
   Settings,
   LogOut,
   ArrowLeftRight,
-} from "lucide-react";  // icônes provenant de la librairie lucide-react 
+} from "lucide-react";  // icônes provenant de la librairie lucide-react
 import { cn } from "../../lib/cn";
+import { useAuth } from "../../auth/AuthContext";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -20,6 +21,14 @@ const nav = [
 ];
 
 export default function Sidebar() {
+  const { logout } = useAuth();   // récupère la fonction logout du contexte d'auth
+  const navigate = useNavigate(); // pour rediriger après déconnexion
+
+  function handleLogout() {
+    logout();            // supprime le token du localStorage + reset user dans le contexte
+    navigate("/login");  // redirige vers la page de login
+  }
+
   return (
     <aside className="hidden w-64 shrink-0 border-r border-white/5 bg-bg/60 p-4 backdrop-blur md:block">
       <div className="mb-6 flex items-center gap-3 px-2">
@@ -51,7 +60,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-6 border-t border-white/5 pt-4">
-        <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white">
+        <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white">
           <LogOut className="h-4 w-4" />
           Sign out
         </button>

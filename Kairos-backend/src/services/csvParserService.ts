@@ -1,4 +1,11 @@
-
+/**
+ * ============================================================================
+ * CSV Parser Service
+ * ============================================================================
+ * Parse un buffer CSV en mémoire (pas de fichier temporaire sur disque).
+ * Gère les guillemets, les délimiteurs virgule et point-virgule, et les
+ * lignes vides. Expose aussi une fonction de preview (10 premières lignes).
+ */
 
 interface CsvParseResult {
   headers: string[];

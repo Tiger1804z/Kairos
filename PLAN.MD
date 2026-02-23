@@ -1,7 +1,7 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-02-17
-**Progression globale :** 70%
+**Dernière mise à jour :** 2026-02-22
+**Progression globale :** 85%
 **Type de projet :** Projet scolaire (MVP pour présentation)
 **Focus actuel :** 📦 **MVP Data-first** - Onboarding & Import CSV Intelligent assisté par IA
 
@@ -742,10 +742,19 @@ uvicorn app.main:app --reload --port 8001
 
 ### Bugs Connus
 
-#### Bug 1 : IA ne voit pas les noms de clients après import CSV
-- **Symptôme :** La query "Top 5 clients by growth" répond "les noms des clients ne sont pas disponibles"
-- **Cause probable :** Le SQL généré fait `JOIN public.clients` mais les transactions importées stockent `client_name` comme string dans la table `transactions`, sans créer de vrais enregistrements dans la table `clients`
-- **À investiguer :** Vérifier si `importService.ts` crée bien des clients dans la table `clients` lors de l'import, et si le SQL généré par l'IA cible la bonne colonne (`transactions.client_name` vs `clients.first_name + last_name`)
+#### ~~Bug 1 : IA ne voit pas les noms de clients après import CSV~~ ✅ CORRIGÉ (2026-02-22)
+- **Symptôme :** La query "qui est mon meilleur client" répondait "le nom n'est pas spécifié" ou SERVER_ERROR
+- **Cause réelle (3 problèmes) :**
+  1. `JSON.stringify` ne peut pas sérialiser les `BigInt` retournés par `COUNT()`/`SUM()` PostgreSQL → SERVER_ERROR en français
+  2. Le schéma clients fourni à l'IA ne contenait pas `company_name` → l'IA ne savait pas que les clients CSV n'ont que ce champ
+  3. L'IA générait un JOIN sur `c.business_id = t.business_id` (faux) au lieu de `c.id_client = t.client_id`
+- **Fix appliqué dans `aiService.ts` :**
+  - Replacer BigInt dans `JSON.stringify` : `(_, v) => typeof v === "bigint" ? Number(v) : v`
+  - Ajout de `company_name` dans le schéma clients du prompt
+  - Ajout de `client_id` dans le schéma transactions du prompt
+  - Nouvel intent `BEST_CLIENT` dans `guessIntent()` avec règles SQL explicites (COALESCE + bon JOIN)
+  - Instruction COALESCE : `COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name)) AS client_name`
+- **Note importante :** Le bug n'apparaît QUE si le CSV avait une colonne `client_name` mappée. Sans cette colonne, `client_id = NULL` sur les transactions → l'IA ne peut pas trouver les noms (c'est normal, pas un bug).
 
 #### Bug 2 : Graphiques ne s'affichent pas après import CSV
 - **Symptôme :** RevenueLineChart et ExpensePieChart vides après import des données
@@ -836,10 +845,38 @@ date,type,amount,category,client_name,description,payment_method
 - ✅ `SettingsPage` + re-import CSV (saute le step Business via router state)
 - ✅ Convention établie : tous les GET API dans des hooks (useXxx)
 
-**🎯 Prochaine session**
-1. **🔘 Bouton Logout** : ajouter un bouton de déconnexion visible dans la sidebar ou le header
-2. **🐛 Corriger Bug graphiques** : vérifier pourquoi les charts sont vides après import CSV (endpoints `/dashboard/monthly-trend` et `/dashboard/expenses-by-category`)
-3. **🐛 Corriger Bug IA clients** : vérifier pourquoi "Top 5 clients by growth" ne trouve pas les noms (`transactions.client_name` vs table `clients`)
-4. **🎨 Phase 4 Polish** (optionnel) : toasts d'erreur, skeleton screens, test E2E
+**🎯 Session 2026-02-22 — Bugs & Code Clean - SUCCÈS ✅**
+- ✅ Suppression imports inutilisés (`TransactionType`, `me`, `use`)
+- ✅ Suppression `console.log("JWT_SECRET loaded?")` debug
+- ✅ Typos corrigés : `metrcis` → `metrics` (×2), `buisness_type` → `business_type`
+- ✅ Fix `$NaN` dans `EngagementDetailPage` : `item.description`→`item.item_name`, `item.total_price`→`item.line_total`
+- ✅ Bug 1 corrigé : AskKairos retourne maintenant les vrais noms de clients (BigInt + JOIN + schéma)
+- ✅ Commentaires ajoutés sur les hooks et services principaux
 
-_Dernière mise à jour PLAN.MD : 2026-02-21 - Phase 3 Pages Read-Only terminée_
+**🎯 Prochaine session**
+1. **🐛 Corriger Bug 2 graphiques** : vérifier pourquoi les charts sont vides après import CSV (endpoints `/dashboard/monthly-trend` et `/dashboard/expenses-by-category`)
+2. **🎨 Phase 4 Polish** (optionnel) : toasts d'erreur, skeleton screens, test E2E
+
+---
+
+### 🧠 Patterns & Pièges à retenir
+
+#### Prisma + BigInt
+PostgreSQL retourne `COUNT()` et `SUM()` comme `BigInt`. `JSON.stringify()` plante.
+Toujours utiliser le replacer : `JSON.stringify(data, (_, v) => typeof v === "bigint" ? Number(v) : v)`
+
+#### Noms de clients (CSV vs Manuel)
+- Clients créés **manuellement** → `first_name` + `last_name` remplis, `company_name` NULL
+- Clients importés **via CSV** → seul `company_name` est rempli (via `findOrCreateClient`)
+- Toujours utiliser : `COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name))`
+
+#### JOIN transactions → clients
+- Clé de relation : `c.id_client = t.client_id` ← **CORRECT**
+- Piège fréquent IA : `c.business_id = t.business_id` ← **FAUX** (croise tous les clients avec toutes les transactions)
+- Si `t.client_id = NULL`, le LEFT JOIN retourne NULL pour tous les champs client → normal si la transaction n'a pas de client lié
+
+#### Champs Prisma (frontend doit correspondre)
+- `EngagementItem` : `item_name` et `line_total` (PAS `description` / `total_price`)
+- `Transaction` : `client_id` (FK optionnel vers `clients.id_client`)
+
+_Dernière mise à jour PLAN.MD : 2026-02-22 - Bug 1 IA corrigé + patterns documentés_

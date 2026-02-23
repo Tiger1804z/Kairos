@@ -21,7 +21,8 @@ export default function ImportResultStep({ result }: { result: ImportResult | nu
   // 2. on navigue vers le dashboard
   async function handleGoDashboard() {
     await refreshBusinesses();
-    navigate("/dashboard");
+    // { state: { fromImport: true } } signale au DashboardPage de re-fetcher ses données
+    navigate("/dashboard", { state: { fromImport: true } });
   }
 
   // si on arrive ici sans resultat (cas improbable), on affiche un fallback

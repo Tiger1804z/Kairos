@@ -1,3 +1,13 @@
+/**
+ * useDashboard — Hook pour charger toutes les données du dashboard en parallèle
+ *
+ * Lance 5 appels simultanés (Promise.all) vers /dashboard/*:
+ *   - metrics          → totalClients, activeEngagements, monthlyRevenue
+ *   - top-clients      → top 5 clients par revenu
+ *   - revenue-growth   → comparaison mois en cours vs mois précédent
+ *   - monthly-trend    → revenus + dépenses des 6 derniers mois (line chart)
+ *   - expenses-by-category → dépenses du mois par catégorie (pie chart)
+ */
 import {useState,useEffect} from "react";
 import {api} from "../lib/api";
 
@@ -53,6 +63,9 @@ export function useDashboard(businessId: number | null) {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // refreshKey permet de forcer un re-fetch sans changer businessId
+    // (ex: après un import CSV, businessId reste le même mais les données ont changé)
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         // si on a pas de bussinesId, on ne fait rien
@@ -89,7 +102,11 @@ export function useDashboard(businessId: number | null) {
         };
 
         fetchDashboardData();
-    }, [businessId]);
-    return { data, loading, error };
+    }, [businessId, refreshKey]); // refreshKey dans les deps: s'incrémente → re-fetch forcé
+
+    // exposé au composant pour déclencher un re-fetch manuel (ex: après import CSV)
+    const refresh = () => setRefreshKey(k => k + 1);
+
+    return { data, loading, error, refresh };
 }
 

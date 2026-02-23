@@ -1,4 +1,10 @@
-import {useState,useEffect, use} from "react";
+/**
+ * useClients — Hook pour charger la liste des clients d'un business
+ *
+ * Charge via GET /clients?business_id=... et expose
+ * clients, loading et error. Se relance si businessId change.
+ */
+import {useState,useEffect} from "react";
 import { api } from "../lib/api";
 
 // types pour les réponses de l'API

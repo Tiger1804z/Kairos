@@ -1,3 +1,12 @@
+/**
+ * ============================================================================
+ * Transactions Service
+ * ============================================================================
+ * CRUD des transactions financières, scoped par business (multi-tenant).
+ * Vérifie que le client et l'engagement appartiennent bien au business
+ * avant toute insertion ou mise à jour.
+ */
+
 import prisma from "../prisma/prisma";
 import { Prisma } from "../../generated/prisma/client";
 

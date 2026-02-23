@@ -12,10 +12,10 @@ type EngagementDetail = {
   client: { first_name: string | null; last_name: string | null; company_name: string | null } | null;
   items: {
     id_item: number;
-    description: string;
+    item_name: string;
     quantity: number;
     unit_price: number;
-    total_price: number;
+    line_total: number;
   }[];
   transactions: {
     id_transaction: number;

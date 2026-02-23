@@ -1,3 +1,10 @@
+/**
+ * useTransactions — Hook pour charger les transactions d'un business
+ *
+ * Charge la liste via GET /transactions?business_id=...
+ * et calcule le résumé (totalIncome, totalExpense, net) côté client.
+ * Se relance automatiquement si businessId change.
+ */
 import { useState,useEffect } from "react";
 import { api } from "../lib/api";
 
@@ -22,7 +29,7 @@ type TransactionsSummary = {
 export function useTransactions(businessId: number | null) {
     // on inilialise à un tableau vide pour permettre a .reduce de fonctionner 
     // et eviter les erreurs de type undefined (sans ca on devrait faire des checks de type transactions ? .reduce  qui peut retourner undefined si pas charger)
-    const [transactions, setTransactions] = useState<Transaction[]>([]); // on inilialise à un tableau vide pour permettre a .reduce de fonctionner 
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading,setLoading] = useState(false);
     const [error,setError] = useState<string | null>(null);
     
