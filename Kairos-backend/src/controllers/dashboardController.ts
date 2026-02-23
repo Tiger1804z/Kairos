@@ -15,9 +15,9 @@ export const getDashboardMetrics = async (req: Request, res: Response) => {
     try {
         const businessId = req.businessId!; // injecter par requireBusinessAccess middleware
 
-        const metrcis = await getDashboardMetricsService(businessId);
+        const metrics = await getDashboardMetricsService(businessId);
 
-        res.status(200).json(metrcis);
+        res.status(200).json(metrics);
     } catch (error) {
         console.error("Error in getDashboardMetrics:", error);
         res.status(500).json({ error: "SERVER_ERROR" });

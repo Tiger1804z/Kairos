@@ -1,121 +1,192 @@
-📘 README.md
+# Kairos — Plateforme de gestion financière pour PME
 
-(branche feature/python-extractor)
-
-# Kairos Backend – Python Extractor Integration (feature branch)
-
-Cette branche implémente l’intégration complète d’un service Python d’extraction de documents
-au backend Node.js de Kairos.
-
-Objectif principal :
-- Externaliser l’extraction de contenu (texte + tableaux) dans un service Python dédié
-- Stabiliser la gestion des chemins de fichiers entre Node.js et Python
-- Mettre en place un pipeline fiable : upload → extraction → analyse IA → persistance
+**Kairos** est un MVP de gestion d'entreprise avec intelligence artificielle qui permet aux propriétaires de PME de :
+- Importer leurs données financières via un **import CSV intelligent assisté par IA**
+- Visualiser leurs clients, transactions et engagements
+- Analyser leurs documents financiers automatiquement (OpenAI)
+- Obtenir des insights via un **assistant IA conversationnel**
+- Visualiser leurs données via un **dashboard interactif avec graphiques**
 
 ---
 
-## Architecture spécifique à cette branche
+## Stack technique
 
-### Backend Node.js (TypeScript)
-Responsabilités :
-- Upload sécurisé des fichiers (multer)
-- Stockage disque local structuré
-- Sauvegarde des métadonnées (Prisma)
-- Orchestration du traitement des documents
-- Appels au service Python d’extraction
-- Analyse IA (finance ou général)
+### Backend (`Kairos-backend/`)
+| Technologie | Usage |
+|---|---|
+| Node.js + Express + TypeScript | Serveur API REST |
+| Prisma ORM | Accès base de données |
+| PostgreSQL (Neon) | Base de données cloud |
+| JWT | Authentification |
+| OpenAI GPT-4o-mini | Assistant IA + SQL + mapping CSV |
+| Multer | Upload de fichiers |
 
-### Service Python (FastAPI)
-Responsabilités :
-- Réception des fichiers (upload direct)
-- Extraction du texte et des tableaux (PDF, CSV, TXT)
-- Normalisation des résultats
-- Retour d’un payload structuré vers Node.js
-
-Les deux services communiquent via HTTP.
-
----
-
-## Gestion du stockage des fichiers
-
-Les fichiers sont stockés localement selon la structure suivante :
-
-
-
-uploads/{business_id}/{YYYY-MM}/{uuid}.{ext}
-
-
-Principes importants :
-- Le fichier brut n’est **jamais** stocké en base de données
-- Seules les métadonnées et le `storage_path` relatif sont persistés
-- La résolution des chemins disque est centralisée dans `fileStorage.ts`
+### Frontend (`kairos-frontend/`)
+| Technologie | Usage |
+|---|---|
+| React 18 + TypeScript | UI |
+| React Router v6 | Routing |
+| TailwindCSS | Styling |
+| Recharts | Graphiques (line chart, donut chart) |
+| Axios | Appels API |
 
 ---
 
-## Flux de traitement d’un document
+## Fonctionnalités MVP
 
-1. Upload du fichier via l’API Node.js
-2. Stockage disque sécurisé
-3. Sauvegarde des métadonnées (Prisma)
-4. Résolution du chemin absolu du fichier
-5. Envoi du fichier au service Python (`extract-upload`)
-6. Extraction du contenu (texte + tableaux)
-7. Analyse IA (finance ou général)
-8. Sauvegarde du résumé et des métadonnées d’extraction
+### Dashboard
+- Métriques clés : total clients, engagements actifs, revenu mensuel
+- Revenue Trend : line chart revenus vs dépenses sur 6 mois
+- Expenses by Category : donut chart dépenses du mois par catégorie
+- Top Clients : classement par revenu
+
+### Assistant IA (AskKairos)
+- Questions en langage naturel → SQL sécurisé → réponse en français
+- Détection d'intent automatique (revenus, dépenses, meilleur client, etc.)
+- Validation SQL via `sqlGuard` (allowlist tables, tenant isolation, LIMIT obligatoire)
+
+### Onboarding & Import CSV Intelligent
+- Wizard 3 étapes : Business → Import CSV → Résultat
+- Détection automatique des colonnes (heuristique + IA si colonnes ambiguës)
+- Mapping manuel modifiable
+- Déduplication automatique
+- Création automatique des clients depuis la colonne `client_name`
+
+### Pages read-only
+- **Clients** : liste + page détail avec historique transactions
+- **Transactions** : table + filtres (date, type, catégorie) + totaux
+- **Engagements** : liste + badges de statut + page détail avec items
+- **Reports** : historique des requêtes IA
+- **Settings** : infos business + re-import CSV
 
 ---
----
-Exemple de .env du python extractor: 
-```txt
-# Clé secrète pour sécuriser l’accès au service d’extraction
-KAIROS_EXTRACTOR_KEY=kairos_dev_secret
 
-# Racine du stockage (doit pointer vers le backend Node)
-KAIROS_STORAGE_ROOT=/chemin/vers/Kairos-backend
+## Démarrage rapide
 
+### Prérequis
+- Node.js 18+
+- Un compte [Neon](https://neon.tech) (PostgreSQL serverless) ou PostgreSQL local
+- Une clé API OpenAI
+
+### 1. Backend
+
+```bash
+cd Kairos-backend
+npm install
 ```
 
-## Lancement des services (développement)
+Créer le fichier `.env` :
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=votre_secret_jwt
+PORT=3000
+OPENAI_API_KEY=sk-...
+KAIROS_EXTRACTOR_KEY=kairos_dev_secret
+KAIROS_EXTRACTOR_URL=http://localhost:8001
+```
 
-### Backend Node.js
+Appliquer les migrations Prisma :
 ```bash
-npm install
-npm run dev
+npx prisma migrate dev
+```
 
-Service Python
-cd python-extractor
+Démarrer :
+```bash
+npm run dev
+```
+
+### 2. Frontend
+
+```bash
+cd kairos-frontend
+npm install
+```
+
+Créer le fichier `.env` :
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+Démarrer :
+```bash
+npm run dev
+```
+
+L'application est accessible sur `http://localhost:5173`.
+
+### 3. Service Python (optionnel — pour l'analyse de documents)
+
+```bash
+cd Kairos-backend/python-extractor
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
-
-Docker (non utilisé dans cette branche)
-
-Un Dockerfile est présent mais volontairement non utilisé dans cette branche.
-
 ```
-
-
-
 
 ---
 
+## Format CSV d'import
 
+### Colonnes minimum requises
+| Colonne | Description |
+|---|---|
+| `date` | Date de la transaction (YYYY-MM-DD, DD/MM/YYYY) |
+| `type` | `income` ou `expense` (synonymes acceptés : revenu, dépense, etc.) |
+| `amount` | Montant positif (formats : 1234.56 / 1 234,56 / $1234) |
 
-```md
-## Résumé du cheminement – Intégration Python Extractor
+### Colonnes optionnelles
+| Colonne | Description |
+|---|---|
+| `category` | Catégorie (ex: marketing, software, consulting) |
+| `client_name` | Nom du client — crée automatiquement le client si inexistant |
+| `description` | Description / libellé |
+| `payment_method` | cash, card, transfer, check |
+| `reference_number` | Numéro de facture / référence |
 
-Cette branche implémente l’intégration d’un service Python dédié à l’extraction de documents
-au sein du backend Kairos.
+---
 
-Le backend Node.js prend en charge l’upload des fichiers, leur stockage sur disque ainsi que
-la persistance des métadonnées en base de données.
-Le service Python, basé sur FastAPI, est responsable de l’extraction du contenu des documents
-(PDF, CSV, TXT).
+## Architecture backend
 
-Un flux complet de traitement a été mis en place :
-upload du fichier → stockage disque → extraction via le service Python → analyse par l’IA →
-sauvegarde du résultat en base de données.
+```
+src/
+├── controllers/     # Logique HTTP (req → res)
+├── services/        # Logique métier + accès DB
+│   ├── aiService.ts          # OpenAI : SQL, résumés, Q&A
+│   ├── sqlGuard.ts           # Validation SQL sécurisée
+│   ├── dashboardService.ts   # Métriques + graphiques
+│   ├── importService.ts      # Import CSV
+│   ├── csvParserService.ts   # Parsing CSV
+│   └── columnMappingService.ts # Mapping colonnes (heuristique + IA)
+├── routes/          # Définition des endpoints
+├── middleware/      # requireAuth + requireBusinessAccess
+├── utils/           # importHelpers, sqlResultNormalizer
+└── index.ts         # Point d'entrée Express
+```
 
-Cette branche permet de valider le fonctionnement du pipeline d’extraction et d’analyse,
-ainsi que la communication entre les services Node.js et Python.
+### Endpoints principaux
+| Méthode | Route | Description |
+|---|---|---|
+| POST | `/auth/signup` | Inscription |
+| POST | `/auth/login` | Connexion |
+| GET | `/auth/me` | Utilisateur connecté |
+| GET | `/dashboard/metrics` | Métriques principales |
+| GET | `/dashboard/monthly-trend` | Revenus/dépenses 6 mois |
+| GET | `/dashboard/expenses-by-category` | Dépenses par catégorie |
+| GET | `/dashboard/top-clients` | Top 5 clients |
+| POST | `/ai/ask` | Question IA → réponse |
+| POST | `/import/transactions/preview` | Preview CSV + mapping suggéré |
+| POST | `/import/transactions` | Lancement import |
+| POST | `/onboarding/business` | Création business onboarding |
+| GET | `/clients` | Liste clients |
+| GET | `/transactions` | Liste transactions |
+| GET | `/engagements` | Liste engagements |
+
+---
+
+## Sécurité
+
+- **Tenant isolation** : toutes les données sont filtrées par `business_id`
+- **Middleware `requireBusinessAccess`** : vérifie que l'utilisateur est owner du business
+- **sqlGuard** : valide chaque SQL généré par l'IA (allowlist tables, LIMIT obligatoire, pas de mutations)
+- **L'IA ne reçoit jamais la base complète** : uniquement les headers + 5 lignes du CSV pour le mapping

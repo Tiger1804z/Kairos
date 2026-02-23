@@ -3,5 +3,5 @@ import { router } from "./router";
 import { Providers } from "./providers";
 
 export default function App() {
-  return<Providers> <RouterProvider router={router} /></Providers>;
+  return <Providers><RouterProvider router={router} /></Providers>;
 }

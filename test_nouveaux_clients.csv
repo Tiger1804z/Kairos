@@ -1,0 +1,26 @@
+date,type,amount,category,client_name,description
+2026-01-03,income,4200.00,consulting,Studio Pixel Craft,Refonte identité visuelle complète
+2026-01-05,income,7800.00,services,Cabinet Leblanc & Associés,Audit comptable annuel
+2026-01-07,expense,380.00,software,,Abonnement Figma Pro
+2026-01-09,income,2900.00,consulting,Clinique Santé Plus,Stratégie marketing digital
+2026-01-11,income,5500.00,services,Transport Arcand Inc,Optimisation logistique
+2026-01-13,expense,650.00,operations,,Renouvellement équipement
+2026-01-15,income,3100.00,consulting,Studio Pixel Craft,Sprint design UX
+2026-01-17,income,9200.00,services,Immobilier Tremblay,Développement plateforme web
+2026-01-19,expense,420.00,marketing,,Publicité Meta Ads
+2026-01-21,income,1750.00,consulting,Clinique Santé Plus,Formation équipe administrative
+2026-01-23,income,6400.00,services,Cabinet Leblanc & Associés,Révision fiscale Q4
+2026-01-25,expense,290.00,software,,Hébergement cloud
+2026-01-27,income,3800.00,consulting,Café Urbain MTL,Branding et communication
+2026-01-29,income,11500.00,services,Immobilier Tremblay,Intégration CRM Salesforce
+2026-01-31,expense,870.00,operations,,Déplacement et frais terrain
+2026-02-02,income,2600.00,consulting,Transport Arcand Inc,Audit processus internes
+2026-02-04,income,4900.00,services,Studio Pixel Craft,Développement app mobile v2
+2026-02-06,expense,310.00,marketing,,Impression cartes d'affaires
+2026-02-08,income,7100.00,consulting,Cabinet Leblanc & Associés,Restructuration financière
+2026-02-10,income,3250.00,services,Café Urbain MTL,Campagne réseaux sociaux
+2026-02-12,expense,540.00,software,,Licence JetBrains
+2026-02-14,income,5800.00,consulting,Clinique Santé Plus,Mise en place logiciel RDV
+2026-02-16,income,8300.00,services,Immobilier Tremblay,Module gestion propriétés
+2026-02-18,expense,720.00,operations,,Formation interne équipe
+2026-02-20,income,2100.00,consulting,Transport Arcand Inc,Conseil en conformité transport

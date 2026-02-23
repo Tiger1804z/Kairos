@@ -1,0 +1,51 @@
+date,type,amount,category,client_name,description
+2025-09-03,income,4800.00,consulting,Studio Pixel Craft,Refonte identité visuelle
+2025-09-07,income,6200.00,services,Cabinet Leblanc & Associés,Audit comptable Q3
+2025-09-10,expense,520.00,software,,Abonnement outils SaaS
+2025-09-12,income,3100.00,consulting,Clinique Santé Plus,Stratégie marketing digital
+2025-09-15,expense,780.00,marketing,,Publicité Google Ads septembre
+2025-09-18,income,8900.00,services,Immobilier Tremblay,Développement plateforme web
+2025-09-22,expense,390.00,operations,,Fournitures bureau
+2025-09-25,income,2400.00,consulting,Transport Arcand Inc,Conseil optimisation flotte
+2025-10-02,income,5500.00,consulting,Studio Pixel Craft,Développement app mobile
+2025-10-06,income,7200.00,services,Cabinet Leblanc & Associés,Restructuration financière
+2025-10-09,expense,650.00,software,,Hébergement cloud octobre
+2025-10-11,income,4100.00,consulting,Café Urbain MTL,Branding et communication
+2025-10-14,expense,920.00,marketing,,Campagne réseaux sociaux
+2025-10-17,income,9800.00,services,Immobilier Tremblay,Intégration CRM Salesforce
+2025-10-20,expense,430.00,operations,,Déplacement client
+2025-10-23,income,3300.00,consulting,Clinique Santé Plus,Formation équipe administrative
+2025-10-28,income,2100.00,services,Transport Arcand Inc,Audit processus internes
+2025-11-04,income,6700.00,consulting,Studio Pixel Craft,Sprint design UX phase 2
+2025-11-07,income,5400.00,services,Cabinet Leblanc & Associés,Révision fiscale Q4
+2025-11-10,expense,710.00,software,,Licences développement
+2025-11-13,income,8100.00,consulting,Immobilier Tremblay,Module gestion propriétés
+2025-11-16,expense,580.00,marketing,,Impression matériel promotionnel
+2025-11-19,income,3800.00,services,Café Urbain MTL,Campagne marketing automne
+2025-11-22,expense,340.00,operations,,Renouvellement équipement
+2025-11-25,income,4600.00,consulting,Clinique Santé Plus,Mise en place logiciel RDV
+2025-11-28,income,2900.00,services,Transport Arcand Inc,Conformité transport
+2025-12-03,income,11200.00,consulting,Immobilier Tremblay,Projet expansion résidentiel
+2025-12-06,income,7800.00,services,Cabinet Leblanc & Associés,Clôture exercice fiscal
+2025-12-09,expense,890.00,software,,Abonnements annuels SaaS
+2025-12-12,income,5200.00,consulting,Studio Pixel Craft,Refonte e-commerce
+2025-12-15,expense,1200.00,marketing,,Budget marketing décembre
+2025-12-18,income,4400.00,services,Café Urbain MTL,Stratégie croissance Q1 2026
+2025-12-20,expense,650.00,operations,,Prime équipe fin d'année
+2025-12-22,income,3600.00,consulting,Clinique Santé Plus,Audit système informatique
+2026-01-05,income,6100.00,consulting,Studio Pixel Craft,Nouveau projet identité 2026
+2026-01-08,income,8500.00,services,Immobilier Tremblay,Plateforme locataires v2
+2026-01-11,expense,540.00,software,,Outils productivité janvier
+2026-01-14,income,4900.00,consulting,Cabinet Leblanc & Associés,Planification fiscale 2026
+2026-01-17,expense,760.00,marketing,,Publicité Meta Ads
+2026-01-20,income,3200.00,services,Transport Arcand Inc,Optimisation logistique
+2026-01-23,income,7400.00,consulting,Immobilier Tremblay,CRM phase 2
+2026-01-26,expense,480.00,operations,,Fournitures et matériel
+2026-01-29,income,2800.00,services,Café Urbain MTL,Maintenance mensuelle
+2026-02-03,income,9600.00,consulting,Immobilier Tremblay,Module rapports avancés
+2026-02-06,income,5800.00,services,Cabinet Leblanc & Associés,Audit interne Q1
+2026-02-09,expense,620.00,software,,Infrastructure cloud
+2026-02-12,income,4300.00,consulting,Studio Pixel Craft,Design système composants
+2026-02-15,expense,830.00,marketing,,Campagne acquisition clients
+2026-02-18,income,3700.00,services,Clinique Santé Plus,Formation nouveaux outils
+2026-02-20,income,6500.00,consulting,Transport Arcand Inc,Refonte processus livraison

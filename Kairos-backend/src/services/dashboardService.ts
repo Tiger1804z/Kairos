@@ -1,7 +1,18 @@
-import { TransactionType } from "../../generated/prisma";
+/**
+ * ============================================================================
+ * Dashboard Service
+ * ============================================================================
+ * Agrège les données de plusieurs tables pour alimenter le dashboard:
+ * - Métriques clés (clients, engagements actifs, revenu mensuel)
+ * - Top 5 clients par revenu
+ * - Croissance du revenu mois/mois
+ * - Tendance mensuelle (6 derniers mois) pour le line chart
+ * - Dépenses par catégorie (mois en cours) pour le pie chart
+ */
+
 import prisma from "../prisma/prisma";
 
-// retourne les  metrics du dashboard
+// retourne les métriques du dashboard
 export const getDashboardMetricsService = async (businessId: number) => {
     const totalClients = await prisma.client.count({
         where: { business_id: businessId, is_active: true },

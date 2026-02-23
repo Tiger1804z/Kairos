@@ -5,6 +5,8 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+export default client; 
+
 /**
  * ---------------------------------------------------------------------------
  * Kairos AI Service
@@ -86,13 +88,15 @@ export const askKairos = async (input: {
   // ✅ Formatter les données brutes si elles existent
   let rawDataSection = "";
   if (input.rawData && input.rawData.rows.length > 0) {
-    const rows = input.rawData.rows.slice(0, 20); // Limiter à 20 lignes max
+    const rows = input.rawData.rows.slice(0, 20); // Limiter à 20 lignes max pour ne pas surcharger le prompt
+    // Le replacer BigInt est obligatoire: PostgreSQL retourne count()/sum() comme BigInt,
+    // ce que JSON.stringify() ne peut pas sérialiser nativement — on le convertit en Number.
     rawDataSection = `
 Données SQL retournées (${input.rawData.rows.length} lignes):
 Colonnes: ${input.rawData.columns.join(", ")}
 
 Extrait des données (max 20 lignes):
-${JSON.stringify(rows, null, 2)}
+${JSON.stringify(rows, (_, v) => (typeof v === "bigint" ? Number(v) : v), 2)}
 `;
   }
 
@@ -365,6 +369,14 @@ RÈGLES INTENT (très important):
 - Si l'intent = LIST_TRANSACTIONS:
   -> Retourner une liste de transactions (id_transaction, transaction_date, transaction_type, amount, category)
   -> ORDER BY transaction_date DESC
+- Si l'intent = BEST_CLIENT:
+  -> Faire un LEFT JOIN public.clients c ON c.id_client = t.client_id AND c.business_id = ${input.businessId}
+  -> ⚠️ INTERDIT: JOIN sur c.business_id = t.business_id (ce n'est PAS la clé de relation)
+  -> Sélectionner: COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name)) AS client_name, SUM(t.amount) AS total_revenue
+  -> Filtrer: t.transaction_type = 'income'
+  -> GROUP BY c.id_client, c.company_name, c.first_name, c.last_name
+  -> ORDER BY total_revenue DESC
+  -> LIMIT 5
 `.trim();
 
   const prompt = `
@@ -383,7 +395,8 @@ RÈGLES STRICTES (à respecter absolument):
 - Uniquement SELECT (READ ONLY)
 - AUCUN markdown, aucun backticks, aucun commentaire
 - AUCUN ';'
-- JOINs autorisés UNIQUEMENT avec la table "clients" (pour récupérer first_name, last_name)
+- JOINs autorisés UNIQUEMENT avec la table "clients"
+- Pour récupérer le nom du client: utiliser COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name)) AS client_name
 - AUCUN UNION, WITH
 - AUCUNE sous-requête (pas de SELECT dans SELECT)
 
@@ -406,6 +419,7 @@ SCHÉMA transactions:
 public.transactions(
   id_transaction,
   business_id,
+  client_id,         -- FK vers clients.id_client (peut être NULL)
   transaction_date,
   transaction_type,  -- 'income' | 'expense'
   amount,
@@ -416,11 +430,14 @@ SCHÉMA clients:
 public.clients(
   id_client,
   business_id,
-  first_name,
-  last_name,
-  email
+  first_name,        -- NULL si client importé via CSV
+  last_name,         -- NULL si client importé via CSV
+  company_name,      -- rempli pour les clients importés via CSV
+  email,
   phone
 )
+-- Pour le nom du client: TOUJOURS utiliser COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name)) AS client_name
+-- JOIN: LEFT JOIN public.clients c ON c.id_client = t.client_id AND c.business_id = ${input.businessId}
   
 INTENTION DÉTECTÉE:
 ${intent}
@@ -469,6 +486,11 @@ const guessIntent = (q: string) => {
   if (s.includes("dépense") || s.includes("depense") || s.includes("expense")) return "AGG_EXPENSES";
   if (s.includes("profit") || s.includes("net") || s.includes("bénéfice") || s.includes("benefice"))
     return "NET_INCOME_MINUS_EXPENSES";
+  // Détecte les questions sur le meilleur/top client (en français et en anglais)
+  if (
+    (s.includes("meilleur") || s.includes("best") || s.includes("top")) &&
+    (s.includes("client") || s.includes("customer"))
+  ) return "BEST_CLIENT";
   if (s.includes("top") || s.includes("plus") || s.includes("meilleur")) return "TOP_CATEGORIES_OR_BIGGEST";
   if (s.includes("liste") || s.includes("transactions") || s.includes("détails") || s.includes("details"))
     return "LIST_TRANSACTIONS";
