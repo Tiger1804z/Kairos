@@ -87,7 +87,7 @@ export const aiDailyFinanceSummary = async (req: Request, res: Response) => {
       natural_query: `Daily summary ${dateStr}`,
       action_type: QueryActionType.summary,
       status: QueryStatus.success,
-      model_used: "gpt-4o-mini",
+      model_used: "gpt-5.2",
       execution_time_ms: Date.now() - t0,
       executed_at: new Date(),
     });
@@ -197,7 +197,7 @@ export const aiAsk = async (req: Request, res: Response) => {
       action_type: QueryActionType.sql_select,
       generated_sql: sql,
       status: QueryStatus.success,
-      model_used: "gpt-4o-mini",
+      model_used: "gpt-5.2",
       execution_time_ms: Date.now() - t0,
       executed_at: new Date(),
     });
@@ -287,7 +287,7 @@ const safeLogError = async (args: {
       generated_sql: args.sql ?? null,
       status: args.status,
       error_message: args.message,
-      model_used: "gpt-4o-mini",
+      model_used: "gpt-5.2",
       execution_time_ms: Date.now() - args.t0,
       executed_at: new Date(),
     });

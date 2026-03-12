@@ -42,6 +42,8 @@ import dashboardRoutes from "./routes/dashboardRoutes";
 import onboardingRoutes from "./routes/onboardingRoutes";
 import importRoutes from "./routes/importRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
+import shopifyRoutes from "./routes/shopifyRoutes";
+
 
 dotenv.config();
 
@@ -82,6 +84,8 @@ app.use("/ai", aiRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/onboarding", onboardingRoutes);
 app.use("/import", importRoutes);
+app.use("/shopify", shopifyRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 

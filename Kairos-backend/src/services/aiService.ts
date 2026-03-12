@@ -54,7 +54,7 @@ Top catégories: ${input.topCategories.map((c) => `${c.category}: ${c.total}`).j
 `.trim();
 
   const resp = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.2",
     messages: [
       { role: "system", content: "Tu es un assistant financier clair, concis, pratique." },
       { role: "user", content: prompt },
@@ -125,7 +125,7 @@ Question utilisateur: ${input.question}
 `.trim();
 
   const resp = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.2",
     messages: [
       { role: "system", content: "Assistant financier clair, concis, pratique. Ne pas halluciner." },
       { role: "user", content: prompt },
@@ -144,7 +144,7 @@ Question utilisateur: ${input.question}
  */
 export const askKairosText = async (prompt: string): Promise<string> => {
   const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.2",
     messages: [
       {
         role: "system",
@@ -459,7 +459,7 @@ QUESTION UTILISATEUR:
 `.trim();
 
   const resp = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5.2",
     messages: [
       { role: "system", content: "Tu génères du SQL PostgreSQL strict, lisible et sécurisé." },
       { role: "user", content: prompt },

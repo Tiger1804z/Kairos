@@ -1,0 +1,110 @@
+date,mouvement,montant,categorie,client_name,prenom,nom_de_famille,email,telephone,libelle,mode_paiement,ref_facture
+2025-12-01,Dépense,2200.00,Loyer,,,,,, Loyer local commercial - décembre 2025,virement,LOYER-DEC25
+2025-12-01,Dépense,79.00,Logiciels,Shopify,,,,,Abonnement Shopify Basic - décembre 2025,carte,SHOP-DEC25
+2025-12-02,Revenu,127.50,Ventes en magasin,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Vente articles déco et accessoires,carte,VTE-001
+2025-12-02,Revenu,89.99,Ventes en ligne,Jean-Philippe Tremblay,Jean-Philippe,Tremblay,jp.tremblay@hotmail.ca,(450) 555-2302,Commande en ligne - livraison,carte,VTE-002
+2025-12-03,Revenu,245.00,Ventes en magasin,Amélie Gagnon,Amélie,Gagnon,amelie.g@gmail.com,(514) 555-2303,Achat cadeau Noël - ensemble,carte,VTE-003
+2025-12-03,Dépense,3480.00,Inventaire,Grossiste Mode Plus,,,,,Réapprovisionnement articles Noël,virement,INV-DEC25-01
+2025-12-04,Revenu,67.50,Ventes en magasin,François Côté,François,Côté,f.cote@outlook.ca,(514) 555-2304,Articles papeterie et accessoires,espèces,VTE-004
+2025-12-04,Revenu,312.00,Ventes en ligne,Isabelle Bouchard,Isabelle,Bouchard,isabelle.b@gmail.com,(450) 555-2305,Commande en ligne - Noël,carte,VTE-005
+2025-12-05,Revenu,189.00,Ventes en magasin,Patrick Roy,Patrick,Roy,p.roy@bell.net,(514) 555-2306,Ensemble cadeau et emballage,carte,VTE-006
+2025-12-05,Dépense,150.00,Marketing,Meta Ads,,,,,Campagne Instagram Noël - semaine 1,carte,META-DEC25-01
+2025-12-06,Revenu,95.00,Ventes en magasin,Marie-Claude Simard,Marie-Claude,Simard,mc.simard@gmail.com,(418) 555-2307,Articles maison et décoration,espèces,VTE-007
+2025-12-06,Revenu,428.50,Ventes en ligne,David Lavoie,David,Lavoie,david.lavoie@gmail.com,(514) 555-2308,Grande commande Noël en ligne,carte,VTE-008
+2025-12-07,Revenu,156.00,Ventes en magasin,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Articles lifestyle et accessoires,carte,VTE-009
+2025-12-08,Revenu,73.00,Ventes en magasin,Camille Fournier,Camille,Fournier,c.fournier@videotron.ca,(514) 555-2309,Petits articles cadeaux,espèces,VTE-010
+2025-12-08,Dépense,2760.00,Inventaire,Distribution Laurentienne,,,,,Stock hiver - vêtements et accessoires,virement,INV-DEC25-02
+2025-12-09,Revenu,234.00,Ventes en magasin,Nicolas Bergeron,Nicolas,Bergeron,n.bergeron@outlook.ca,(450) 555-2310,Ensemble cadeau premium,carte,VTE-011
+2025-12-09,Revenu,118.50,Ventes en ligne,Catherine Leblanc,Catherine,Leblanc,cat.leblanc@gmail.com,(514) 555-2311,Commande en ligne,carte,VTE-012
+2025-12-10,Revenu,299.00,Ventes en magasin,Antoine Paquette,Antoine,Paquette,a.paquette@gmail.com,(514) 555-2312,Achats multiples Noël,carte,VTE-013
+2025-12-10,Dépense,95.00,Télécommunications,Bell Canada,,,,,Forfait internet et téléphone boutique - décembre,prélèvement,BELL-DEC25
+2025-12-11,Revenu,145.00,Ventes en magasin,Julie Morin,Julie,Morin,julie.morin@hotmail.fr,(514) 555-2313,Articles mode et bijoux,carte,VTE-014
+2025-12-11,Revenu,380.00,Ventes en ligne,Maxime Bélanger,Maxime,Bélanger,max.belanger@gmail.com,(450) 555-2314,Panier cadeau en ligne - livraison express,carte,VTE-015
+2025-12-12,Dépense,280.00,Livraison,Purolator,,,,,Frais expédition commandes en ligne - sem. 2,carte,PUR-DEC25-01
+2025-12-13,Revenu,88.00,Ventes en magasin,Sarah Thibodeau,Sarah,Thibodeau,sarah.t@gmail.com,(514) 555-2315,Accessoires et petits cadeaux,espèces,VTE-016
+2025-12-13,Revenu,512.00,Ventes en magasin,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Achats Noël famille - retour cliente,carte,VTE-017
+2025-12-14,Revenu,167.50,Ventes en ligne,François Côté,François,Côté,f.cote@outlook.ca,(514) 555-2304,2e commande en ligne,carte,VTE-018
+2025-12-15,Dépense,800.00,Marketing,Meta Ads,,,,,Campagne Instagram et Facebook - Noël boost,carte,META-DEC25-02
+2025-12-15,Dépense,350.00,Marketing,Google Ads,,,,,Google Shopping campagne Noël,carte,GAD-DEC25
+2025-12-16,Revenu,423.00,Ventes en magasin,Isabelle Bouchard,Isabelle,Bouchard,isabelle.b@gmail.com,(450) 555-2305,Achats cadeaux multiples,carte,VTE-019
+2025-12-17,Revenu,201.00,Ventes en magasin,Marc-Antoine Denis,Marc-Antoine,Denis,ma.denis@gmail.com,(514) 555-2316,Articles cuisine et maison,carte,VTE-020
+2025-12-17,Dépense,340.00,Emballage,Emballex Canada,,,,,Fournitures emballage cadeau - réapprovisionnement,carte,EMB-DEC25
+2025-12-18,Revenu,689.00,Ventes en ligne,David Lavoie,David,Lavoie,david.lavoie@gmail.com,(514) 555-2308,Commande Noël urgente - livraison express,carte,VTE-021
+2025-12-18,Revenu,143.00,Ventes en magasin,Mélissa Côté,Mélissa,Côté,m.cote@hotmail.ca,(450) 555-2317,Accessoires et mode,carte,VTE-022
+2025-12-19,Dépense,220.00,Assurance,Intact Assurance,,,,,Assurance commerce - mensuelle décembre,virement,ASS-DEC25
+2025-12-19,Revenu,276.00,Ventes en magasin,Nicolas Bergeron,Nicolas,Bergeron,n.bergeron@outlook.ca,(450) 555-2310,2e achat avant Noël,carte,VTE-023
+2025-12-20,Revenu,334.50,Ventes en magasin,Camille Fournier,Camille,Fournier,c.fournier@videotron.ca,(514) 555-2309,Cadeaux Noël - gros achat,carte,VTE-024
+2025-12-20,Dépense,2400.00,Salaires,,,,,,Salaire employé temps partiel - décembre 2025,virement,SAL-DEC25
+2025-12-21,Revenu,198.00,Ventes en ligne,Antoine Paquette,Antoine,Paquette,a.paquette@gmail.com,(514) 555-2312,Commande last minute Noël,carte,VTE-025
+2025-12-22,Dépense,265.00,Livraison,Poste Canada,,,,,Frais expédition commandes - sem. 3 et 4,carte,POST-DEC25
+2025-12-23,Revenu,567.00,Ventes en magasin,Julie Morin,Julie,Morin,julie.morin@hotmail.fr,(514) 555-2313,Achats veille Noël - retour cliente,carte,VTE-026
+2025-12-26,Revenu,289.00,Ventes en magasin,Marie-Claude Simard,Marie-Claude,Simard,mc.simard@gmail.com,(418) 555-2307,Échanges et nouveaux achats post-Noël,carte,VTE-027
+2025-12-27,Revenu,145.50,Ventes en ligne,Sarah Thibodeau,Sarah,Thibodeau,sarah.t@gmail.com,(514) 555-2315,Commande soldes après Noël,carte,VTE-028
+2025-12-28,Dépense,180.00,Utilités,Hydro-Québec,,,,,Électricité boutique - novembre-décembre,prélèvement,HYD-DEC25
+2025-12-29,Revenu,223.00,Ventes en magasin,Patrick Roy,Patrick,Roy,p.roy@bell.net,(514) 555-2306,Achats soldes fin d'année,carte,VTE-029
+2025-12-30,Dépense,300.00,Comptabilité,Comptable Perreault & Ass.,,,,,Révision fin d'année - états financiers,chèque,PERRLT-DEC25
+2025-12-31,Dépense,145.00,Frais bancaires,Caisse Desjardins,,,,,Frais terminaux et transactions - décembre,prélèvement,DESJ-DEC25
+2026-01-02,Dépense,2200.00,Loyer,,,,,,Loyer local commercial - janvier 2026,virement,LOYER-JAN26
+2026-01-02,Dépense,79.00,Logiciels,Shopify,,,,,Abonnement Shopify Basic - janvier 2026,carte,SHOP-JAN26
+2026-01-03,Revenu,78.00,Ventes en magasin,Maxime Bélanger,Maxime,Bélanger,max.belanger@gmail.com,(450) 555-2314,Soldes janvier - articles mode,carte,VTE-030
+2026-01-04,Revenu,134.50,Ventes en ligne,Catherine Leblanc,Catherine,Leblanc,cat.leblanc@gmail.com,(514) 555-2311,Commande soldes en ligne,carte,VTE-031
+2026-01-05,Revenu,56.00,Ventes en magasin,Marc-Antoine Denis,Marc-Antoine,Denis,ma.denis@gmail.com,(514) 555-2316,Article maison en solde,espèces,VTE-032
+2026-01-06,Dépense,1850.00,Inventaire,Grossiste Mode Plus,,,,,Nouveautés hiver - collection janvier,virement,INV-JAN26-01
+2026-01-07,Revenu,167.00,Ventes en magasin,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Articles maison - soldes,carte,VTE-033
+2026-01-07,Revenu,89.00,Ventes en ligne,Mélissa Côté,Mélissa,Côté,m.cote@hotmail.ca,(450) 555-2317,Commande en ligne janvier,carte,VTE-034
+2026-01-08,Dépense,95.00,Télécommunications,Bell Canada,,,,,Forfait internet et téléphone boutique - janvier,prélèvement,BELL-JAN26
+2026-01-08,Revenu,145.00,Ventes en magasin,François Côté,François,Côté,f.cote@outlook.ca,(514) 555-2304,Articles quotidien,espèces,VTE-035
+2026-01-09,Revenu,112.00,Ventes en magasin,Amélie Gagnon,Amélie,Gagnon,amelie.g@gmail.com,(514) 555-2303,Vente accessoires hivernaux,carte,VTE-036
+2026-01-10,Dépense,300.00,Marketing,Meta Ads,,,,,Campagne soldes janvier - Instagram,carte,META-JAN26
+2026-01-11,Revenu,234.00,Ventes en ligne,Jean-Philippe Tremblay,Jean-Philippe,Tremblay,jp.tremblay@hotmail.ca,(450) 555-2302,Commande en ligne - articles divers,carte,VTE-037
+2026-01-12,Revenu,67.50,Ventes en magasin,Patrick Roy,Patrick,Roy,p.roy@bell.net,(514) 555-2306,Petits articles quotidien,espèces,VTE-038
+2026-01-13,Dépense,145.00,Livraison,Purolator,,,,,Frais expédition commandes en ligne - janvier,carte,PUR-JAN26
+2026-01-14,Revenu,178.50,Ventes en magasin,Nicolas Bergeron,Nicolas,Bergeron,n.bergeron@outlook.ca,(450) 555-2310,Articles décoration et mode,carte,VTE-039
+2026-01-14,Dépense,220.00,Assurance,Intact Assurance,,,,,Assurance commerce - mensuelle janvier,virement,ASS-JAN26
+2026-01-15,Dépense,2200.00,Salaires,,,,,,Salaire employé temps partiel - janvier 2026,virement,SAL-JAN26
+2026-01-16,Revenu,145.00,Ventes en ligne,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Commande en ligne,carte,VTE-040
+2026-01-17,Revenu,89.00,Ventes en magasin,Camille Fournier,Camille,Fournier,c.fournier@videotron.ca,(514) 555-2309,Accessoires hivernaux,carte,VTE-041
+2026-01-17,Dépense,180.00,Emballage,Emballex Canada,,,,,Fournitures emballage - réapprovisionnement,carte,EMB-JAN26
+2026-01-18,Dépense,1200.00,Inventaire,Distribution Laurentienne,,,,,Réapprovisionnement accessoires hiver,virement,INV-JAN26-02
+2026-01-20,Revenu,312.00,Ventes en magasin,David Lavoie,David,Lavoie,david.lavoie@gmail.com,(514) 555-2308,Achats multiples - client fidèle,carte,VTE-042
+2026-01-21,Revenu,98.50,Ventes en ligne,Julie Morin,Julie,Morin,julie.morin@hotmail.fr,(514) 555-2313,Commande en ligne,carte,VTE-043
+2026-01-22,Dépense,175.00,Utilités,Hydro-Québec,,,,,Électricité boutique - décembre-janvier,prélèvement,HYD-JAN26
+2026-01-23,Revenu,156.00,Ventes en magasin,Isabelle Bouchard,Isabelle,Bouchard,isabelle.b@gmail.com,(450) 555-2305,Articles mode hiver,carte,VTE-044
+2026-01-24,Revenu,67.00,Ventes en magasin,Sarah Thibodeau,Sarah,Thibodeau,sarah.t@gmail.com,(514) 555-2315,Accessoires,espèces,VTE-045
+2026-01-24,Revenu,265.00,Ventes en ligne,Maxime Bélanger,Maxime,Bélanger,max.belanger@gmail.com,(450) 555-2314,Commande en ligne,carte,VTE-046
+2026-01-25,Dépense,200.00,Marketing,Google Ads,,,,,Campagne Google Shopping - janvier,carte,GAD-JAN26
+2026-01-26,Revenu,189.00,Ventes en ligne,Antoine Paquette,Antoine,Paquette,a.paquette@gmail.com,(514) 555-2312,Commande en ligne - livraison,carte,VTE-047
+2026-01-27,Revenu,123.50,Ventes en magasin,Marie-Claude Simard,Marie-Claude,Simard,mc.simard@gmail.com,(418) 555-2307,Articles cuisine,carte,VTE-048
+2026-01-28,Dépense,130.00,Frais bancaires,Caisse Desjardins,,,,,Frais terminaux et transactions - janvier,prélèvement,DESJ-JAN26
+2026-01-29,Revenu,234.00,Ventes en magasin,Marc-Antoine Denis,Marc-Antoine,Denis,ma.denis@gmail.com,(514) 555-2316,Articles lifestyle,carte,VTE-049
+2026-01-30,Revenu,78.00,Ventes en ligne,Mélissa Côté,Mélissa,Côté,m.cote@hotmail.ca,(450) 555-2317,Commande en ligne,carte,VTE-050
+2026-01-31,Dépense,300.00,Comptabilité,Comptable Perreault & Ass.,,,,,Bilan mensuel janvier 2026,chèque,PERRLT-JAN26
+2026-02-01,Dépense,2200.00,Loyer,,,,,,Loyer local commercial - février 2026,virement,LOYER-FEB26
+2026-02-01,Dépense,79.00,Logiciels,Shopify,,,,,Abonnement Shopify Basic - février 2026,carte,SHOP-FEB26
+2026-02-02,Revenu,156.00,Ventes en magasin,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Articles Saint-Valentin,carte,VTE-051
+2026-02-02,Revenu,234.00,Ventes en ligne,Jean-Philippe Tremblay,Jean-Philippe,Tremblay,jp.tremblay@hotmail.ca,(450) 555-2302,Commande Saint-Valentin,carte,VTE-052
+2026-02-03,Dépense,2200.00,Inventaire,Grossiste Mode Plus,,,,,Stock Saint-Valentin - articles cadeaux,virement,INV-FEB26-01
+2026-02-03,Revenu,189.00,Ventes en magasin,Amélie Gagnon,Amélie,Gagnon,amelie.g@gmail.com,(514) 555-2303,Articles romantiques et cadeaux,carte,VTE-053
+2026-02-04,Dépense,95.00,Télécommunications,Bell Canada,,,,,Forfait internet et téléphone boutique - février,prélèvement,BELL-FEB26
+2026-02-05,Revenu,267.50,Ventes en ligne,François Côté,François,Côté,f.cote@outlook.ca,(514) 555-2304,Commande cadeau Saint-Valentin,carte,VTE-054
+2026-02-05,Dépense,500.00,Marketing,Meta Ads,,,,,Campagne Saint-Valentin Instagram et Facebook,carte,META-FEB26
+2026-02-06,Revenu,145.00,Ventes en magasin,Patrick Roy,Patrick,Roy,p.roy@bell.net,(514) 555-2306,Cadeau Saint-Valentin - bijoux,carte,VTE-055
+2026-02-07,Revenu,398.00,Ventes en ligne,Isabelle Bouchard,Isabelle,Bouchard,isabelle.b@gmail.com,(450) 555-2305,Grande commande Saint-Valentin,carte,VTE-056
+2026-02-07,Dépense,250.00,Marketing,Google Ads,,,,,Google Shopping - Saint-Valentin,carte,GAD-FEB26
+2026-02-08,Revenu,178.00,Ventes en magasin,Nicolas Bergeron,Nicolas,Bergeron,n.bergeron@outlook.ca,(450) 555-2310,Articles cadeaux couples,carte,VTE-057
+2026-02-09,Revenu,223.00,Ventes en ligne,David Lavoie,David,Lavoie,david.lavoie@gmail.com,(514) 555-2308,Commande en ligne,carte,VTE-058
+2026-02-10,Dépense,220.00,Assurance,Intact Assurance,,,,,Assurance commerce - mensuelle février,virement,ASS-FEB26
+2026-02-10,Revenu,312.00,Ventes en magasin,Marie-Claude Simard,Marie-Claude,Simard,mc.simard@gmail.com,(418) 555-2307,Achats Saint-Valentin,carte,VTE-059
+2026-02-11,Revenu,145.50,Ventes en ligne,Catherine Leblanc,Catherine,Leblanc,cat.leblanc@gmail.com,(514) 555-2311,Commande en ligne,carte,VTE-060
+2026-02-12,Revenu,489.00,Ventes en magasin,Julie Morin,Julie,Morin,julie.morin@hotmail.fr,(514) 555-2313,Gros achat veille Saint-Valentin,carte,VTE-061
+2026-02-13,Revenu,678.00,Ventes en magasin,Antoine Paquette,Antoine,Paquette,a.paquette@gmail.com,(514) 555-2312,Achat surprise Saint-Valentin,carte,VTE-062
+2026-02-13,Dépense,190.00,Livraison,Purolator,,,,,Frais expédition Saint-Valentin - express,carte,PUR-FEB26
+2026-02-14,Revenu,534.00,Ventes en magasin,Maxime Bélanger,Maxime,Bélanger,max.belanger@gmail.com,(450) 555-2314,Saint-Valentin - pic de ventes,carte,VTE-063
+2026-02-14,Revenu,289.50,Ventes en ligne,Sarah Thibodeau,Sarah,Thibodeau,sarah.t@gmail.com,(514) 555-2315,Commande Saint-Valentin last minute,carte,VTE-064
+2026-02-15,Dépense,2200.00,Salaires,,,,,,Salaire employé temps partiel - février 2026,virement,SAL-FEB26
+2026-02-16,Revenu,123.00,Ventes en magasin,Sophie Martin,Sophie,Martin,s.martin@gmail.com,(514) 555-2301,Achats post Saint-Valentin,carte,VTE-065
+2026-02-17,Revenu,167.00,Ventes en ligne,Marc-Antoine Denis,Marc-Antoine,Denis,ma.denis@gmail.com,(514) 555-2316,Commande en ligne,carte,VTE-066
+2026-02-18,Dépense,165.00,Utilités,Hydro-Québec,,,,,Électricité boutique - janvier-février,prélèvement,HYD-FEB26
+2026-02-19,Revenu,198.00,Ventes en magasin,Camille Fournier,Camille,Fournier,c.fournier@videotron.ca,(514) 555-2309,Articles mode printemps - preview,carte,VTE-067
+2026-02-20,Revenu,89.00,Ventes en ligne,Mélissa Côté,Mélissa,Côté,m.cote@hotmail.ca,(450) 555-2317,Commande en ligne,carte,VTE-068
+2026-02-21,Dépense,125.00,Frais bancaires,Caisse Desjardins,,,,,Frais terminaux et transactions - février,prélèvement,DESJ-FEB26

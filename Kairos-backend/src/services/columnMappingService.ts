@@ -116,7 +116,7 @@ Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans explication:
 
     // appel OpenAI avec temperature 0 pour des résultats precis (pas de créativité)
     const response = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5.2",
         messages: [{ role: "user", content: prompt }],
         temperature: 0,
     });
