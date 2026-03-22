@@ -54,7 +54,7 @@ Top catégories: ${input.topCategories.map((c) => `${c.category}: ${c.total}`).j
 `.trim();
 
   const resp = await client.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: "Tu es un assistant financier clair, concis, pratique." },
       { role: "user", content: prompt },
@@ -85,12 +85,10 @@ export const askKairos = async (input: {
   const currency = input.currencyLabel ?? "$ CAD";
   const fmt = (v: number | null) => (v === null ? "Non fourni" : String(v));
 
-  // ✅ Formatter les données brutes si elles existent
+  //  Formatter les données brutes si elles existent
   let rawDataSection = "";
   if (input.rawData && input.rawData.rows.length > 0) {
-    const rows = input.rawData.rows.slice(0, 20); // Limiter à 20 lignes max pour ne pas surcharger le prompt
-    // Le replacer BigInt est obligatoire: PostgreSQL retourne count()/sum() comme BigInt,
-    // ce que JSON.stringify() ne peut pas sérialiser nativement — on le convertit en Number.
+    const rows = input.rawData.rows.slice(0, 20); // Limiter à 20 lignes max
     rawDataSection = `
 Données SQL retournées (${input.rawData.rows.length} lignes):
 Colonnes: ${input.rawData.columns.join(", ")}
@@ -125,7 +123,7 @@ Question utilisateur: ${input.question}
 `.trim();
 
   const resp = await client.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: "Assistant financier clair, concis, pratique. Ne pas halluciner." },
       { role: "user", content: prompt },
@@ -144,7 +142,7 @@ Question utilisateur: ${input.question}
  */
 export const askKairosText = async (prompt: string): Promise<string> => {
   const completion = await client.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
@@ -369,14 +367,6 @@ RÈGLES INTENT (très important):
 - Si l'intent = LIST_TRANSACTIONS:
   -> Retourner une liste de transactions (id_transaction, transaction_date, transaction_type, amount, category)
   -> ORDER BY transaction_date DESC
-- Si l'intent = BEST_CLIENT:
-  -> Faire un LEFT JOIN public.clients c ON c.id_client = t.client_id AND c.business_id = ${input.businessId}
-  -> ⚠️ INTERDIT: JOIN sur c.business_id = t.business_id (ce n'est PAS la clé de relation)
-  -> Sélectionner: COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name)) AS client_name, SUM(t.amount) AS total_revenue
-  -> Filtrer: t.transaction_type = 'income'
-  -> GROUP BY c.id_client, c.company_name, c.first_name, c.last_name
-  -> ORDER BY total_revenue DESC
-  -> LIMIT 5
 `.trim();
 
   const prompt = `
@@ -459,7 +449,7 @@ QUESTION UTILISATEUR:
 `.trim();
 
   const resp = await client.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o-mini",
     messages: [
       { role: "system", content: "Tu génères du SQL PostgreSQL strict, lisible et sécurisé." },
       { role: "user", content: prompt },
@@ -486,11 +476,6 @@ const guessIntent = (q: string) => {
   if (s.includes("dépense") || s.includes("depense") || s.includes("expense")) return "AGG_EXPENSES";
   if (s.includes("profit") || s.includes("net") || s.includes("bénéfice") || s.includes("benefice"))
     return "NET_INCOME_MINUS_EXPENSES";
-  // Détecte les questions sur le meilleur/top client (en français et en anglais)
-  if (
-    (s.includes("meilleur") || s.includes("best") || s.includes("top")) &&
-    (s.includes("client") || s.includes("customer"))
-  ) return "BEST_CLIENT";
   if (s.includes("top") || s.includes("plus") || s.includes("meilleur")) return "TOP_CATEGORIES_OR_BIGGEST";
   if (s.includes("liste") || s.includes("transactions") || s.includes("détails") || s.includes("details"))
     return "LIST_TRANSACTIONS";

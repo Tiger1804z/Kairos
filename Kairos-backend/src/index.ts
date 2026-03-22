@@ -43,6 +43,7 @@ import onboardingRoutes from "./routes/onboardingRoutes";
 import importRoutes from "./routes/importRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
 import shopifyRoutes from "./routes/shopifyRoutes";
+import { shopifyCallback } from "./controllers/shopifyController";
 
 
 dotenv.config();
@@ -67,6 +68,9 @@ app.get("/", (_req, res) => {
 
 // Routes publiques (sans JWT)
 app.use("/auth", authRoutes);
+
+// Shopify OAuth callback — public (Shopify redirige ici, pas de JWT)
+app.get("/shopify/callback", shopifyCallback);
 
 // Toutes les routes suivantes nécessitent un JWT valide
 app.use(requireAuth);

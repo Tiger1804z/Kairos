@@ -15,6 +15,7 @@ import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import TransactionsPage from "../pages/dashboard/TransactionsPage";
 import ClientDetailPage from "../pages/dashboard/ClientDetailPage";
 import EngagementDetailPage from "../pages/dashboard/EngagementDetailPage";
+import ShopifySuccessPage from "../pages/shopify/ShopifySuccessPage";
 
 
 // arbre de routes de react-router :
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
     element: <RequireAuth />,
     children: [
       {path: "/onboarding", element: <OnboardingPage />},
+      { path: "/shopify/success", element: <ShopifySuccessPage /> },
       {
         path: "/dashboard",
         element: <DashboardLayout />,

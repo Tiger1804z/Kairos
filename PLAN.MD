@@ -1,7 +1,7 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-03-11
-**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-2 complète ✅
+**Dernière mise à jour :** 2026-03-22
+**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-4 backend complet ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
 **Focus actuel :** 🛍️ **Pivot Shopify** — Calcul de rentabilité réelle par produit
 
@@ -291,11 +291,13 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 - [x] Communication TS ↔ Python (health check `GET /shopify/health`) ✅ (2026-03-11)
 
 ### Semaine 3-4 — Shopify Sync
-- [ ] `shopifyAuthService` : OAuth Shopify complet
-- [ ] `shopifySyncService` : sync Products + Variants
-- [ ] `shopifySyncService` : sync Customers
-- [ ] `shopifySyncService` : sync Orders + OrderItems + Refunds
-- [ ] Page "Connecter Shopify" dans le frontend
+- [x] `shopifyAuthService` : OAuth Shopify complet ✅ (2026-03-12)
+- [x] `shopifySyncService` : sync Products + Variants ✅ (2026-03-22)
+- [x] `shopifySyncService` : sync Customers ✅ (2026-03-22)
+- [x] `shopifySyncService` : sync Orders + OrderItems + Refunds ✅ (2026-03-22)
+- [x] `shopifyController` : `POST /:businessId/sync` + `GET /:businessId/status` ✅ (2026-03-22)
+- [x] `ShopifySuccessPage` + route `/shopify/success` (frontend) ✅ (2026-03-22)
+- [ ] Page "Connecter Shopify" dans Settings (frontend)
 - [ ] Écran post-connexion avec résumé de la sync
 
 ### Semaine 5-6 — Cost Entry + Profitability Engine
@@ -336,7 +338,7 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 
 | Fonctionnalité | Backend | Frontend | Statut |
 |---|---|---|---|
-| Shopify OAuth + Sync | 0% | 0% | ❌ À faire |
+| Shopify OAuth + Sync | 100% | 20% | 🔄 Frontend Settings restant |
 | Modèles Prisma Shopify | 100% | — | ✅ Fait |
 | Service Python FastAPI | 100% | — | ✅ Fait (health check) |
 | Cost Entry (manuel) | 0% | 0% | ❌ À faire |

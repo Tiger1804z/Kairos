@@ -273,8 +273,8 @@ model Product {
   order_items        OrderItem[]
   profitability      ProfitabilitySnapshot[]
 
+  @@unique([shopify_product_id, business_id])
   @@index([business_id])
-  @@index([shopify_product_id])
   @@map("products")
 }
 
@@ -290,8 +290,8 @@ model ProductVariant {
   costs              ProductCost[]
   order_items        OrderItem[]
 
+  @@unique([shopify_variant_id])
   @@index([product_id])
-  @@index([shopify_variant_id])
   @@map("product_variants")
 }
 
@@ -325,8 +325,8 @@ model ShopifyCustomer {
   business            Business @relation(fields: [business_id], references: [id_business], onDelete: Cascade)
   orders              Order[]
 
+  @@unique([shopify_customer_id, business_id])
   @@index([business_id])
-  @@index([shopify_customer_id])
   @@map("shopify_customers")
 }
 
@@ -346,26 +346,27 @@ model Order {
   items              OrderItem[]
   refunds            Refund[]
 
+  @@unique([shopify_order_id, business_id])
   @@index([business_id])
-  @@index([shopify_order_id])
   @@index([customer_id])
   @@index([created_at])
   @@map("orders")
 }
 
 model OrderItem {
-  id         String          @id @default(uuid())
-  order_id   String
-  product_id String?
-  variant_id String?
-  quantity   Int
-  unit_price Decimal         @db.Decimal(12, 2)
-  line_total Decimal         @db.Decimal(12, 2)
-  sku        String?
-  title      String
-  order      Order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  product    Product?        @relation(fields: [product_id], references: [id], onDelete: SetNull)
-  variant    ProductVariant? @relation(fields: [variant_id], references: [id], onDelete: SetNull)
+  id                   String          @id @default(uuid())
+  shopify_line_item_id String          @unique
+  order_id             String
+  product_id           String?
+  variant_id           String?
+  quantity             Int
+  unit_price           Decimal         @db.Decimal(12, 2)
+  line_total           Decimal         @db.Decimal(12, 2)
+  sku                  String?
+  title                String
+  order                Order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product              Product?        @relation(fields: [product_id], references: [id], onDelete: SetNull)
+  variant              ProductVariant? @relation(fields: [variant_id], references: [id], onDelete: SetNull)
 
   @@index([order_id])
   @@index([product_id])
@@ -373,12 +374,13 @@ model OrderItem {
 }
 
 model Refund {
-  id         String   @id @default(uuid())
-  order_id   String
-  amount     Decimal  @db.Decimal(12, 2)
-  reason     String?
-  created_at DateTime
-  order      Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  id                String   @id @default(uuid())
+  shopify_refund_id String   @unique
+  order_id          String
+  amount            Decimal  @db.Decimal(12, 2)
+  reason            String?
+  created_at        DateTime
+  order             Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
   @@map("refunds")
