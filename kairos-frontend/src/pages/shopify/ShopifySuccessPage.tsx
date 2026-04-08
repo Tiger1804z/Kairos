@@ -6,7 +6,7 @@ export default function ShopifySuccessPage() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            navigate("/dashboard/settings");
+            navigate("/dashboard/settings?shopify=connected");
         }, 3000);
 
         return () => clearTimeout(timer);

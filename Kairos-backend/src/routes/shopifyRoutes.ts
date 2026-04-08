@@ -20,9 +20,9 @@ router.get("/health", async (_req: Request, res: Response) => {
 router.post("/connect", connectShopify);
 
 // Sync manuelle — déclenche products + customers + orders
-router.post("/:businessId/sync", requireBusinessAccess, triggerSync);
+router.post("/:businessId/sync", requireBusinessAccess({ from: "params", key: "businessId" }), triggerSync);
 
 // Statut de la connexion Shopify + compteurs en DB
-router.get("/:businessId/status", requireBusinessAccess, getShopifyStatus);
+router.get("/:businessId/status", requireBusinessAccess({ from: "params", key: "businessId" }), getShopifyStatus);
 
 export default router;

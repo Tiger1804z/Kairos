@@ -44,6 +44,9 @@ import importRoutes from "./routes/importRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
 import shopifyRoutes from "./routes/shopifyRoutes";
 import { shopifyCallback } from "./controllers/shopifyController";
+import costRoutes from "./routes/costRoutes";
+import productRoutes from "./routes/productRoutes";
+import profitabilityRoutes from "./routes/profitabilityRoutes";
 
 
 dotenv.config();
@@ -89,7 +92,9 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/onboarding", onboardingRoutes);
 app.use("/import", importRoutes);
 app.use("/shopify", shopifyRoutes);
-
+app.use("/costs", costRoutes);
+app.use("/products", productRoutes);
+app.use("/profitability", profitabilityRoutes);
 
 const PORT = process.env.PORT || 3000;
 

@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-03-22
-**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-4 backend complet ✅
+**Dernière mise à jour :** 2026-04-08
+**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-6 complet ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
-**Focus actuel :** 🛍️ **Pivot Shopify** — Calcul de rentabilité réelle par produit
+**Focus actuel :** 🧠 **Semaine 7** — Insight Engine
 
 ---
 
@@ -297,20 +297,30 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 - [x] `shopifySyncService` : sync Orders + OrderItems + Refunds ✅ (2026-03-22)
 - [x] `shopifyController` : `POST /:businessId/sync` + `GET /:businessId/status` ✅ (2026-03-22)
 - [x] `ShopifySuccessPage` + route `/shopify/success` (frontend) ✅ (2026-03-22)
-- [ ] Page "Connecter Shopify" dans Settings (frontend)
-- [ ] Écran post-connexion avec résumé de la sync
+- [x] Page Settings — section Shopify (connecter / statut / sync) ✅ (2026-03-26)
+- [x] Écran post-connexion avec bandeau "Boutique connectée avec succès !" ✅ (2026-03-26)
+- [x] Fix `requireBusinessAccess` — passage en factory call sur routes Shopify ✅ (2026-03-26)
+- [x] Sync résiliente — customers/orders échouent sans crasher ✅ (2026-03-26)
+- [x] Shopify Protected Customer Data (PCD) configuré → Analytics + Store management ✅ (2026-03-26)
+- [x] Sync complète validée : `{ products: 17, customers: 3, orders: 2 }` ✅ (2026-03-26)
+- 📄 Voir `docs/shopify-protected-data.md` pour le détail complet
 
-### Semaine 5-6 — Cost Entry + Profitability Engine
-- [ ] Page Produits (liste avec marge par produit)
-- [ ] Modal saisie manuelle coût par produit/variant
-- [ ] `costController` + `costService`
-- [ ] Import CSV de coûts
-- [ ] Profitability Engine Python (calcul complet)
-- [ ] Endpoint `POST /analytics/profitability`
-- [ ] Stockage `ProfitabilitySnapshot`
-- [ ] Mise à jour instantanée de la marge après saisie
+### Semaine 5-6 — Cost Entry + Profitability Engine ✅
+- [x] Vérifier `order_items` en DB (line_items, quantity, price) ✅ (2026-04-08)
+- [x] Fix sync orders `status=any` (tous les orders, pas seulement open) ✅ (2026-04-08)
+- [x] `costService.ts` + `costController.ts` : CRUD `ProductCost` ✅ (2026-04-08)
+- [x] `costRoutes.ts` : `POST /costs` + `GET /costs/:productId` ✅ (2026-04-08)
+- [x] `productController.ts` + `productRoutes.ts` : `GET /products/:businessId` ✅ (2026-04-08)
+- [x] `productService.ts` (frontend) ✅ (2026-04-08)
+- [x] Page Produits — liste avec coût unitaire par produit ✅ (2026-04-08)
+- [x] Modal saisie manuelle coût par produit ✅ (2026-04-08)
+- [x] Import CSV de coûts (`csvCostImporter.ts` + `POST /costs/import-csv` + bouton frontend) ✅ (2026-04-08)
+- [x] Profitability Engine Python (calcul complet) ✅ (2026-04-08)
+- [x] Endpoint `POST /profitability/:businessId/compute` ✅ (2026-04-08)
+- [x] Stockage `ProfitabilitySnapshot` + migration `@@unique` ✅ (2026-04-08)
+- [x] Afficher marge brute dans la page Produits (vert/orange/rouge) ✅ (2026-04-08)
 
-### Semaine 7 — Insight Engine
+### Semaine 7 — Insight Engine  ← **FOCUS ACTUEL**
 - [ ] Insight Engine Python (6 insights)
 - [ ] Stockage `Insight` en DB
 - [ ] Page Insights dans le frontend
@@ -338,7 +348,7 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 
 | Fonctionnalité | Backend | Frontend | Statut |
 |---|---|---|---|
-| Shopify OAuth + Sync | 100% | 20% | 🔄 Frontend Settings restant |
+| Shopify OAuth + Sync | 100% | 100% | ✅ Fait |
 | Modèles Prisma Shopify | 100% | — | ✅ Fait |
 | Service Python FastAPI | 100% | — | ✅ Fait (health check) |
 | Cost Entry (manuel) | 0% | 0% | ❌ À faire |

@@ -403,6 +403,7 @@ model ProfitabilitySnapshot {
   business         Business @relation(fields: [business_id], references: [id_business], onDelete: Cascade)
   product          Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
+  @@unique([business_id, product_id, period_start, period_end])
   @@index([business_id])
   @@index([product_id])
   @@index([period_start, period_end])

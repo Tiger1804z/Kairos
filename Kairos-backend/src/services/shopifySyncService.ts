@@ -92,7 +92,7 @@ export async function syncCustomers(businessId: number, store: ShopifyStore): Pr
 
 // ─── sync orders ────────────────────────────────────────────────────
 export async function syncOrders(businessId: number, store: ShopifyStore): Promise<number> {
-    let url: string | null = `https://${store.shop_domain}/admin/api/2024-01/orders.json?limit=250`;
+    let url: string | null = `https://${store.shop_domain}/admin/api/2024-01/orders.json?limit=250&status=any`;
     let total = 0;
 
     while (url) {
@@ -205,8 +205,8 @@ export async function syncAll(businessId: number): Promise<{ products: number; c
     if (!store) throw new Error("Aucun store Shopify connecté pour ce business");
 
     const products  = await syncProducts(businessId, store);
-    const customers = await syncCustomers(businessId, store);
-    const orders    = await syncOrders(businessId, store);
+    const customers = await syncCustomers(businessId, store).catch((err) => { console.warn("[syncAll] customers skipped:", err.message); return 0; });
+    const orders    = await syncOrders(businessId, store).catch((err) => { console.warn("[syncAll] orders skipped:", err.message); return 0; });
 
     await prisma.shopifyStore.update({
         where: { id: store.id },
