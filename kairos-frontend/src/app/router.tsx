@@ -17,6 +17,7 @@ import ClientDetailPage from "../pages/dashboard/ClientDetailPage";
 import EngagementDetailPage from "../pages/dashboard/EngagementDetailPage";
 import ShopifySuccessPage from "../pages/shopify/ShopifySuccessPage";
 import ProductsPage from "../pages/dashboard/ProductsPage";
+import InsightsPage from "../pages/dashboard/InsightsPage";
 
 
 // arbre de routes de react-router :
@@ -52,8 +53,8 @@ export const router = createBrowserRouter([
           {path:"engagements/:id",element: <EngagementDetailPage />},
           {path:"reports",element: <ReportsPage />},
           {path:"settings",element: <SettingsPage />},
-          {path:"products",element: <ProductsPage />}
-
+          {path:"products",element: <ProductsPage />},
+          {path:"insights",element: <InsightsPage />}
         ],
       },
     ],

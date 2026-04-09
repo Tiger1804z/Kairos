@@ -47,6 +47,7 @@ import { shopifyCallback } from "./controllers/shopifyController";
 import costRoutes from "./routes/costRoutes";
 import productRoutes from "./routes/productRoutes";
 import profitabilityRoutes from "./routes/profitabilityRoutes";
+import insightRoutes from "./routes/insightRoutes";
 
 
 dotenv.config();
@@ -95,6 +96,7 @@ app.use("/shopify", shopifyRoutes);
 app.use("/costs", costRoutes);
 app.use("/products", productRoutes);
 app.use("/profitability", profitabilityRoutes);
+app.use("/insights", insightRoutes);
 
 const PORT = process.env.PORT || 3000;
 

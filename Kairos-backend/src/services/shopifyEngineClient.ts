@@ -40,6 +40,41 @@ export const computeProfitability = async (payload: {
     order_items: {product_id: string; quantity: number; unit_price: number;}[];
     product_costs: {product_id: string; cost_per_unit: number;}[];
 }): Promise<ProfitabilitySnapshot[]> => {
-    const res = await axios.post(`${ENGINE_URL}/profit/compute`, payload, { timeout: 10_000 }); 
+    const res = await axios.post(`${ENGINE_URL}/profit/compute`, payload, { timeout: 10_000 });
     return res.data.snapshots
+};
+
+export type InsightResult = {
+    type: string;
+    product_id: string;
+    title: string;
+    description: string;
+    severity: "info" | "warning" | "critical";
+    value: number;
+};
+
+export const computeInsights = async (payload: {
+    business_id: number;
+    period_start: string;
+    period_end: string;
+    snapshots: {
+        product_id: string;
+        product_name: string;
+        revenue: number;
+        cogs: number;
+        gross_profit: number;
+        gross_margin_pct: number;
+        units_sold: number;
+        has_cost: boolean;
+    }[];
+    order_items: {
+        product_id: string;
+        quantity: number;
+        unit_price: number;
+        original_price: number;
+        refunded_amount: number;
+    }[];
+}): Promise<InsightResult[]> => {
+    const res = await axios.post(`${ENGINE_URL}/insights/compute`, payload, { timeout: 10_000 });
+    return res.data.insights;
 };

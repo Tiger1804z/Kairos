@@ -8,6 +8,7 @@ import {
   LogOut,
   ArrowLeftRight,
   Package,
+  Lightbulb,
 } from "lucide-react";  // icônes provenant de la librairie lucide-react
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../auth/AuthContext";
@@ -20,6 +21,7 @@ const nav = [
   { to: "/dashboard/reports", label: "Reports", icon: FileText },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
   { to: "/dashboard/products", label: "Products", icon: Package },
+  { to: "/dashboard/insights", label: "Insights", icon: Lightbulb },
 ];
 
 export default function Sidebar() {

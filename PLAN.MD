@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-04-08
-**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-6 complet ✅
+**Dernière mise à jour :** 2026-04-09
+**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-7 complet ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
-**Focus actuel :** 🧠 **Semaine 7** — Insight Engine
+**Focus actuel :** 🧪 **Semaine 8** — Données de test réalistes + validation end-to-end
 
 ---
 
@@ -320,13 +320,24 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 - [x] Stockage `ProfitabilitySnapshot` + migration `@@unique` ✅ (2026-04-08)
 - [x] Afficher marge brute dans la page Produits (vert/orange/rouge) ✅ (2026-04-08)
 
-### Semaine 7 — Insight Engine  ← **FOCUS ACTUEL**
-- [ ] Insight Engine Python (6 insights)
-- [ ] Stockage `Insight` en DB
-- [ ] Page Insights dans le frontend
-- [ ] Cartes visuelles par sévérité
+### Semaine 7 — Insight Engine ✅
+- [x] `insight_engine.py` : 6 insights (true_top_product, negative_margin_alert, low_margin_warning, missing_cost_alert, refund_impact, discount_erosion) ✅ (2026-04-09)
+- [x] Nouveaux modèles Pydantic : `SnapshotInput`, `OrderItemDetailInput`, `InsightRequest` ✅ (2026-04-09)
+- [x] Route Python `POST /insights/compute` ✅ (2026-04-09)
+- [x] `insightController.ts` + `insightRoutes.ts` ✅ (2026-04-09)
+- [x] `insightService.ts` (frontend) ✅ (2026-04-09)
+- [x] `InsightsPage.tsx` : cards par sévérité + bouton Recalculer ✅ (2026-04-09)
+- [x] Lien Insights dans Sidebar ✅ (2026-04-09)
+- [x] Fix doublons : déduplication snapshots + deleteMany global ✅ (2026-04-09)
 
-### Semaine 8 — Chat enrichi
+### Semaine 8 — Données de test + Validation end-to-end  ← **FOCUS ACTUEL**
+- [ ] Ajouter des orders variés dans Shopify dev store (marges négatives, faibles, manquantes)
+- [ ] Ajouter des produits vendus sans coût → valider `missing_cost_alert`
+- [ ] Ajouter des orders remboursés → valider `refund_impact`
+- [ ] Valider les 6 insights avec données réalistes
+- [ ] Vérifier pipeline complet : sync → profitabilité → insights
+
+### Semaine 9 — Chat enrichi
 - [ ] `ChatContextBuilder` Python
 - [ ] Intégration `ProfitabilitySnapshot` + `Insight` dans le contexte
 - [ ] Modifier `aiController.ts` pour appeler Python context

@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from app.models import ProfitabilityRequest
+from app.models import ProfitabilityRequest, InsightRequest
+from app.insight_engine import compute_insights
 
 load_dotenv()
 
@@ -63,5 +64,18 @@ def compute_profit(request: ProfitabilityRequest):
         })
     
     return {"business_id": request.business_id, "snapshots": snapshots}
-            
-            
+
+
+# -----------------------------------------------------------------------------
+# Insight Engine (Semaine 7)
+# -----------------------------------------------------------------------------
+@app.post("/insights/compute")
+def compute_insights_route(request: InsightRequest):
+    insights = compute_insights(request)
+    return {
+        "business_id": request.business_id,
+        "period_start": request.period_start,
+        "period_end": request.period_end,
+        "insights": insights,
+        "count": len(insights),
+    }

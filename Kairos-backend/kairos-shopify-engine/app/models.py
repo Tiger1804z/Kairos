@@ -16,3 +16,34 @@ class ProfitabilityRequest(BaseModel):
     period_end: str  # format "YYYY-MM-DD"
     order_items: list[OrderItemInput]
     product_costs: list[ProductCostInput]
+
+
+# -----------------------------------------------------------------------------
+# Insight Engine models
+# -----------------------------------------------------------------------------
+
+class SnapshotInput(BaseModel):
+    product_id: str
+    product_name: str
+    revenue: float
+    cogs: float
+    gross_profit: float
+    gross_margin_pct: float
+    units_sold: int
+    has_cost: bool
+
+
+class OrderItemDetailInput(BaseModel):
+    product_id: str
+    quantity: int
+    unit_price: float          # prix payé réellement
+    original_price: float      # prix catalogue (avant remise)
+    refunded_amount: float     # montant remboursé sur cette ligne
+
+
+class InsightRequest(BaseModel):
+    business_id: int
+    period_start: str
+    period_end: str
+    snapshots: list[SnapshotInput]
+    order_items: list[OrderItemDetailInput]
