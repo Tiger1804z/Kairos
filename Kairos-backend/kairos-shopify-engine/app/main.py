@@ -3,8 +3,11 @@ from __future__ import annotations
 import os
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from app.models import ProfitabilityRequest, InsightRequest
+from app.models import ProfitabilityRequest, InsightRequest, ChatRequest
 from app.insight_engine import compute_insights
+from app.chat_context_builder import build_context
+from app.llm_service import ask_llm
+
 
 load_dotenv()
 
@@ -78,4 +81,18 @@ def compute_insights_route(request: InsightRequest):
         "period_end": request.period_end,
         "insights": insights,
         "count": len(insights),
+    }
+
+# -----------------------------------------------------------------------------
+# Chat enrichi (Semaine 9)
+# -----------------------------------------------------------------------------
+@app.post("/chat/compute")
+def chat_compute(request: ChatRequest):
+    context = build_context(request)
+    answer = ask_llm(context, request.question)
+    
+    return {
+        "business_id": request.business_id,
+        "question": request.question,
+        "answer": answer,
     }

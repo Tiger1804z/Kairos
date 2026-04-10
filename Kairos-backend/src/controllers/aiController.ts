@@ -7,10 +7,13 @@ import {
 } from "../services/aiService";
 import { isSafeSQL } from "../services/sqlGuard";
 
+import { askShopifyChat } from "../services/shopifyEngineClient";
+
 // logging
 import { createQueryLogService } from "../services/queryLogsService";
 import { createReportService } from "../services/reportsService";
 import { QueryActionType, QueryStatus, ReportType } from "../../generated/prisma/client";
+
 
 export const aiDailyFinanceSummary = async (req: Request, res: Response) => {
   const t0 = Date.now();
@@ -294,4 +297,64 @@ const safeLogError = async (args: {
   } catch (e) {
     console.error("Failed to create query log (error):", e);
   }
+};
+
+export const aiAskShopify = async (req: Request, res: Response) => {
+  const businessId = parseInt(req.params.businessId ??"", 10);
+  const question = req.body.question?.toString()?.trim();
+
+
+  if (!question || question.length < 3) {
+    return res.status(400).json({ error: "QUESTION_REQUIRED" });
+  }
+
+  // 1. Fetch snapshots avec le nom du produit (include)
+  const allSnapshots = await prisma.profitabilitySnapshot.findMany({
+    where: { business_id: businessId },
+    orderBy: { period_end: "desc" },
+    include: { product: { select: { title: true } } },
+  });
+
+  // Garder le plus récent par produit
+  const seen = new Set<string>();
+  const snapshots = allSnapshots.filter((s) => {
+    if (seen.has(s.product_id)) return false;
+    seen.add(s.product_id);
+    return true;
+  });
+
+  // 2. Fetch des insights
+  const insights = await prisma.insight.findMany({
+    where: {business_id: businessId},
+    orderBy: { created_at: "desc" },
+  });
+
+  // 3. Appel Python
+  const result = await askShopifyChat({
+    business_id: businessId,
+    question,
+    snapshots: snapshots.map((s) => ({
+      product_id: s.product_id,
+      product_name: s.product?.title ?? s.product_id,
+      revenue: Number(s.revenue),
+      cogs: Number(s.cogs),
+      gross_profit: Number(s.gross_profit),
+      gross_margin_pct: Number(s.gross_margin_pct),
+      units_sold: s.units_sold,
+      has_cost: Number(s.cogs) > 0,
+    })),
+    insights: insights.map((i) => {
+      const meta = (i.metadata ?? {}) as { product_id?: string; value?: number };
+      return {
+        type: i.type,
+        title: i.title,
+        description: i.message,
+        severity: i.severity,
+        product_id: meta.product_id ?? "",
+        value: meta.value ?? 0,
+      };
+    }),
+  });
+
+  return res.status(200).json({answer: result.answer});
 };

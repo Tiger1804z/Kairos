@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-04-09
-**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-7 complet ✅
+**Dernière mise à jour :** 2026-04-10
+**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-9 chat complet ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
-**Focus actuel :** 🧪 **Semaine 8** — Données de test réalistes + validation end-to-end
+**Focus actuel :** 📊 **Semaine 9** — Dashboard + Polish
 
 ---
 
@@ -330,14 +330,17 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 - [x] Lien Insights dans Sidebar ✅ (2026-04-09)
 - [x] Fix doublons : déduplication snapshots + deleteMany global ✅ (2026-04-09)
 
-### Semaine 8 — Données de test + Validation end-to-end  ← **FOCUS ACTUEL**
-- [ ] Ajouter des orders variés dans Shopify dev store (marges négatives, faibles, manquantes)
-- [ ] Ajouter des produits vendus sans coût → valider `missing_cost_alert`
-- [ ] Ajouter des orders remboursés → valider `refund_impact`
-- [ ] Valider les 6 insights avec données réalistes
-- [ ] Vérifier pipeline complet : sync → profitabilité → insights
+### Semaine 8 — Données de test + Validation end-to-end ✅
+- [x] `prisma/seedShopifyTestData.ts` : seed DB direct via Prisma (6 scénarios) ✅ (2026-04-09)
+- [x] Valider `negative_margin_alert` — The Collection Snowboard: Oxygen ✅ (2026-04-09)
+- [x] Valider `low_margin_warning` — The Complete Snowboard ✅ (2026-04-09)
+- [x] Valider `missing_cost_alert` — The Draft Snowboard ✅ (2026-04-09)
+- [x] Valider `refund_impact` — The Collection Snowboard: Liquid ✅ (2026-04-09)
+- [x] Valider `true_top_product` — The 3p Fulfilled Snowboard ✅ (2026-04-09)
+- [x] Valider `discount_erosion` — The Compare at Price Snowboard ✅ (2026-04-09)
+- [x] Pipeline complet validé : seed DB → profitabilité → insights → UI ✅ (2026-04-09)
 
-### Semaine 9 — Chat enrichi
+### Semaine 9 — Chat enrichi  ← **FOCUS ACTUEL**
 - [ ] `ChatContextBuilder` Python
 - [ ] Intégration `ProfitabilitySnapshot` + `Insight` dans le contexte
 - [ ] Modifier `aiController.ts` pour appeler Python context
@@ -362,12 +365,13 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 | Shopify OAuth + Sync | 100% | 100% | ✅ Fait |
 | Modèles Prisma Shopify | 100% | — | ✅ Fait |
 | Service Python FastAPI | 100% | — | ✅ Fait (health check) |
-| Cost Entry (manuel) | 0% | 0% | ❌ À faire |
-| Import CSV coûts | 0% | 0% | ❌ À faire |
-| Profitability Engine | 0% | — | ❌ À faire |
-| Insight Engine | 0% | — | ❌ À faire |
-| Page Produits + Marges | — | 0% | ❌ À faire |
-| Page Insights | — | 0% | ❌ À faire |
+| Cost Entry (manuel) | 100% | 100% | ✅ Fait |
+| Import CSV coûts | 100% | 100% | ✅ Fait |
+| Profitability Engine | 100% | 100% | ✅ Fait |
+| Insight Engine | 100% | 100% | ✅ Fait |
+| Page Produits + Marges | — | 100% | ✅ Fait |
+| Page Insights | — | 100% | ✅ Fait |
+| Validation end-to-end (6 insights) | 100% | 100% | ✅ Fait |
 | Chat enrichi (profitabilité) | 0% | 0% | ❌ À faire |
 
 ---

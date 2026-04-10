@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import { api } from "../../lib/api";
 import BusinessSelector from "../dashboard/BusinessSelector";
+import ChatDrawer from "../kairos/ChatDrawer";
 
 type MeUser = {
   id_user: number;
@@ -99,6 +100,7 @@ export default function DashboardLayout() {
           </div>
         </main>
       </div>
+      <ChatDrawer />
     </div>
   );
 }

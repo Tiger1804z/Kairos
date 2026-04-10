@@ -47,3 +47,21 @@ class InsightRequest(BaseModel):
     period_end: str
     snapshots: list[SnapshotInput]
     order_items: list[OrderItemDetailInput]
+    
+# -----------------------------------------------------------------------------
+# Chat enrichi models (Semaine 9)
+# -----------------------------------------------------------------------------
+
+class InsightContextInput(BaseModel):
+    type: str
+    title: str
+    description: str
+    severity: str  # "info"|"warning"|"critical"
+    product_id: str
+    value: float
+    
+class ChatRequest(BaseModel):
+    business_id: int
+    question: str
+    snapshots: list[SnapshotInput]
+    insights: list[InsightContextInput]

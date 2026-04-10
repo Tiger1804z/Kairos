@@ -78,3 +78,37 @@ export const computeInsights = async (payload: {
     const res = await axios.post(`${ENGINE_URL}/insights/compute`, payload, { timeout: 10_000 });
     return res.data.insights;
 };
+
+export type ChatAnswer = {
+    business_id: number;
+    question: string;
+    answer: string;
+};
+
+export const askShopifyChat = async (payload: {
+    business_id: number;
+    question: string;
+    snapshots: {
+        product_id: string;
+        product_name: string;
+        revenue: number;
+        gross_profit: number;
+        gross_margin_pct: number;
+        units_sold: number;
+        has_cost: boolean;
+    }[];
+    insights: {
+        type: string;
+        title: string;
+        description: string;
+        severity: string;
+        product_id: string;
+        value: number;
+    }[];
+}): Promise<ChatAnswer> => {
+    const res = await axios.post(`${ENGINE_URL}/chat/compute`, payload, { timeout: 30_000 });
+    return res.data;
+};
+
+
+    
