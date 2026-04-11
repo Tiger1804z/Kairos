@@ -1,27 +1,21 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Users,
-  ClipboardList,
-  FileText,
   Settings,
   LogOut,
-  ArrowLeftRight,
   Package,
   Lightbulb,
 } from "lucide-react";  // icônes provenant de la librairie lucide-react
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../auth/AuthContext";
 
+// MVP sidebar — core Shopify profit intelligence only
+// Transactions / Clients / Engagements / Reports sont hors scope MVP (code conservé, routes accessibles par URL directe)
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/dashboard/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { to: "/dashboard/clients", label: "Clients", icon: Users },
-  { to: "/dashboard/engagements", label: "Engagements", icon: ClipboardList },
-  { to: "/dashboard/reports", label: "Reports", icon: FileText },
-  { to: "/dashboard/settings", label: "Settings", icon: Settings },
   { to: "/dashboard/products", label: "Products", icon: Package },
   { to: "/dashboard/insights", label: "Insights", icon: Lightbulb },
+  { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar() {

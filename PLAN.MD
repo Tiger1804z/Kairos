@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
 **Dernière mise à jour :** 2026-04-10
-**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaine 1-9 chat complet ✅
+**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaines 1-9 + Dashboard MVP ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
-**Focus actuel :** 📊 **Semaine 9** — Dashboard + Polish
+**Focus actuel :** ✅ **Dashboard MVP terminé** — Prochaine étape : Bloc 1 Demo Mode
 
 ---
 
@@ -340,17 +340,190 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 - [x] Valider `discount_erosion` — The Compare at Price Snowboard ✅ (2026-04-09)
 - [x] Pipeline complet validé : seed DB → profitabilité → insights → UI ✅ (2026-04-09)
 
-### Semaine 9 — Chat enrichi  ← **FOCUS ACTUEL**
-- [ ] `ChatContextBuilder` Python
-- [ ] Intégration `ProfitabilitySnapshot` + `Insight` dans le contexte
-- [ ] Modifier `aiController.ts` pour appeler Python context
-- [ ] Test : *"Quel produit je devrais arrêter de vendre ?"*
+### Semaine 9 — Chat enrichi ✅
+- [x] `chat_context_builder.py` : construit contexte enrichi depuis snapshots + insights ✅ (2026-04-10)
+- [x] `llm_service.py` : appel OpenAI avec contexte + question ✅ (2026-04-10)
+- [x] Route Python `POST /chat/compute` ✅ (2026-04-10)
+- [x] `aiAskShopify` dans `aiController.ts` : fetch DB → appel Python ✅ (2026-04-10)
+- [x] Route `POST /ai/shopify/:businessId/ask` ✅ (2026-04-10)
+- [x] `ChatDrawer.tsx` : drawer flottant accessible depuis toutes les pages ✅ (2026-04-10)
+- [x] `useAskKairos` migré vers le nouveau endpoint Shopify ✅ (2026-04-10)
+- [x] Test validé : réponses avec vrais noms de produits et marges réelles ✅ (2026-04-10)
 
-### Semaine 9 — Dashboard + Polish
-- [ ] Dashboard : Revenu / Profit réel / Marge moyenne
-- [ ] Vue produits avec colonne marge
-- [ ] CTA "coûts manquants" sur le dashboard
-- [ ] Indicateurs visuels (vert/orange/rouge)
+### Semaine 9 — Dashboard + Polish  ← **FOCUS ACTUEL**
+- [x] Dashboard Shopify KPIs Row 1 : Total Revenue / Real Profit / Avg Margin / Missing Costs ✅ (2026-04-10)
+- [x] Dashboard Shopify KPIs Row 2 : Losing Money / Low Margin / Top Profit Product / Revenue at Risk ✅ (2026-04-10)
+- [x] Panel "Top Products by Profit" ✅ (2026-04-10)
+- [x] Panel "Highest Risk Products" ✅ (2026-04-10)
+- [x] Panel "Active Insights" (résumé des 3 insights les plus critiques) ✅ (2026-04-10)
+- [x] Suppression blocs legacy (Total Clients / Active Engagements / Top Clients / Expenses by Category) ✅ (2026-04-10)
+- [x] CTA "Fix in Products →" sur la carte Missing Costs ✅ (2026-04-10)
+- [x] Liens "View all →" / "See insights →" dans les panels ✅ (2026-04-10)
+- [x] Suppression du gros bloc chat/AI hero du haut — remplacé par Executive Summary compact ✅ (2026-04-10)
+- [x] Header deux colonnes : Welcome + status pills cliquables (signaux critiques temps réel) ✅ (2026-04-10)
+- [x] Copy : "Losing Money" → "Products Losing Money" ✅ (2026-04-10)
+- [x] Copy : "Revenue at Risk" sous-texte clarifié → "Negative margin or missing cost" ✅ (2026-04-10)
+
+---
+
+## 🚀 PHASE — DEMO & PRODUCT EXPERIENCE
+
+> Objectif : transformer Kairos en copilote business, démo impressionnante, outil qui dit quoi faire.
+> Chaque bloc augmente la valeur perçue du produit.
+
+---
+
+### Bloc 0 — Sidebar Simplification (QUICK WIN — faire en premier)
+
+**Objectif :** Aligner immédiatement la navigation visible avec le positionnement MVP. Zéro backend, 5 minutes de frontend.
+
+**Tâches :**
+- [ ] Retirer Transactions / Clients / Engagements / Reports de la sidebar
+- [ ] Garder Dashboard / Products / Insights / Settings / Sign out
+- [ ] Vérifier que les routes directes restent fonctionnelles (pas de 404)
+
+> Voir section `## 🗺️ Navigation MVP — Sidebar Positioning` pour le rationnel complet.
+
+---
+
+### Bloc 1 — Demo Mode (PRIORITÉ MAX)
+
+**Objectif :** Kairos démo-ready en 1 clic. Plus besoin de seed manuel.
+
+**Architecture :**
+- Endpoint : `POST /demo/:businessId/load`
+  - appelle clearTestData + seed (logique existante dans `seedShopifyTestData.ts`)
+  - appelle `POST /profitability/:businessId/compute`
+  - appelle `POST /insights/:businessId/compute`
+  - retourne `{ success: true, products: N, insights: N }`
+- Frontend : bouton "Load Demo Data" dans le Dashboard ou Settings
+  - 1 clic → spinner → refresh UI automatique
+  - état visible : "Données chargées — dashboard actif"
+
+**Tâches :**
+- [ ] `demoController.ts` + `demoRoutes.ts` : `POST /demo/:businessId/load`
+- [ ] Orchestration seed → profitability → insights dans le controller
+- [ ] Bouton "Load Demo Data" dans le Dashboard (visible si pas de données)
+- [ ] Refresh automatique du dashboard après chargement
+
+---
+
+### Bloc 2 — Insight Engine V2 — Actionable Insights
+
+**Objectif :** Passer d'un ton passif à des décisions business directes.
+
+**Principe :** même structure, même sévérité — seulement le texte change.
+- Avant : *"Ce produit a une marge négative de -15%"*
+- Après : *"Tu perds 12$ à chaque vente de ce produit. Action : augmenter le prix ou l'arrêter."*
+
+**Contraintes :** direct, orienté action, court, impactant. Pas de jargon.
+
+**Tâches :**
+- [ ] Réécrire les messages des 6 insights dans `insight_engine.py` (ton actif + chiffre + action)
+- [ ] Ajouter un champ `action` (string courte) dans `InsightResult` Python + modèle Pydantic
+- [ ] Stocker `action` dans `metadata` JSON de `Insight` en DB (pas de migration nécessaire)
+- [ ] Afficher l'action recommandée dans `InsightsPage.tsx` (ligne sous la description)
+
+---
+
+### Bloc 3 — Chat Persistant
+
+**Objectif :** L'utilisateur voit son historique de conversation, pas juste la dernière réponse.
+
+**Architecture choisie :**
+- **Stockage : DB** (pas localStorage — SaaS = données persistantes cross-device)
+- **Limite : 30 messages** par business (les plus récents)
+- **Reset :** bouton "New Chat" manuel + auto-reset si dernier message > 7 jours
+- **Scope : business_id** (cohérent avec tout le reste)
+
+**Nouveau modèle Prisma :**
+```prisma
+model ChatMessage {
+  id          String   @id @default(uuid())
+  business_id Int
+  role        String   // "user" | "assistant"
+  content     String
+  created_at  DateTime @default(now())
+  business    Business @relation(fields: [business_id], references: [id_business], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([created_at])
+  @@map("chat_messages")
+}
+```
+
+**Endpoints :**
+- `GET /chat/:businessId/messages` — retourne les 30 derniers messages
+- `POST /chat/:businessId/message` — envoie question → appel Python → stocke user + assistant → retourne réponse
+- `DELETE /chat/:businessId/messages` — reset (New Chat)
+
+**Comportement auto-reset :** si le dernier message a > 7 jours, `GET /messages` retourne `[]` et efface automatiquement.
+
+**Tâches :**
+- [ ] Migration Prisma : modèle `ChatMessage`
+- [ ] `chatController.ts` : `getMessages`, `sendMessage`, `resetMessages`
+- [ ] `chatRoutes.ts` : 3 endpoints
+- [ ] Migrer `aiAskShopify` → `sendMessage` (stocke les échanges)
+- [ ] `ChatDrawer.tsx` : afficher historique + bouton "New Chat"
+- [ ] `useChat.ts` : hook dédié (remplace `useAskKairos` pour le chat)
+
+---
+
+### Bloc 4 — Chat Expand (Grande Vue)
+
+**Objectif :** Lire des réponses longues, voir l'historique complet, meilleure zone d'écriture.
+
+**Architecture choisie : modal large** (pas page dédiée)
+- Garde le concept "accessible partout"
+- Pas de routing supplémentaire
+- État partagé entre drawer et modal (même hook `useChat`)
+- Transition : bouton "⤢" dans le header du drawer → ouvre le modal
+
+**Comportement :**
+- Drawer (compact) : question courte + dernière réponse + bouton expand
+- Modal (full) : historique complet scrollable + grande zone de saisie
+- Les deux utilisent le même `useChat` → état synchronisé
+
+**Tâches :**
+- [ ] `ChatModal.tsx` : vue étendue avec historique + input
+- [ ] Bouton "⤢ Expand" dans le header du `ChatDrawer`
+- [ ] `useChat.ts` partagé entre drawer et modal
+- [ ] Transition animée drawer → modal
+
+---
+
+### Bloc 5 — UI ↔ AI (Copilote Interactif)
+
+**Objectif :** Passer de "dashboard passif" à "copilote actif".
+
+**Interactions :**
+- Produit en rouge dans `ProductsPage` si `gross_margin_pct < 0`
+- Clic sur un insight → scroll vers le produit concerné dans `ProductsPage`
+- Produits avec coûts manquants : badge "⚠ Coût manquant" visible
+
+**Architecture :**
+- Pas de changement backend — 100% frontend
+- `InsightsPage` : lien vers `/products?highlight=<product_id>` sur chaque insight critique
+- `ProductsPage` : lit `?highlight` dans l'URL → scroll + animation sur la ligne
+
+**Tâches :**
+- [ ] `ProductsPage` : ligne rouge si marge < 0, badge warning si pas de coût
+- [ ] `InsightsPage` : bouton "Voir le produit →" sur les insights critique/warning
+- [ ] Navigation insight → produit via query param `?highlight=<product_id>`
+- [ ] Animation scroll + highlight sur la ligne produit ciblée
+
+---
+
+### Ordre d'implémentation recommandé
+
+| Ordre | Bloc | Pourquoi |
+|---|---|---|
+| 1 | Dashboard KPIs | En cours — finir ce qui est commencé |
+| 2 | Demo Mode | Fondation démo — sans données rien ne s'affiche |
+| 3 | Insight Engine V2 | Python pur, zéro migration, impact immédiat |
+| 4 | Chat Persistant | Nouveau modèle Prisma → base du chat expand |
+| 5 | Chat Expand | Dépend du chat persistant pour l'historique |
+| 6 | UI ↔ AI | Plus complexe, en dernier |
 
 ### Semaine 10 — Tests + Validation
 - [ ] Tests end-to-end avec dev store Shopify
@@ -372,7 +545,13 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 | Page Produits + Marges | — | 100% | ✅ Fait |
 | Page Insights | — | 100% | ✅ Fait |
 | Validation end-to-end (6 insights) | 100% | 100% | ✅ Fait |
-| Chat enrichi (profitabilité) | 0% | 0% | ❌ À faire |
+| Chat enrichi (profitabilité) | 100% | 100% | ✅ Fait |
+| Dashboard Shopify (KPIs + panels) | 100% | 100% | ✅ Fait |
+| Demo Mode (1 clic) | 0% | 0% | ❌ À faire |
+| Insight Engine V2 (actionable) | 0% | 0% | ❌ À faire |
+| Chat Persistant (DB) | 0% | 0% | ❌ À faire |
+| Chat Expand (modal) | 0% | 0% | ❌ À faire |
+| UI ↔ AI (interactions) | 0% | 0% | ❌ À faire |
 
 ---
 
@@ -403,6 +582,73 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 3. **Python = intelligence, TypeScript = produit** — calculs → Python, auth/API → TypeScript
 4. **Le chat s'enrichit sans être refactorisé** — on ajoute un contexte de profitabilité, on ne remplace pas
 5. **Shopify d'abord** — on valide avant d'élargir
+6. **La sidebar est un élément de positionnement produit** — voir section Navigation MVP ci-dessous
+
+---
+
+## 🗺️ Navigation MVP — Sidebar Positioning
+
+> **Décision produit — 2026-04-10**
+> La sidebar n'est pas un menu de navigation. C'est le premier signal que l'utilisateur reçoit sur ce que fait le produit.
+
+### Contexte
+
+Kairos a été initialement construit comme un outil généraliste (CRM / ERP / dashboard PME). Ces pages existent encore en code, mais elles ne correspondent plus au positionnement actuel du produit.
+
+Afficher ces pages dans la sidebar envoie un mauvais signal en démo et brouille la promesse principale :
+*"Connecte ta boutique Shopify, entre tes coûts, vois ton vrai profit par produit."*
+
+### Décision
+
+Pour le MVP actuel, **la sidebar principale doit refléter uniquement le core actif de Kairos** : Shopify profit intelligence.
+
+#### Pages visibles dans la sidebar (MVP)
+
+| Page | Rôle |
+|------|------|
+| Dashboard | Vue KPIs — revenu, profit réel, marge |
+| Products | Analyse produit par produit — marges, coûts |
+| Insights | Alertes et recommandations actionnables |
+| Settings | Connexion Shopify + configuration |
+| Sign out | — |
+
+#### Pages à retirer / masquer de la sidebar
+
+| Page | Statut |
+|------|--------|
+| Transactions | Hors scope MVP Shopify — reste en code |
+| Clients | Hors scope MVP Shopify — reste en code |
+| Engagements | Hors scope MVP Shopify — reste en code |
+| Reports | Hors scope MVP Shopify — reste en code |
+
+### Rationnel produit / UX
+
+- **La sidebar raconte une histoire.** Chaque item visible dit : *"voilà ce que ce produit fait."* Des items hérités dilue cette histoire.
+- **En démo, l'interface doit être immédiatement lisible.** Dashboard → Products → Insights → Chat : c'est le parcours. Chaque page hors de ce parcours est du bruit cognitif.
+- **Le code des pages masquées n'est pas supprimé.** Il reste disponible comme legacy pour une éventuelle réintroduction (ex : Reports en Phase 2). L'objectif est d'épurer la perception, pas de supprimer du travail.
+- **Le positionnement cible est clair :** performance business + analyse produit + marge + insights + copilote AI. Clients / Transactions / Engagements / Reports renvoient à un CRM / ERP — ce n'est pas ce que Kairos est aujourd'hui.
+
+### Note produit
+
+> Même si le code de ces pages existe encore dans la codebase, elles ne doivent plus apparaître dans la navigation principale tant qu'elles ne renforcent pas la promesse centrale du MVP. Elles peuvent rester comme pages accessibles par URL directe (ex: `/clients`) sans être exposées dans la sidebar.
+
+### Checklist d'implémentation
+
+- [ ] Retirer `Transactions` du rendu conditionnel de la sidebar
+- [ ] Retirer `Clients` du rendu conditionnel de la sidebar
+- [ ] Retirer `Engagements` du rendu conditionnel de la sidebar
+- [ ] Retirer `Reports` du rendu conditionnel de la sidebar
+- [ ] Vérifier que Dashboard, Products, Insights, Settings restent accessibles
+- [ ] Vérifier que les routes directes (`/clients`, etc.) restent fonctionnelles (pas de 404)
+
+### Impact produit attendu
+
+| Avant | Après |
+|-------|-------|
+| Sidebar généraliste — 8+ items | Sidebar focalisée — 4 items core |
+| Message implicite : "CRM / ERP / outil PME" | Message implicite : "profit intelligence for Shopify" |
+| En démo : l'utilisateur cherche où regarder | En démo : le parcours est évident |
+| Positionnement dilué | Positionnement aligné avec la promesse MVP |
 
 ---
 
