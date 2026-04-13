@@ -49,6 +49,7 @@ export type InsightResult = {
     product_id: string;
     title: string;
     description: string;
+    action: string | null;
     severity: "info" | "warning" | "critical";
     value: number;
 };
@@ -75,7 +76,7 @@ export const computeInsights = async (payload: {
         refunded_amount: number;
     }[];
 }): Promise<InsightResult[]> => {
-    const res = await axios.post(`${ENGINE_URL}/insights/compute`, payload, { timeout: 10_000 });
+    const res = await axios.post(`${ENGINE_URL}/insights/compute`, payload, { timeout: 30_000 });
     return res.data.insights;
 };
 
@@ -88,6 +89,7 @@ export type ChatAnswer = {
 export const askShopifyChat = async (payload: {
     business_id: number;
     question: string;
+    history: { role: "user" | "assistant"; content: string }[];
     snapshots: {
         product_id: string;
         product_name: string;
@@ -109,6 +111,5 @@ export const askShopifyChat = async (payload: {
     const res = await axios.post(`${ENGINE_URL}/chat/compute`, payload, { timeout: 30_000 });
     return res.data;
 };
-
 
     

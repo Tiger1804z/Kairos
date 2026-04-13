@@ -97,6 +97,7 @@ export async function handleComputeInsights(req: Request, res: Response) {
         severity: insight.severity,
         title: insight.title,
         message: insight.description,
+        action: insight.action ?? null,
         metadata: { product_id: insight.product_id, value: insight.value },
         period_start: periodStart,
         period_end: periodEnd,

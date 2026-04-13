@@ -54,6 +54,7 @@ model Business {
   orders                   Order[]
   profitability_snapshots  ProfitabilitySnapshot[]
   insights                 Insight[]
+  chat_conversations       ChatConversation[]
 
   @@index([owner_id])
   @@index([is_active])
@@ -417,6 +418,7 @@ model Insight {
   severity     InsightSeverity
   title        String
   message      String
+  action       String?
   metadata     Json?
   period_start DateTime?
   period_end   DateTime?
@@ -427,6 +429,38 @@ model Insight {
   @@index([severity])
   @@index([created_at])
   @@map("insights")
+}
+
+model ChatConversation {
+  id          Int           @id @default(autoincrement())
+  business_id Int
+  user_id     Int
+  title       String?       @db.VarChar(255)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  business    Business      @relation(fields: [business_id], references: [id_business], onDelete: Cascade)
+  messages    ChatMessage[]
+
+  @@index([business_id])
+  @@index([user_id])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id              Int              @id @default(autoincrement())
+  conversation_id Int
+  role            ChatMessageRole
+  content         String
+  created_at      DateTime         @default(now())
+  conversation    ChatConversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id])
+  @@map("chat_messages")
+}
+
+enum ChatMessageRole {
+  user
+  assistant
 }
 
 enum CostSourceType {

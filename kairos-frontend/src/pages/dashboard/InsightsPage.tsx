@@ -36,6 +36,11 @@ function InsightCard({ insight }: { insight: Insight }) {
         </div>
         <p className="text-sm font-medium text-white">{insight.title}</p>
         <p className="text-xs text-white/60">{insight.message}</p>
+        {insight.action && (
+          <p className="text-xs font-medium text-white/40">
+            → {insight.action}
+          </p>
+        )}
       </div>
     </div>
   );

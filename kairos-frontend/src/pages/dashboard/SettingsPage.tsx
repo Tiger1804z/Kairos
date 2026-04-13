@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { Card } from "../../components/ui/Card";
 import { getShopifyStatus, connectShopify, triggerShopifySync } from "../../services/shopifyService";
+import { api } from "../../lib/api";
 
 type ShopifyStatus =
   | { connected: false }
@@ -24,6 +25,9 @@ export default function SettingsPage() {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [justConnected, setJustConnected] = useState(false);
+  const [loadingDemo, setLoadingDemo] = useState(false);
+  const [demoResult, setDemoResult] = useState<{ productsSeeded: number; insightsGenerated: number } | null>(null);
+  const [demoError, setDemoError] = useState<string | null>(null);
 
   // Détecter le redirect OAuth ?shopify=connected
   useEffect(() => {
@@ -65,6 +69,21 @@ export default function SettingsPage() {
       console.error("Sync error:", err);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleLoadDemo() {
+    if (!selectedBusiness) return;
+    setLoadingDemo(true);
+    setDemoResult(null);
+    setDemoError(null);
+    try {
+      const res = await api.post(`/demo/${selectedBusiness.id_business}/load`);
+      setDemoResult(res.data);
+    } catch (err: any) {
+      setDemoError(err?.response?.data?.error || err?.message || "Demo load failed");
+    } finally {
+      setLoadingDemo(false);
     }
   }
 
@@ -141,25 +160,32 @@ export default function SettingsPage() {
         )}
       </Card>
 
-      {/* Actions */}
+      {/* Demo */}
       <Card className="p-6">
-        <h2 className="text-lg font-medium mb-6">Actions</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Importer des données CSV supplémentaires</p>
-              <p className="text-xs text-white/40 mt-1">
-                Ajouter de nouvelles transactions depuis un fichier CSV — les données existantes ne sont pas effacées
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/onboarding", { state: { reimport: true, businessId: selectedBusiness.id_business } })}
-              className="px-4 py-2 rounded-lg bg-white/10 text-sm hover:bg-white/15 transition"
-            >
-              Re-import CSV
-            </button>
+        <h2 className="text-lg font-medium mb-2">Demo Data</h2>
+        <p className="text-xs text-white/40 mb-6">
+          Charge 6 scénarios de test (marges négatives, coûts manquants, remises…) et calcule automatiquement la profitabilité et les insights.
+        </p>
+
+        {demoResult && (
+          <div className="mb-4 rounded-lg bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400 ring-1 ring-emerald-500/20">
+            Données chargées — {demoResult.productsSeeded} produits · {demoResult.insightsGenerated} insights
           </div>
-        </div>
+        )}
+
+        {demoError && (
+          <div className="mb-4 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-400 ring-1 ring-red-500/20">
+            {demoError}
+          </div>
+        )}
+
+        <button
+          onClick={handleLoadDemo}
+          disabled={loadingDemo}
+          className="px-4 py-2 rounded-lg bg-accent text-sm font-semibold text-white hover:bg-accent/80 transition disabled:opacity-50"
+        >
+          {loadingDemo ? "Chargement…" : "Load Demo Data"}
+        </button>
       </Card>
     </div>
   );

@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-04-10
-**Progression globale :** Phase scolaire 100% ✅ — Nouveau produit : Semaines 1-9 + Dashboard MVP ✅
+**Dernière mise à jour :** 2026-04-13
+**Progression globale :** Phase scolaire 100% ✅ — Blocs 1-2-3 ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
-**Focus actuel :** ✅ **Dashboard MVP terminé** — Prochaine étape : Bloc 1 Demo Mode
+**Focus actuel :** ✅ **Bloc 4 Chat Expand terminé** — Prochaine étape : Bloc 5 UI ↔ AI
 
 ---
 
@@ -373,56 +373,74 @@ POST /documents/extract-costs   ← (Phase 2) extraction coûts PDF
 
 ---
 
-### Bloc 0 — Sidebar Simplification (QUICK WIN — faire en premier)
+### Bloc 0 — Sidebar Simplification ✅ (2026-04-10)
 
 **Objectif :** Aligner immédiatement la navigation visible avec le positionnement MVP. Zéro backend, 5 minutes de frontend.
 
 **Tâches :**
-- [ ] Retirer Transactions / Clients / Engagements / Reports de la sidebar
-- [ ] Garder Dashboard / Products / Insights / Settings / Sign out
-- [ ] Vérifier que les routes directes restent fonctionnelles (pas de 404)
+- [x] Retirer Transactions / Clients / Engagements / Reports de la sidebar ✅
+- [x] Garder Dashboard / Products / Insights / Settings / Sign out ✅
+- [x] Vérifier que les routes directes restent fonctionnelles (pas de 404) ✅
 
 > Voir section `## 🗺️ Navigation MVP — Sidebar Positioning` pour le rationnel complet.
 
 ---
 
-### Bloc 1 — Demo Mode (PRIORITÉ MAX)
+### Bloc 1 — Demo Mode (✅ TERMINÉ — 2026-04-11)
 
 **Objectif :** Kairos démo-ready en 1 clic. Plus besoin de seed manuel.
 
 **Architecture :**
 - Endpoint : `POST /demo/:businessId/load`
-  - appelle clearTestData + seed (logique existante dans `seedShopifyTestData.ts`)
-  - appelle `POST /profitability/:businessId/compute`
-  - appelle `POST /insights/:businessId/compute`
-  - retourne `{ success: true, products: N, insights: N }`
-- Frontend : bouton "Load Demo Data" dans le Dashboard ou Settings
-  - 1 clic → spinner → refresh UI automatique
-  - état visible : "Données chargées — dashboard actif"
+  - `ensureDemoProducts()` : crée les 6 produits démo si aucun produit Shopify (auto-suffisant)
+  - clearTestData → seed 6 scénarios → profitability → insights
+  - retourne `{ success: true, productsSeeded: 6, insightsGenerated: N }`
+- Frontend : bouton "Load Demo Data" dans Dashboard (si pas de données) + Settings (toujours)
+  - 1 clic → spinner → refresh UI automatique / message de confirmation
+  - Erreur affichée si Python down : message explicite avec commande de lancement
 
 **Tâches :**
-- [ ] `demoController.ts` + `demoRoutes.ts` : `POST /demo/:businessId/load`
-- [ ] Orchestration seed → profitability → insights dans le controller
-- [ ] Bouton "Load Demo Data" dans le Dashboard (visible si pas de données)
-- [ ] Refresh automatique du dashboard après chargement
+- [x] `demoController.ts` + `demoRoutes.ts` : `POST /demo/:businessId/load` ✅
+- [x] `ensureDemoProducts()` — demo auto-suffisant sans Shopify ✅
+- [x] Orchestration seed → profitability → insights dans le controller ✅
+- [x] Bouton "Load Demo Data" dans le Dashboard (visible si pas de données) ✅
+- [x] Bouton "Load Demo Data" dans Settings (toujours visible) ✅
+- [x] Refresh automatique du dashboard après chargement ✅
+- [x] Affichage d'erreur (Python down, etc.) dans UI ✅
+- [x] **BUG FIXÉ** : `Unique constraint failed on ('shopify_line_item_id')` → nettoyage direct par `shopify_line_item_id: { startsWith: TEST_PREFIX }` sans dépendre du parent Order ✅
 
 ---
 
-### Bloc 2 — Insight Engine V2 — Actionable Insights
+### Bloc 2 — Insight Engine V2 — Hybrid Architecture (✅ TERMINÉ — 2026-04-11)
 
-**Objectif :** Passer d'un ton passif à des décisions business directes.
+**Décision produit :** Kairos ne confie pas la détection des problèmes au LLM. Kairos détecte avec des règles métier déterministes, puis utilise l'IA pour rédiger un insight plus humain, plus premium et plus actionnable.
 
-**Principe :** même structure, même sévérité — seulement le texte change.
-- Avant : *"Ce produit a une marge négative de -15%"*
-- Après : *"Tu perds 12$ à chaque vente de ce produit. Action : augmenter le prix ou l'arrêter."*
+**Architecture hybride :**
+```
+Detection layer (Python déterministe)
+  → produit des raw_facts structurés { type, product_name, métriques clés, sévérité }
 
-**Contraintes :** direct, orienté action, court, impactant. Pas de jargon.
+LLM Insight Writer (OpenAI via llm_service.py)
+  → reçoit les raw_facts par type d'insight
+  → rédige title + message + action en langage humain court et direct
+
+Fallback templated (Python)
+  → si OpenAI échoue (timeout, erreur, quota)
+  → texte pré-rédigé par type avec métriques injectées
+  → aucune dépendance externe
+
+Champ action (String? — colonne Prisma — migration)
+  → 1 phrase, orientée décision, concrète
+  → ex: "Increase the price or pause this product."
+```
 
 **Tâches :**
-- [ ] Réécrire les messages des 6 insights dans `insight_engine.py` (ton actif + chiffre + action)
-- [ ] Ajouter un champ `action` (string courte) dans `InsightResult` Python + modèle Pydantic
-- [ ] Stocker `action` dans `metadata` JSON de `Insight` en DB (pas de migration nécessaire)
-- [ ] Afficher l'action recommandée dans `InsightsPage.tsx` (ligne sous la description)
+- [x] `schema.prisma` : ajouter `action String?` au modèle `Insight` + migration ✅
+- [x] `insight_engine.py` : refactor → detection only, raw_facts structurés + ThreadPoolExecutor ✅
+- [x] Nouveau `insight_writer.py` : LLM writer (OpenAI) + fallback templates par type ✅
+- [x] `insightController.ts` + `demoController.ts` : lire et stocker `action` ✅
+- [x] `insightService.ts` : ajouter `action?: string` au type `Insight` ✅
+- [x] `InsightsPage.tsx` : afficher `action` sous la description dans `InsightCard` ✅
 
 ---
 
@@ -469,61 +487,192 @@ model ChatMessage {
 
 ---
 
-### Bloc 4 — Chat Expand (Grande Vue)
+### Bloc 4 — Chat Expand (Grande Vue) ✅ Terminé
 
 **Objectif :** Lire des réponses longues, voir l'historique complet, meilleure zone d'écriture.
 
-**Architecture choisie : modal large** (pas page dédiée)
-- Garde le concept "accessible partout"
-- Pas de routing supplémentaire
-- État partagé entre drawer et modal (même hook `useChat`)
-- Transition : bouton "⤢" dans le header du drawer → ouvre le modal
-
-**Comportement :**
-- Drawer (compact) : question courte + dernière réponse + bouton expand
-- Modal (full) : historique complet scrollable + grande zone de saisie
-- Les deux utilisent le même `useChat` → état synchronisé
-
-**Tâches :**
-- [ ] `ChatModal.tsx` : vue étendue avec historique + input
-- [ ] Bouton "⤢ Expand" dans le header du `ChatDrawer`
-- [ ] `useChat.ts` partagé entre drawer et modal
-- [ ] Transition animée drawer → modal
+**Livré :**
+- `ChatModal.tsx` : modal 80% écran, historique complet scrollable, textarea multi-ligne
+- Bouton `⤢ Maximize` dans le header du `ChatDrawer`
+- `expanded` state dans `useAskKairos` — état partagé drawer ↔ modal
+- Lien "↑ Voir les N messages précédents" si convo > 3 messages
+- Drawer affiche les 3 derniers messages seulement
 
 ---
 
-### Bloc 5 — UI ↔ AI (Copilote Interactif)
+### Bloc 5 — Answer Quality & Decision UX (Copilote Business Premium)
 
-**Objectif :** Passer de "dashboard passif" à "copilote actif".
+**Objectif :** Passer de "réponses correctes" à "copilote business premium" — plus court, plus structuré, plus tranchant, plus actionnable.
 
-**Interactions :**
-- Produit en rouge dans `ProductsPage` si `gross_margin_pct < 0`
-- Clic sur un insight → scroll vers le produit concerné dans `ProductsPage`
-- Produits avec coûts manquants : badge "⚠ Coût manquant" visible
+> **Constat (2026-04-13)** : Kairos comprend déjà bien les données (7/10). Le cerveau est bon. L'expérience produit doit maintenant être rendue plus nette (5.5/10 → cible 8/10). Le seul levier : le prompt système dans `llm_service.py`.
 
-**Architecture :**
-- Pas de changement backend — 100% frontend
-- `InsightsPage` : lien vers `/products?highlight=<product_id>` sur chaque insight critique
-- `ProductsPage` : lit `?highlight` dans l'URL → scroll + animation sur la ligne
+**Philosophie produit**
+
+Kairos AI n'est pas un assistant rédactionnel généraliste. C'est un :
+- **copilote business orienté décision**
+- **outil de priorisation commerciale**
+- **analyste sharp qui tranche, pas qui suggère**
+
+Les réponses doivent prioriser l'action, pas l'explication.
+
+---
+
+**Problèmes à corriger**
+
+| Problème | Impact | Correction |
+|---|---|---|
+| Réponses trop longues / denses | UX dégradée | Max 90 mots pour questions simples |
+| Ton trop prudent ("il serait judicieux") | Autorité faible | Formulations directes et affirmatives |
+| Conseils marketing génériques | Pas ancré dans les données | Rester dans la réalité du dataset |
+| Logique de ranking imparfaite | Mauvaise priorisation | Scoring explicite : marge négative > remboursement > données manquantes |
+| Structure trop libre | Pas scannable | Formats stables selon le type de question |
+| Confusion données manquantes vs problème business | Crédibilité réduite | Distinguer explicitement les deux |
+
+---
+
+**Formats cibles à imposer**
+
+**Question simple → Verdict / Métrique clé / Action**
+```
+Arrête Carbon Fiber Ski Boots.
+Marge : -33,3 % → perte de 20 $ par unité.
+Action : mets-le en pause ou revois le prix/coût.
+```
+
+**Question synthèse → Top 3 / Priorité #1**
+```
+Top 3 problèmes :
+1. Carbon Fiber Ski Boots — marge -33,3 % → pause immédiate
+2. Helmet with Integrated Visor — 100 % de remboursements → analyse les retours
+3. Thermal Base Layer Set — marge 6,7 % → teste une hausse de prix
+Priorité #1 : Ski Boots.
+```
+
+**Question produit → Produit / Métrique / Risque ou opportunité / Action**
+
+---
+
+**Règles de comportement à imposer dans le prompt**
+
+- [ ] Max 3 points dans une réponse multi-insights
+- [ ] Toujours citer la métrique la plus importante (marge %, perte $, taux remboursement)
+- [ ] Toujours conclure par une action concrète
+- [ ] Conclure par "Priorité #1 :" si la question implique un choix
+- [ ] Zéro conseil marketing générique non ancré dans les données
+- [ ] Distinguer explicitement : problème de rentabilité / remboursement / données manquantes / opportunité
+- [ ] Formulations directes : "arrête", "corrige", "pousse", "pause" — pas "il serait judicieux de"
+
+---
+
+**Logique de ranking à renforcer**
+
+Le scoring de priorité doit suivre cet ordre :
+1. Marge négative active (perte directe par vente)
+2. Perte unitaire absolue (impact financier total)
+3. Taux de remboursement anormal
+4. Données manquantes (coût non saisi → marge non fiable)
+5. Faible marge mais positive (opportunité d'optimisation)
+
+---
+
+**Tâches Bloc 5A — Answer Quality**
+
+- [x] Réécrire le `system_prompt` dans `llm_service.py` : format, ton, ranking, interdictions
+- [x] Réécrire `chat_context_builder.py` : produits triés par priorité, section "SIGNAUX PRIORITAIRES", profit/unité calculé
+- [x] Temperature abaissée à 0.2 pour moins de variance
+- [ ] Tester les 5 questions de l'analyse et valider le format de sortie
+
+---
+
+### Bloc 5B — Response Templates V3
+
+**Objectif :** Éliminer la variation de forme résiduelle. Passer d'un bon chat analytique à un copilote avec une forme de réponse constante, scannabe et décisionnelle.
+
+> **Constat** : les réponses sont déjà plus directes et plus courtes après le Bloc 5A. Mais Kairos rédige encore parfois en style semi-libre selon la question. Le prochain levier : lui apprendre à choisir un template selon l'intention détectée dans la question.
+
+**Pourquoi produit**
+
+Un copilote premium ne rédige pas — il rend un verdict. La constance de la forme crée la confiance : l'utilisateur sait d'avance comment lire la réponse, où est l'action, où est la priorité. Moins de prose libre = plus de crédibilité business.
+
+Impact attendu : fort (perception qualité). Coût technique : faible (prompt engineering uniquement).
+
+---
+
+**Les 4 templates cibles**
+
+**Template 1 — Décision**
+Questions : "quel produit arrêter", "quoi corriger en premier", "quelle est ma priorité", "quel est le plus gros risque"
+```
+Verdict : [produit ou problème]
+Métrique clé : [chiffre principal]
+Impact : [conséquence directe]
+Action : [verbe d'action + quoi faire]
+Priorité #1 : [1 phrase nette]
+```
+
+**Template 2 — Synthèse**
+Questions : "résume-moi les 3 plus gros problèmes", "que dois-je surveiller", "quelles sont mes priorités"
+```
+[1 phrase de verdict global]
+1. [produit] — [métrique] — [action]
+2. [produit] — [métrique] — [action]
+3. [produit] — [métrique] — [action]
+Priorité #1 : [le plus urgent]
+```
+
+**Template 3 — Fiabilité des données**
+Questions : "quelles données sont incomplètes", "est-ce que mes chiffres sont fiables", "qu'est-ce qui manque"
+```
+Donnée manquante : [produit + ce qui manque]
+Conséquence : [ce qu'on ne peut pas calculer]
+Ce qu'on peut quand même conclure : [signal fiable disponible]
+Action : [quoi faire pour combler le manque]
+```
+> Note : distinguer explicitement "problème de donnée" (coût manquant) vs "problème business réel" (remboursements élevés, marge négative confirmée).
+
+**Template 4 — Opportunité**
+Questions : "quel produit pousser davantage", "où puis-je gagner plus", "quelle opportunité est la plus claire"
+```
+Opportunité : [produit + pourquoi]
+Pourquoi : [métrique qui confirme]
+Action : [quoi faire concrètement]
+Risque à surveiller : [signal d'alerte si applicable]
+```
+
+---
+
+**Tâches Bloc 5B**
+
+- [ ] Ajouter la détection d'intention dans le `system_prompt` : 4 types de questions → 4 formats
+- [ ] Documenter les mots-clés déclencheurs par template (ex: "arrêter", "priorité" → Template Décision)
+- [ ] Tester chaque template avec une question représentative
+- [ ] Valider que le format est stable sur 3 runs consécutifs par template
+
+---
+
+### Bloc 6 — UI ↔ AI (Navigation Contextuelle)
+
+**Objectif :** Connecter le dashboard et les insights au chat — passer de widgets passifs à une navigation active.
 
 **Tâches :**
-- [ ] `ProductsPage` : ligne rouge si marge < 0, badge warning si pas de coût
+- [ ] `ProductsPage` : ligne rouge si marge < 0, badge "⚠ Coût manquant" si pas de coût
 - [ ] `InsightsPage` : bouton "Voir le produit →" sur les insights critique/warning
 - [ ] Navigation insight → produit via query param `?highlight=<product_id>`
 - [ ] Animation scroll + highlight sur la ligne produit ciblée
 
 ---
 
-### Ordre d'implémentation recommandé
+### Ordre d'implémentation
 
-| Ordre | Bloc | Pourquoi |
+| Ordre | Bloc | Statut |
 |---|---|---|
-| 1 | Dashboard KPIs | En cours — finir ce qui est commencé |
-| 2 | Demo Mode | Fondation démo — sans données rien ne s'affiche |
-| 3 | Insight Engine V2 | Python pur, zéro migration, impact immédiat |
-| 4 | Chat Persistant | Nouveau modèle Prisma → base du chat expand |
-| 5 | Chat Expand | Dépend du chat persistant pour l'historique |
-| 6 | UI ↔ AI | Plus complexe, en dernier |
+| 1 | Dashboard KPIs | ✅ Fait |
+| 2 | Demo Mode | ✅ Fait |
+| 3 | Insight Engine V2 | ✅ Fait |
+| 4 | Chat Persistant | ✅ Fait |
+| 5 | Chat Expand | ✅ Fait |
+| 6 | Answer Quality & Decision UX | 🔄 En cours |
+| 7 | UI ↔ AI Navigation | ❌ À faire |
 
 ### Semaine 10 — Tests + Validation
 - [ ] Tests end-to-end avec dev store Shopify
@@ -547,11 +696,13 @@ model ChatMessage {
 | Validation end-to-end (6 insights) | 100% | 100% | ✅ Fait |
 | Chat enrichi (profitabilité) | 100% | 100% | ✅ Fait |
 | Dashboard Shopify (KPIs + panels) | 100% | 100% | ✅ Fait |
-| Demo Mode (1 clic) | 0% | 0% | ❌ À faire |
-| Insight Engine V2 (actionable) | 0% | 0% | ❌ À faire |
-| Chat Persistant (DB) | 0% | 0% | ❌ À faire |
-| Chat Expand (modal) | 0% | 0% | ❌ À faire |
-| UI ↔ AI (interactions) | 0% | 0% | ❌ À faire |
+| Demo Mode (1 clic) | 100% | 100% | ✅ Fait |
+| Insight Engine V2 (actionable) | 100% | 100% | ✅ Fait |
+| Chat Persistant (DB) | 100% | 100% | ✅ Terminé |
+| Chat Expand (modal) | 100% | 100% | ✅ Terminé |
+| Answer Quality — Bloc 5A | 100% | — | ✅ Terminé |
+| Response Templates V3 — Bloc 5B | 0% | — | 🔄 En cours |
+| UI ↔ AI Navigation | 0% | 0% | ❌ À faire |
 
 ---
 

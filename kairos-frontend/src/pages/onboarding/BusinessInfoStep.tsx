@@ -13,7 +13,7 @@ const INDUSTRIES = [
 // les devises supportees
 const CURRENCIES = ["CAD", "USD", "EUR", "GBP"];
 
-export default function BusinessInfoStep({ onNext }: { onNext: (id: number) => void }) {
+export default function BusinessInfoStep({ onNext }: { onNext: () => void }) {
   // champs du formulaire
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("CAD");
@@ -30,14 +30,14 @@ export default function BusinessInfoStep({ onNext }: { onNext: (id: number) => v
 
     try {
       // appel POST /onboarding/business pour creer le business
-      const res = await api.post("/onboarding/business", {
+      await api.post("/onboarding/business", {
         name,
         currency,
         industry: industry || undefined, // optionnel, on envoie pas si vide
       });
 
       // le backend retourne l'id du business cree
-      onNext(res.data.id_business);
+      onNext();
     } catch (err: any) {
       // le backend retourne { error: "CODE" } sans champ message
       // on mappe les codes d'erreur connus vers des messages lisibles

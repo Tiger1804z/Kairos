@@ -89,7 +89,7 @@ def compute_insights_route(request: InsightRequest):
 @app.post("/chat/compute")
 def chat_compute(request: ChatRequest):
     context = build_context(request)
-    answer = ask_llm(context, request.question)
+    answer = ask_llm(context, request.question, request.history)
     
     return {
         "business_id": request.business_id,

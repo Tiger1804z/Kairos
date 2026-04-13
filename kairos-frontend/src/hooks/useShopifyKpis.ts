@@ -48,6 +48,7 @@ export function useShopifyKpis(businessId: number | null) {
   const [kpis, setKpis] = useState<ShopifyKpis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
 
   useEffect(() => {
     if (!businessId) return;
@@ -66,7 +67,9 @@ export function useShopifyKpis(businessId: number | null) {
     };
 
     fetchKpis();
-  }, [businessId]);
+  }, [businessId, refreshCount]);
 
-  return { kpis, loading, error };
+  const refetch = () => setRefreshCount((c) => c + 1);
+
+  return { kpis, loading, error, refetch };
 }

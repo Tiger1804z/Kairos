@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { useShopifyKpis } from "../../hooks/useShopifyKpis";
+import { api } from "../../lib/api";
 
 type MeUser = {
   id_user: number;
@@ -26,8 +28,25 @@ const SEVERITY_DOT = {
 export default function DashboardPage() {
   const { me, loadingMe } = useOutletContext<{ me: MeUser | null; loadingMe: boolean }>();
   const { selectedBusinessId, loading: loadingBusiness } = useBusinessContext();
-  const { kpis, loading, error } = useShopifyKpis(selectedBusinessId);
+  const { kpis, loading, error, refetch } = useShopifyKpis(selectedBusinessId);
   const navigate = useNavigate();
+  const [loadingDemo, setLoadingDemo] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+
+  const handleLoadDemo = async () => {
+    if (!selectedBusinessId) return;
+    setLoadingDemo(true);
+    setDemoError(null);
+    try {
+      await api.post(`/demo/${selectedBusinessId}/load`);
+      refetch();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || "Failed to load demo data";
+      setDemoError(msg);
+    } finally {
+      setLoadingDemo(false);
+    }
+  };
 
   const name = me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email : "—";
 
@@ -98,6 +117,34 @@ export default function DashboardPage() {
 
         {/* Séparateur */}
         <div className="mt-6 border-t border-white/5" />
+
+        {/* Demo banner — visible si aucune donnée de profitabilité */}
+        {selectedBusinessId && !loading && (!kpis || kpis.productsTracked === 0) && (
+          <div className="mt-6 rounded-2xl bg-accent/10 px-6 py-4 ring-1 ring-accent/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold">No profitability data yet</div>
+                <div className="mt-0.5 text-xs text-white/50">
+                  Load demo data to see Kairos in action — 6 real scenarios in 1 click.
+                </div>
+              </div>
+              <button
+                onClick={handleLoadDemo}
+                disabled={loadingDemo}
+                className="ml-4 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent/80 disabled:opacity-50"
+              >
+                {loadingDemo ? "Loading…" : "Load Demo Data"}
+              </button>
+            </div>
+            {demoError && (
+              <div className="mt-3 text-xs text-orange-400">
+                {demoError.includes("produit") || demoError.includes("product")
+                  ? "Shopify sync required first — go to Settings → connect your store → Sync."
+                  : demoError}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Erreur */}
         {error && (

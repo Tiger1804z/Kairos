@@ -300,22 +300,53 @@ const safeLogError = async (args: {
 };
 
 export const aiAskShopify = async (req: Request, res: Response) => {
-  const businessId = parseInt(req.params.businessId ??"", 10);
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+  const userId = req.user!.user_id;
   const question = req.body.question?.toString()?.trim();
-
+  const conversationId: number | undefined = req.body.conversationId ? parseInt(req.body.conversationId, 10) : undefined;
 
   if (!question || question.length < 3) {
     return res.status(400).json({ error: "QUESTION_REQUIRED" });
   }
 
-  // 1. Fetch snapshots avec le nom du produit (include)
+  // 1. Charger ou créer la conversation
+  let conversation;
+  if (conversationId) {
+    conversation = await prisma.chatConversation.findFirst({
+      where: { id: conversationId, business_id: businessId },
+    });
+    if (!conversation) {
+      return res.status(404).json({ error: "CONVERSATION_NOT_FOUND" });
+    }
+  } else {
+    conversation = await prisma.chatConversation.create({
+      data: {
+        business_id: businessId,
+        user_id: userId,
+        title: question.slice(0, 80),
+      },
+    });
+  }
+
+  // 2. Charger les 10 derniers messages (historique)
+  const recentMessages = await prisma.chatMessage.findMany({
+    where: { conversation_id: conversation.id },
+    orderBy: { created_at: "asc" },
+    take: 10,
+  });
+
+  const history = recentMessages.map((m) => ({
+    role: m.role as "user" | "assistant",
+    content: m.content,
+  }));
+
+  // 3. Fetch snapshots
   const allSnapshots = await prisma.profitabilitySnapshot.findMany({
     where: { business_id: businessId },
     orderBy: { period_end: "desc" },
     include: { product: { select: { title: true } } },
   });
 
-  // Garder le plus récent par produit
   const seen = new Set<string>();
   const snapshots = allSnapshots.filter((s) => {
     if (seen.has(s.product_id)) return false;
@@ -323,16 +354,17 @@ export const aiAskShopify = async (req: Request, res: Response) => {
     return true;
   });
 
-  // 2. Fetch des insights
+  // 4. Fetch insights
   const insights = await prisma.insight.findMany({
-    where: {business_id: businessId},
+    where: { business_id: businessId },
     orderBy: { created_at: "desc" },
   });
 
-  // 3. Appel Python
+  // 5. Appel Python avec historique
   const result = await askShopifyChat({
     business_id: businessId,
     question,
+    history,
     snapshots: snapshots.map((s) => ({
       product_id: s.product_id,
       product_name: s.product?.title ?? s.product_id,
@@ -356,5 +388,56 @@ export const aiAskShopify = async (req: Request, res: Response) => {
     }),
   });
 
-  return res.status(200).json({answer: result.answer});
+  // 6. Sauvegarder les 2 messages en DB
+  await prisma.chatMessage.createMany({
+    data: [
+      { conversation_id: conversation.id, role: "user", content: question },
+      { conversation_id: conversation.id, role: "assistant", content: result.answer },
+    ],
+  });
+
+  // 7. Mettre à jour updated_at de la conversation
+  await prisma.chatConversation.update({
+    where: { id: conversation.id },
+    data: { updated_at: new Date() },
+  });
+
+  return res.status(200).json({
+    answer: result.answer,
+    conversationId: conversation.id,
+  });
+}
+
+export const getConversations = async (req: Request, res: Response) => {
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+
+  const conversations = await prisma.chatConversation.findMany({
+    where: { business_id: businessId },
+    orderBy: { updated_at: "desc" },
+    select: {
+      id: true,
+      title: true,
+      created_at: true,
+      updated_at: true,
+    },
+  });
+
+  return res.status(200).json({ conversations });
+};
+
+export const getConversationMessages = async (req: Request, res: Response) => {
+  const conversationId = parseInt(req.params.conversationId ?? "", 10);
+
+  const messages = await prisma.chatMessage.findMany({
+    where: { conversation_id: conversationId },
+    orderBy: { created_at: "asc" },
+    select: {
+      id: true,
+      role: true,
+      content: true,
+      created_at: true,
+    },
+  });
+
+  return res.status(200).json({ messages });
 };

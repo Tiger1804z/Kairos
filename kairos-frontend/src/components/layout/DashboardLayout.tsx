@@ -1,63 +1,25 @@
-import { Outlet, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { Outlet } from "react-router-dom";
+import { useMemo } from "react";
 import Sidebar from "./Sidebar";
-import { api } from "../../lib/api";
 import BusinessSelector from "../dashboard/BusinessSelector";
 import ChatDrawer from "../kairos/ChatDrawer";
-
-type MeUser = {
-  id_user: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  role: "owner" | "admin" | "employee";
-};
+import { useAuth } from "../../auth/AuthContext";
 
 export default function DashboardLayout() {
-  const navigate = useNavigate();
-  const [me, setMe] = useState<MeUser | null>(null);
-  const [loadingMe, setLoadingMe] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      try {
-        // On suppose que ton backend renvoie: { user: {...} }
-        const res = await api.get("/auth/me");
-        if (!alive) return;
-
-        const user = res.data?.user ?? null;
-        setMe(user);
-      } catch (e: any) {
-        if (!alive) return;
-        setMe(null);
-
-        // Si pas auth => on renvoie au login
-        // (tu peux commenter si tu veux juste laisser la page)
-        navigate("/auth?mode=login");
-      } finally {
-        if (alive) setLoadingMe(false);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [navigate]);
+  const { user, loading: loadingMe } = useAuth();
 
   const initials = useMemo(() => {
-    if (!me?.email) return "?";
-    return me.email.trim().charAt(0).toUpperCase() || "?";
-  }, [me]);
+    if (!user?.email) return "?";
+    return user.email.trim().charAt(0).toUpperCase();
+  }, [user]);
 
   const displayName = useMemo(() => {
-    if (!me) return "—";
-    const fn = me.first_name?.trim() ?? "";
-    const ln = me.last_name?.trim() ?? "";
+    if (!user) return "—";
+    const fn = user.first_name?.trim() ?? "";
+    const ln = user.last_name?.trim() ?? "";
     const full = `${fn} ${ln}`.trim();
-    return full || me.email;
-  }, [me]);
+    return full || user.email;
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-bg text-white">
@@ -70,19 +32,15 @@ export default function DashboardLayout() {
             <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
               <div className="text-sm text-white/70">Dashboard</div>
 
-
-
               <div className="flex items-center gap-3">
-                <BusinessSelector/>
+                <BusinessSelector />
                 {loadingMe ? (
                   <div className="text-xs text-white/50">Loading...</div>
-              
-                
                 ) : (
                   <>
                     <div className="hidden text-right leading-tight sm:block">
                       <div className="text-xs font-medium">{displayName}</div>
-                      <div className="text-[11px] text-white/50">{me?.role ?? "—"}</div>
+                      <div className="text-[11px] text-white/50">{user?.role ?? "—"}</div>
                     </div>
 
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10">
@@ -96,7 +54,7 @@ export default function DashboardLayout() {
 
           {/* Content */}
           <div className="mx-auto max-w-7xl px-6 py-10">
-            <Outlet context={{ me, loadingMe }} />
+            <Outlet context={{ me: user, loadingMe }} />
           </div>
         </main>
       </div>

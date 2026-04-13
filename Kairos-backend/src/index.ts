@@ -49,6 +49,7 @@ import productRoutes from "./routes/productRoutes";
 import profitabilityRoutes from "./routes/profitabilityRoutes";
 import insightRoutes from "./routes/insightRoutes";
 import shopifyDashboardRoutes from "./routes/shopifyDashboardRoutes";
+import demoRoutes from "./routes/demoRoutes";
 
 
 dotenv.config();
@@ -99,6 +100,7 @@ app.use("/products", productRoutes);
 app.use("/profitability", profitabilityRoutes);
 app.use("/insights", insightRoutes);
 app.use("/shopify-dashboard", shopifyDashboardRoutes);
+app.use("/demo", demoRoutes);
 
 const PORT = process.env.PORT || 3000;
 

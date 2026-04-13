@@ -8,6 +8,7 @@ export interface Insight {
   severity: InsightSeverity;
   title: string;
   message: string;
+  action: string | null;
   metadata: { product_id: string; value: number } | null;
   period_start: string | null;
   period_end: string | null;

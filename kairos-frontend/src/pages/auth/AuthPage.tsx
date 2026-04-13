@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import axios from "axios";
 import { useAuth } from "../../auth/AuthContext";
+import { useBusinessContext } from "../../business/BusinessContext";
 
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -27,6 +28,7 @@ const signupSchema = z.object({
 
 export default function AuthPage() {
   const { login, signup } = useAuth();
+  const { refreshBusinesses } = useBusinessContext();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
@@ -78,6 +80,7 @@ export default function AuthPage() {
       } else {
         await login(result.data.email, result.data.password);
       }
+      await refreshBusinesses(); // sync le contexte avant navigation
       navigate("/dashboard");
     } catch (err: any) {
       setError(err?.response?.data?.error || err?.message || "Request failed");

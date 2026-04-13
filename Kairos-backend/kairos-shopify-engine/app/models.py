@@ -60,8 +60,13 @@ class InsightContextInput(BaseModel):
     product_id: str
     value: float
     
+class ChatMessageInput(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+    
 class ChatRequest(BaseModel):
     business_id: int
     question: str
     snapshots: list[SnapshotInput]
     insights: list[InsightContextInput]
+    history: list[ChatMessageInput] = []
