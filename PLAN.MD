@@ -1,9 +1,9 @@
 # 📋 PLAN.MD - Projet Kairos
 
 **Dernière mise à jour :** 2026-04-13
-**Progression globale :** Phase scolaire 100% ✅ — Blocs 1-2-3 ✅
+**Progression globale :** Phase scolaire 100% ✅ — Blocs 1-2-3-4-5A-5B-6 ✅
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
-**Focus actuel :** ✅ **Bloc 4 Chat Expand terminé** — Prochaine étape : Bloc 5 UI ↔ AI
+**Focus actuel :** ✅ **Bloc 5B terminé** — Prochaine étape : Bloc 6 UI ↔ AI Navigation
 
 ---
 
@@ -478,12 +478,13 @@ model ChatMessage {
 **Comportement auto-reset :** si le dernier message a > 7 jours, `GET /messages` retourne `[]` et efface automatiquement.
 
 **Tâches :**
-- [ ] Migration Prisma : modèle `ChatMessage`
-- [ ] `chatController.ts` : `getMessages`, `sendMessage`, `resetMessages`
-- [ ] `chatRoutes.ts` : 3 endpoints
-- [ ] Migrer `aiAskShopify` → `sendMessage` (stocke les échanges)
-- [ ] `ChatDrawer.tsx` : afficher historique + bouton "New Chat"
-- [ ] `useChat.ts` : hook dédié (remplace `useAskKairos` pour le chat)
+- [x] Migration Prisma : modèles `ChatConversation` + `ChatMessage` + enum `ChatMessageRole` — migration `20260413202659_add_chat_conversations` ✅
+- [x] `aiController.ts` : crée/charge conversation, sauvegarde messages user + assistant en DB, retourne `conversationId` ✅
+- [x] Routes : `GET /ai/shopify/:businessId/conversations` + `GET /ai/shopify/conversations/:conversationId` ✅
+- [x] `useAskKairos.ts` : auto-load dernière convo, état messages[], fenêtre glissante 10 messages ✅
+- [x] `ChatDrawer.tsx` : bulles de chat (user droite / assistant gauche) + bouton `+` nouvelle convo ✅
+
+> Note : l'implémentation finale utilise `ChatConversation` (multi-convo par business) plutôt qu'un simple modèle `ChatMessage` plat — plus robuste pour la Phase 2.
 
 ---
 
@@ -580,15 +581,15 @@ Le scoring de priorité doit suivre cet ordre :
 - [x] Réécrire le `system_prompt` dans `llm_service.py` : format, ton, ranking, interdictions
 - [x] Réécrire `chat_context_builder.py` : produits triés par priorité, section "SIGNAUX PRIORITAIRES", profit/unité calculé
 - [x] Temperature abaissée à 0.2 pour moins de variance
-- [ ] Tester les 5 questions de l'analyse et valider le format de sortie
+- [x] Tester les 5 questions de l'analyse et valider le format de sortie ✅
 
 ---
 
-### Bloc 5B — Response Templates V3
+### Bloc 5B — Response Templates V3 ✅ (TERMINÉ — 2026-04-13)
 
-**Objectif :** Éliminer la variation de forme résiduelle. Passer d'un bon chat analytique à un copilote avec une forme de réponse constante, scannabe et décisionnelle.
+**Objectif :** Éliminer la variation de forme résiduelle. Passer d'un bon chat analytique à un copilote avec une forme de réponse constante, scannable et décisionnelle.
 
-> **Constat** : les réponses sont déjà plus directes et plus courtes après le Bloc 5A. Mais Kairos rédige encore parfois en style semi-libre selon la question. Le prochain levier : lui apprendre à choisir un template selon l'intention détectée dans la question.
+> **Constat** : les réponses sont déjà plus directes et plus courtes après le Bloc 5A. Mais Kairos rédigeait encore parfois en style semi-libre selon la question. Le levier appliqué : détection d'intention explicite dans le system prompt → template de réponse imposé.
 
 **Pourquoi produit**
 
@@ -598,67 +599,118 @@ Impact attendu : fort (perception qualité). Coût technique : faible (prompt en
 
 ---
 
-**Les 4 templates cibles**
+**Les 4 templates implémentés**
 
 **Template 1 — Décision**
-Questions : "quel produit arrêter", "quoi corriger en premier", "quelle est ma priorité", "quel est le plus gros risque"
+Questions : "faut-il arrêter", "est-ce rentable", "dois-je", "vaut-il la peine"
 ```
-Verdict : [produit ou problème]
-Métrique clé : [chiffre principal]
-Impact : [conséquence directe]
-Action : [verbe d'action + quoi faire]
-Priorité #1 : [1 phrase nette]
+Verdict net : Oui ou Non.
+Métrique clé : [marge %, perte $, taux remboursement]
+Raison : [1 phrase max]
+Action immédiate : [1 verbe + 1 objet]
 ```
 
 **Template 2 — Synthèse**
-Questions : "résume-moi les 3 plus gros problèmes", "que dois-je surveiller", "quelles sont mes priorités"
+Questions : "bilan", "résume mes produits", "état général", "top problèmes"
 ```
 [1 phrase de verdict global]
-1. [produit] — [métrique] — [action]
-2. [produit] — [métrique] — [action]
-3. [produit] — [métrique] — [action]
-Priorité #1 : [le plus urgent]
+1. [produit] — [métrique clé] — [action]
+2. [produit] — [métrique clé] — [action]
+3. [produit] — [métrique clé] — [action]
+Priorité #1 : [le plus urgent — raison en 5 mots max]
 ```
 
 **Template 3 — Fiabilité des données**
-Questions : "quelles données sont incomplètes", "est-ce que mes chiffres sont fiables", "qu'est-ce qui manque"
+Questions : "mes données sont fiables ?", "qu'est-ce qui manque", "est-ce que mes chiffres sont fiables"
 ```
-Donnée manquante : [produit + ce qui manque]
-Conséquence : [ce qu'on ne peut pas calculer]
-Ce qu'on peut quand même conclure : [signal fiable disponible]
-Action : [quoi faire pour combler le manque]
+Fiable : [ce sur quoi on peut se fier]
+Manquant : [coûts non saisis ou données absentes]
+Conclusion possible : [ce qu'on peut affirmer malgré les lacunes]
 ```
-> Note : distinguer explicitement "problème de donnée" (coût manquant) vs "problème business réel" (remboursements élevés, marge négative confirmée).
 
 **Template 4 — Opportunité**
-Questions : "quel produit pousser davantage", "où puis-je gagner plus", "quelle opportunité est la plus claire"
+Questions : "quoi améliorer", "où agir", "comment optimiser", "quelle piste explorer"
 ```
-Opportunité : [produit + pourquoi]
-Pourquoi : [métrique qui confirme]
-Action : [quoi faire concrètement]
-Risque à surveiller : [signal d'alerte si applicable]
+Top 3 opportunités classées par impact estimé.
+[action] — gain potentiel [$ ou %]
+Par où commencer : [1 ligne, la plus haute priorité]
 ```
 
 ---
 
 **Tâches Bloc 5B**
 
-- [ ] Ajouter la détection d'intention dans le `system_prompt` : 4 types de questions → 4 formats
-- [ ] Documenter les mots-clés déclencheurs par template (ex: "arrêter", "priorité" → Template Décision)
-- [ ] Tester chaque template avec une question représentative
-- [ ] Valider que le format est stable sur 3 runs consécutifs par template
+- [x] Ajouter la détection d'intention dans le `system_prompt` : ÉTAPE 1 (classification) + ÉTAPE 2 (template) ✅
+- [x] Tester chaque template avec une question représentative ✅
+- [x] Valider que le format est stable sur 3 runs consécutifs par template ✅
+
+**Résultat des tests (3 runs, 4 templates) :**
+- DÉCISION : format identique sur 3 runs — "Verdict net : Oui. Métrique clé. Raison. Action immédiate." ✅
+- SYNTHÈSE : structure stable (Top 3 + Priorité #1), variance légère sur la phrase d'intro — acceptable ✅
+- FIABILITÉ : "Fiable / Manquant / Conclusion possible" — présent sur tous les runs ✅
+- OPPORTUNITÉ : Top 3 + "Par où commencer" stable, ordre interne peut varier selon les données — acceptable ✅
 
 ---
 
-### Bloc 6 — UI ↔ AI (Navigation Contextuelle)
+### Décision architecturale — Intent Families MVP (2026-04-13)
 
-**Objectif :** Connecter le dashboard et les insights au chat — passer de widgets passifs à une navigation active.
+> **Décision produit validée :** le système de compréhension des questions du MVP repose sur **8 familles d'intention seulement**.
+
+**Rationnel**
+
+Le choix de 8 familles est volontaire :
+- Couvrir la majorité des cas réels observés sans sur-segmenter trop tôt
+- Éviter une explosion de règles fragiles difficiles à maintenir
+- Garder le prompt et la logique de routing simples et lisibles
+- Permettre d'itérer rapidement à partir de vrais tests utilisateurs
+- Reporter les embeddings / la classification avancée à une phase fondée sur des données réelles
+
+> **Un système simple mais fiable vaut mieux qu'un système "intelligent" trop tôt.**
+> La priorité actuelle est la **qualité perçue des réponses** : cohérentes, actionnables, bien cadrées — avant de chercher plus de sophistication technique.
+
+Les familles ultra-spécifiques (pricing-only, refunds-only, best-product-only, low-margin-only) restent pour l'instant des **variantes ou sous-cas** de familles plus larges. Les embeddings ne sont pas la prochaine étape immédiate.
+
+---
+
+**Les 8 familles d'intention retenues**
+
+| # | Famille | Rôle |
+|---|---------|------|
+| 1 | **Stop Loss** | Identifier quoi arrêter, couper ou corriger immédiatement pour stopper une perte |
+| 2 | **Biggest Problems** | Résumer les plus gros problèmes de rentabilité et les classer par gravité |
+| 3 | **Growth Opportunity** | Identifier le meilleur produit ou levier à pousser pour augmenter le profit |
+| 4 | **Data Quality / Missing Data** | Détecter les coûts manquants, données incomplètes, ou conclusions peu fiables |
+| 5 | **Single Best Action** | Obtenir une seule priorité claire — la meilleure action à faire maintenant |
+| 6 | **Profit Improvement Plan** | Obtenir un mini plan d'action pour améliorer rapidement la rentabilité |
+| 7 | **Business Health Summary** | Résumé global du dashboard ou de la santé business |
+| 8 | **Multi-Issue Diagnosis** | Distinguer la nature des problèmes : marge, retours, qualité des données |
+
+---
+
+**Progression par phases — Intent System**
+
+| Phase | Objectif | Statut |
+|-------|----------|--------|
+| **Phase A** | Stabiliser les 8 familles avec exemples de questions et formats de réponse attendus | ✅ Fait (Bloc 5B) |
+| **Phase B** | Logger les questions réelles qui matchent mal ou pas du tout | ❌ À faire |
+| **Phase C** | Analyser les questions réelles et décider si certaines familles doivent être divisées | ❌ À faire |
+| **Phase D** | Envisager embeddings / classifieur plus intelligent — uniquement après accumulation de données réelles | ❌ Phase 3 |
+
+---
+
+### Bloc 6 — UI ↔ AI (Navigation Contextuelle) ✅ (TERMINÉ — 2026-04-13)
+
+**Objectif :** Connecter les insights au produit concerné — passer de widgets passifs à une navigation active et actionnelle.
 
 **Tâches :**
-- [ ] `ProductsPage` : ligne rouge si marge < 0, badge "⚠ Coût manquant" si pas de coût
-- [ ] `InsightsPage` : bouton "Voir le produit →" sur les insights critique/warning
-- [ ] Navigation insight → produit via query param `?highlight=<product_id>`
-- [ ] Animation scroll + highlight sur la ligne produit ciblée
+- [x] `ProductsPage` : fond rouge subtil (`bg-red-500/5`) si marge < 0, badge "⚠ Coût manquant" si pas de coût ✅
+- [x] `InsightsPage` : bouton "Voir le produit →" sur toutes les InsightCard avec `metadata.product_id` ✅
+- [x] Navigation insight → produit via `navigate("/dashboard/products?highlight=<product_id>")` ✅
+- [x] Scroll automatique + highlight violet (`bg-violet-500/15 + ring-2`) pendant 4 secondes ✅
+
+**Décision technique clé**
+
+L'effet de highlight dépend de `[highlightParam, products, loading]`. Sans `loading` dans les dépendances, le `querySelector` cherchait les rows avant qu'elles soient dans le DOM (le tableau affiche "Loading..." tant que `loading = true`). Ajouter `loading` garantit que l'effet ne fire qu'après que les rows sont rendues.
 
 ---
 
@@ -671,8 +723,8 @@ Risque à surveiller : [signal d'alerte si applicable]
 | 3 | Insight Engine V2 | ✅ Fait |
 | 4 | Chat Persistant | ✅ Fait |
 | 5 | Chat Expand | ✅ Fait |
-| 6 | Answer Quality & Decision UX | 🔄 En cours |
-| 7 | UI ↔ AI Navigation | ❌ À faire |
+| 6 | Answer Quality & Decision UX | ✅ Fait |
+| 7 | UI ↔ AI Navigation | ✅ Fait |
 
 ### Semaine 10 — Tests + Validation
 - [ ] Tests end-to-end avec dev store Shopify
@@ -701,8 +753,8 @@ Risque à surveiller : [signal d'alerte si applicable]
 | Chat Persistant (DB) | 100% | 100% | ✅ Terminé |
 | Chat Expand (modal) | 100% | 100% | ✅ Terminé |
 | Answer Quality — Bloc 5A | 100% | — | ✅ Terminé |
-| Response Templates V3 — Bloc 5B | 0% | — | 🔄 En cours |
-| UI ↔ AI Navigation | 0% | 0% | ❌ À faire |
+| Response Templates V3 — Bloc 5B | 100% | — | ✅ Terminé |
+| UI ↔ AI Navigation — Bloc 6 | 100% | 100% | ✅ Terminé |
 
 ---
 

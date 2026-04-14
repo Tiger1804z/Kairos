@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { getProducts, createCost, computeProfitability, importCostsCsv } from "../../services/productService";
 import { Card } from "../../components/ui/Card";
@@ -21,10 +22,13 @@ interface Product {
 
 export default function ProductsPage() {
     const {selectedBusinessId} = useBusinessContext();
+    const [searchParams] = useSearchParams();
+    const highlightParam = searchParams.get("highlight");
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [marginMap, setMarginMap] = useState<Record<string, number>>({});
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
     // Modal state
     const [modalProduct, setModalProduct] = useState<Product | null>(null);
@@ -57,6 +61,18 @@ export default function ProductsPage() {
     useEffect(() => {
         fetchProducts();
     }, [selectedBusinessId]);
+
+    useEffect(() => {
+        if (!highlightParam || loading || products.length === 0) return;
+        const frame = requestAnimationFrame(() => {
+            const el = document.querySelector(`[data-product-id="${highlightParam}"]`) as HTMLElement | null;
+            if (!el) return;
+            setHighlightedId(highlightParam);
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            setTimeout(() => setHighlightedId(null), 4000);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [highlightParam, products, loading]);
 
     async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -147,9 +163,31 @@ export default function ProductsPage() {
               ) : (
                 products.map((p) => {
                   const latestCost = p.costs[0];
+                  const margin = marginMap[p.id];
+                  const isNegative = margin !== undefined && margin < 0;
+                  const isHighlighted = highlightedId === p.id;
                   return (
-                    <tr key={p.id} className="border-b border-white/5">
-                      <td className="px-6 py-4 font-medium">{p.title}</td>
+                    <tr
+                      key={p.id}
+                      data-product-id={p.id}
+                      className={`border-b border-white/5 transition-colors duration-500 ${
+                        isHighlighted
+                          ? "bg-violet-500/15 ring-2 ring-inset ring-violet-400/60"
+                          : isNegative
+                            ? "bg-red-500/5"
+                            : ""
+                      }`}
+                    >
+                      <td className="px-6 py-4 font-medium">
+                        <div className="flex items-center gap-2">
+                          {p.title}
+                          {!latestCost && (
+                            <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[11px] text-orange-400 ring-1 ring-orange-500/20">
+                              ⚠ Coût manquant
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-white/60">{p.vendor ?? "—"}</td>
                       <td className="px-6 py-4 text-white/60">{p.status}</td>
                       <td className="px-6 py-4">
@@ -159,9 +197,9 @@ export default function ProductsPage() {
                         }
                       </td>
                       <td className="px-6 py-4">
-                        {marginMap[p.id] !== undefined
-                          ? <span className={marginMap[p.id] >= 15 ? "text-emerald-300" : marginMap[p.id] >= 0 ? "text-orange-400" : "text-red-400"}>
-                              {marginMap[p.id].toFixed(1)}%
+                        {margin !== undefined
+                          ? <span className={margin >= 15 ? "text-emerald-300" : margin >= 0 ? "text-orange-400" : "text-red-400 font-semibold"}>
+                              {margin.toFixed(1)}%
                             </span>
                           : <span className="text-white/30">—</span>
                         }

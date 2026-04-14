@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { computeInsights, getInsights, type Insight, type InsightSeverity } from "../../services/insightService";
 import { Card } from "../../components/ui/Card";
@@ -23,12 +24,13 @@ const SEVERITY_STYLES: Record<InsightSeverity, { bar: string; badge: string; lab
   },
 };
 
-function InsightCard({ insight }: { insight: Insight }) {
+function InsightCard({ insight, onViewProduct }: { insight: Insight; onViewProduct: (productId: string) => void }) {
   const style = SEVERITY_STYLES[insight.severity];
+  const productId = insight.metadata?.product_id ?? null;
   return (
     <div className="flex gap-4 rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
       <div className={`mt-1 h-full w-1 shrink-0 rounded-full ${style.bar}`} />
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center gap-2">
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.badge}`}>
             {style.label}
@@ -41,6 +43,14 @@ function InsightCard({ insight }: { insight: Insight }) {
             → {insight.action}
           </p>
         )}
+        {productId && (
+          <button
+            onClick={() => onViewProduct(productId)}
+            className="mt-2 self-start rounded-lg bg-white/5 px-3 py-1 text-xs text-white/60 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
+          >
+            Voir le produit →
+          </button>
+        )}
       </div>
     </div>
   );
@@ -48,10 +58,15 @@ function InsightCard({ insight }: { insight: Insight }) {
 
 export default function InsightsPage() {
   const { selectedBusinessId } = useBusinessContext();
+  const navigate = useNavigate();
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [computing, setComputing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handleViewProduct(productId: string) {
+    navigate(`/dashboard/products?highlight=${productId}`);
+  }
 
   async function fetchInsights() {
     if (!selectedBusinessId) return;
@@ -140,7 +155,7 @@ export default function InsightsPage() {
                 </h2>
                 <div className="space-y-3">
                   {group.map((insight) => (
-                    <InsightCard key={insight.id} insight={insight} />
+                    <InsightCard key={insight.id} insight={insight} onViewProduct={handleViewProduct} />
                   ))}
                 </div>
               </section>
