@@ -1,7 +1,7 @@
 # 📋 PLAN.MD - Projet Kairos
 
-**Dernière mise à jour :** 2026-04-13
-**Progression globale :** Phase scolaire 100% ✅ — Blocs 1-2-3-4-5A-5B-6 ✅
+**Dernière mise à jour :** 2026-04-15
+**Progression globale :** Phase scolaire 100% ✅ — Blocs 1-2-3-4-5A-5B-6 ✅ — Phase B observabilité 🔄
 **Type de projet :** Produit SaaS — True Profit Intelligence for Shopify Stores
 **Focus actuel :** ✅ **Bloc 5B terminé** — Prochaine étape : Bloc 6 UI ↔ AI Navigation
 
@@ -692,7 +692,7 @@ Les familles ultra-spécifiques (pricing-only, refunds-only, best-product-only, 
 | Phase | Objectif | Statut |
 |-------|----------|--------|
 | **Phase A** | Stabiliser les 8 familles avec exemples de questions et formats de réponse attendus | ✅ Fait (Bloc 5B) |
-| **Phase B** | Logger les questions réelles qui matchent mal ou pas du tout | ❌ À faire |
+| **Phase B** | Logger les questions réelles qui matchent mal ou pas du tout | 🔄 Implémenté — en attente de tests |
 | **Phase C** | Analyser les questions réelles et décider si certaines familles doivent être divisées | ❌ À faire |
 | **Phase D** | Envisager embeddings / classifieur plus intelligent — uniquement après accumulation de données réelles | ❌ Phase 3 |
 
@@ -725,10 +725,29 @@ L'effet de highlight dépend de `[highlightParam, products, loading]`. Sans `loa
 | 5 | Chat Expand | ✅ Fait |
 | 6 | Answer Quality & Decision UX | ✅ Fait |
 | 7 | UI ↔ AI Navigation | ✅ Fait |
+| 8 | Observabilité chat — Phase B | ✅ Validé (2026-04-16) |
+| 9 | Bloc 7 — E2E Beta Readiness | ✅ Validé (2026-04-16) |
 
-### Semaine 10 — Tests + Validation
-- [ ] Tests end-to-end avec dev store Shopify
-- [ ] Validation : *"vrai profit par produit en moins de 5 min"*
+### Semaine 10 — Tests + Validation ✅ (2026-04-16)
+- [x] Validation Phase B : 4 familles détectées, `GET /ai/shopify/:id/chat-logs` opérationnel
+- [x] Validation E2E : 7 parcours critiques validés
+- [x] 2 bugs mineurs corrigés (ProductsPage error isolation, useAskKairos business switch)
+- [ ] Tests avec dev store Shopify réel (optionnel — démo fonctionne sans)
+
+### Bloc 7 — E2E Beta Readiness ✅ (TERMINÉ — 2026-04-16)
+
+**7 parcours validés :**
+- Onboarding : inscription → business → dashboard ✅
+- Demo mode : 1 clic, 6 produits, 6 insights ✅
+- Dashboard KPIs : 8 cartes + 3 panels ✅
+- Insights → Products : navigation + highlight + signaux visuels ✅
+- Chat Kairos AI : 4 familles, persist, expand modal ✅
+- Logging Phase B : intent_family + routing_status + unknown ✅
+- États limites : coût manquant, highlight invalide, insight sans produit ✅
+
+**Bugs corrigés :**
+- `ProductsPage.fetchProducts()` : erreur produits vs marges séparées (Python peut être down sans bloquer l'affichage)
+- `useAskKairos` : messages vidés avant chargement nouvelle conversation au changement de business
 
 ---
 
@@ -755,6 +774,7 @@ L'effet de highlight dépend de `[highlightParam, products, loading]`. Sans `loa
 | Answer Quality — Bloc 5A | 100% | — | ✅ Terminé |
 | Response Templates V3 — Bloc 5B | 100% | — | ✅ Terminé |
 | UI ↔ AI Navigation — Bloc 6 | 100% | 100% | ✅ Terminé |
+| Observabilité chat — Phase B | 100% | — | 🔄 À tester |
 
 ---
 

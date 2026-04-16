@@ -447,14 +447,19 @@ model ChatConversation {
 }
 
 model ChatMessage {
-  id              Int              @id @default(autoincrement())
-  conversation_id Int
-  role            ChatMessageRole
-  content         String
-  created_at      DateTime         @default(now())
-  conversation    ChatConversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  id                Int              @id @default(autoincrement())
+  conversation_id   Int
+  role              ChatMessageRole
+  content           String
+  intent_family     String?          // DÉCISION | SYNTHÈSE | FIABILITÉ | OPPORTUNITÉ | unknown
+  routing_status    String?          // clear | ambiguous | unknown
+  execution_time_ms Int?
+  created_at        DateTime         @default(now())
+  conversation      ChatConversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
 
   @@index([conversation_id])
+  @@index([intent_family])
+  @@index([routing_status])
   @@map("chat_messages")
 }
 

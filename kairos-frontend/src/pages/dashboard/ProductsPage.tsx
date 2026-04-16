@@ -41,19 +41,24 @@ export default function ProductsPage() {
 
     async function fetchProducts(){
         if (!selectedBusinessId) return;
-        try{
+        try {
             const data = await getProducts(selectedBusinessId);
             setProducts(data);
-
+        } catch {
+            setError("Impossible de charger les produits");
+            setLoading(false);
+            return;
+        }
+        try {
             const snapshots = await computeProfitability(selectedBusinessId);
             const map: Record<string, number> = {};
             for (const s of snapshots) {
                 map[s.product_id] = s.gross_margin_pct;
             }
             setMarginMap(map);
-        }catch{
-            setError("Impossible de charger les produits");
-        }finally{
+        } catch {
+            // Marges non disponibles (service Python injoignable) — produits toujours affichés
+        } finally {
             setLoading(false);
         }
     }

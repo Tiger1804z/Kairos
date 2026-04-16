@@ -300,6 +300,7 @@ const safeLogError = async (args: {
 };
 
 export const aiAskShopify = async (req: Request, res: Response) => {
+  const t0 = Date.now();
   const businessId = parseInt(req.params.businessId ?? "", 10);
   const userId = req.user!.user_id;
   const question = req.body.question?.toString()?.trim();
@@ -388,10 +389,17 @@ export const aiAskShopify = async (req: Request, res: Response) => {
     }),
   });
 
-  // 6. Sauvegarder les 2 messages en DB
+  // 6. Sauvegarder les 2 messages en DB (métadonnées d'intent sur le message user)
   await prisma.chatMessage.createMany({
     data: [
-      { conversation_id: conversation.id, role: "user", content: question },
+      {
+        conversation_id: conversation.id,
+        role: "user",
+        content: question,
+        intent_family: result.intent_family ?? "unknown",
+        routing_status: result.routing_status ?? "unknown",
+        execution_time_ms: Date.now() - t0,
+      },
       { conversation_id: conversation.id, role: "assistant", content: result.answer },
     ],
   });
@@ -423,6 +431,31 @@ export const getConversations = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json({ conversations });
+};
+
+export const getChatLogs = async (req: Request, res: Response) => {
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+  const limit = Math.min(parseInt(req.query.limit?.toString() ?? "50", 10), 200);
+
+  const messages = await prisma.chatMessage.findMany({
+    where: {
+      role: "user",
+      conversation: { business_id: businessId },
+    },
+    orderBy: { created_at: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      content: true,
+      intent_family: true,
+      routing_status: true,
+      execution_time_ms: true,
+      created_at: true,
+      conversation: { select: { id: true, title: true } },
+    },
+  });
+
+  return res.status(200).json({ logs: messages, count: messages.length });
 };
 
 export const getConversationMessages = async (req: Request, res: Response) => {

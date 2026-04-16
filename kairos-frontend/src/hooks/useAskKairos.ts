@@ -35,6 +35,8 @@ export function useAskKairos() {
   }, [selectedBusiness]);
 
   useEffect(() => {
+    setMessages([]);
+    setConversationId(null);
     loadLastConversation();
   }, [loadLastConversation]);
 

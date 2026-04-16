@@ -7,6 +7,7 @@ from app.models import ProfitabilityRequest, InsightRequest, ChatRequest
 from app.insight_engine import compute_insights
 from app.chat_context_builder import build_context
 from app.llm_service import ask_llm
+from app.intent_classifier import classify_intent
 
 
 load_dotenv()
@@ -88,11 +89,14 @@ def compute_insights_route(request: InsightRequest):
 # -----------------------------------------------------------------------------
 @app.post("/chat/compute")
 def chat_compute(request: ChatRequest):
+    intent_family, routing_status = classify_intent(request.question)
     context = build_context(request)
     answer = ask_llm(context, request.question, request.history)
-    
+
     return {
         "business_id": request.business_id,
         "question": request.question,
         "answer": answer,
+        "intent_family": intent_family,
+        "routing_status": routing_status,
     }

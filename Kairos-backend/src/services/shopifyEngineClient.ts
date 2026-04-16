@@ -84,6 +84,8 @@ export type ChatAnswer = {
     business_id: number;
     question: string;
     answer: string;
+    intent_family: string;
+    routing_status: string;
 };
 
 export const askShopifyChat = async (payload: {
