@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Plus, Maximize2 } from "lucide-react";
 import { useAskKairos } from "../../hooks/useAskKairos";
+import { MessageContent } from "./MessageContent";
 import ChatModal from "./ChatModal";
+import { useI18n } from "../../i18n/useI18n";
 
 export default function ChatDrawer() {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const { ask, newConversation, messages, loading, error, expanded, setExpanded } = useAskKairos();
+  const { t } = useI18n();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Scroll auto vers le bas à chaque nouveau message
   useEffect(() => {
     if (open) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,7 +29,6 @@ export default function ChatDrawer() {
     setQuestion("");
   };
 
-  // Drawer affiche seulement les 3 derniers messages
   const visibleMessages = messages.slice(-3);
 
   return (
@@ -35,13 +36,13 @@ export default function ChatDrawer() {
       {/* Bouton flottant */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-500 transition"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-xl hover:bg-accent-hover transition"
       >
         <MessageCircle className="h-4 w-4" />
-        Ask Kairos
+        {t("chat.askKairos")}
       </button>
 
-      {/* Overlay drawer */}
+      {/* Overlay */}
       {open && !expanded && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
@@ -51,45 +52,53 @@ export default function ChatDrawer() {
 
       {/* Drawer */}
       <div
-        className={`fixed bottom-0 right-0 z-50 flex h-[560px] w-full max-w-md flex-col rounded-tl-2xl bg-[#0f0f12] ring-1 ring-white/10 shadow-2xl transition-transform duration-300 ${
+        className={`fixed bottom-0 right-0 z-50 flex h-[560px] w-full max-w-md flex-col rounded-tl-2xl bg-surface ring-1 ring-white/10 shadow-2xl transition-transform duration-300 ${
           open && !expanded ? "translate-y-0" : "translate-y-full"
         }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <div>
-            <p className="text-sm font-semibold text-white">Kairos AI</p>
-            <p className="text-xs text-white/40">
-              {messages.length > 3 ? `${messages.length} messages — vue partielle` : "Pose une question sur ta rentabilité"}
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+              <p className="text-sm font-bold text-white">{t("chat.title")}</p>
+            </div>
+            <p className="mt-0.5 text-xs text-white/40">
+              {messages.length > 3
+                ? t("chat.messages", { count: messages.length, plural: messages.length > 1 ? "s" : "" })
+                : t("chat.subtitle")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setExpanded(true)}
-              title="Agrandir"
-              className="text-white/40 hover:text-white transition"
+              title={t("chat.expand")}
+              className="rounded-lg p-1.5 text-white/40 hover:bg-white/5 hover:text-white transition"
             >
               <Maximize2 className="h-4 w-4" />
             </button>
             <button
               onClick={newConversation}
-              title="Nouvelle conversation"
-              className="text-white/40 hover:text-white transition"
+              title={t("chat.newConversation")}
+              className="rounded-lg p-1.5 text-white/40 hover:bg-white/5 hover:text-white transition"
             >
               <Plus className="h-4 w-4" />
             </button>
-            <button onClick={handleClose} className="text-white/40 hover:text-white transition">
+            <button
+              onClick={handleClose}
+              className="rounded-lg p-1.5 text-white/40 hover:bg-white/5 hover:text-white transition"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Messages (3 derniers) */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
           {messages.length === 0 && !loading && !error && (
             <div className="flex h-full items-center justify-center">
-              <p className="text-center text-sm text-white/30">
-                Ex: "Quel produit arrêter de vendre ?"
+              <p className="text-center text-sm text-white/40">
+                {t("chat.example")}
               </p>
             </div>
           )}
@@ -97,9 +106,10 @@ export default function ChatDrawer() {
           {messages.length > 3 && (
             <button
               onClick={() => setExpanded(true)}
-              className="w-full text-center text-xs text-indigo-400 hover:text-indigo-300 transition py-1"
+              className="w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-accent/60 hover:bg-white/[0.04] hover:text-accent transition"
             >
-              ↑ Voir les {messages.length - 3} messages précédents
+              <span>↑</span>
+              <span>{t("chat.previous", { count: messages.length - 3 })}</span>
             </button>
           )}
 
@@ -109,21 +119,29 @@ export default function ChatDrawer() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm leading-relaxed whitespace-pre-line ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
                   msg.role === "user"
-                    ? "bg-indigo-600 text-white rounded-br-sm"
-                    : "bg-white/8 text-white/80 rounded-bl-sm ring-1 ring-white/10"
+                    ? "bg-accent text-white rounded-br-sm"
+                    : "bg-card text-white/70 rounded-bl-sm ring-1 ring-white/10"
                 }`}
               >
-                {msg.content}
+                <MessageContent text={msg.content} isUser={msg.role === "user"} />
               </div>
             </div>
           ))}
 
           {loading && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-sm bg-white/8 px-4 py-2 ring-1 ring-white/10">
-                <span className="text-sm text-white/40">Kairos réfléchit...</span>
+              <div className="rounded-2xl rounded-bl-sm bg-card px-4 py-3 ring-1 ring-white/10">
+                <div className="flex items-center gap-1.5">
+                  {[0, 150, 300].map((delay) => (
+                    <span
+                      key={delay}
+                      className="h-1.5 w-1.5 rounded-full bg-white/30 animate-pulse"
+                      style={{ animationDelay: `${delay}ms` }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -136,11 +154,11 @@ export default function ChatDrawer() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-white/10 px-5 py-4 flex gap-3">
+        <div className="border-t border-white/10 bg-white/[0.02] px-5 py-4 flex gap-3">
           <input
             type="text"
-            className="flex-1 rounded-xl bg-white/5 px-4 py-2 text-sm text-white placeholder-white/30 ring-1 ring-white/10 focus:outline-none focus:ring-white/30"
-            placeholder="Ta question..."
+            className="flex-1 rounded-xl bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/40 ring-1 ring-white/10 focus:outline-none focus:ring-accent/30"
+            placeholder={t("chat.input.placeholder")}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => {
@@ -150,9 +168,9 @@ export default function ChatDrawer() {
           <button
             onClick={handleAsk}
             disabled={loading || !question.trim()}
-            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
-            Envoyer
+            {t("chat.send")}
           </button>
         </div>
       </div>

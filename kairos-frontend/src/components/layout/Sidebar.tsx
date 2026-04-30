@@ -8,16 +8,19 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../auth/AuthContext";
+import { useI18n } from "../../i18n/useI18n";
+import type { TranslationKey } from "../../i18n/I18nProvider";
 
 const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/dashboard/products", label: "Products", icon: Package },
-  { to: "/dashboard/insights", label: "Insights", icon: Lightbulb },
-  { to: "/dashboard/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/dashboard/products", labelKey: "nav.products", icon: Package },
+  { to: "/dashboard/insights", labelKey: "nav.insights", icon: Lightbulb },
+  { to: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
 export default function Sidebar() {
   const { logout } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -34,7 +37,7 @@ export default function Sidebar() {
         </div>
         <div className="leading-tight">
           <div className="text-sm font-bold tracking-wide text-white">KAIROS</div>
-          <div className="text-[11px] text-white/40">Profit Intelligence</div>
+          <div className="text-[11px] text-white/40">{t("nav.profitIntelligence")}</div>
         </div>
       </div>
 
@@ -62,7 +65,7 @@ export default function Sidebar() {
                     isActive ? "text-accent" : "text-white/30"
                   )}
                 />
-                <span>{n.label}</span>
+                <span>{t(n.labelKey as TranslationKey)}</span>
               </>
             )}
           </NavLink>
@@ -76,7 +79,7 @@ export default function Sidebar() {
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/40 transition duration-150 hover:bg-white/5 hover:text-white/70"
         >
           <LogOut className="h-4 w-4" />
-          Sign out
+          {t("nav.signOut")}
         </button>
       </div>
     </aside>

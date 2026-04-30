@@ -4,6 +4,7 @@ import { Card } from "../../components/ui/Card";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { useShopifyKpis } from "../../hooks/useShopifyKpis";
 import { api } from "../../lib/api";
+import { useI18n } from "../../i18n/useI18n";
 
 type MeUser = {
   id_user: number;
@@ -27,6 +28,7 @@ const SEVERITY_DOT = {
 
 export default function DashboardPage() {
   const { me, loadingMe } = useOutletContext<{ me: MeUser | null; loadingMe: boolean }>();
+  const { language, t } = useI18n();
   const { selectedBusinessId, loading: loadingBusiness } = useBusinessContext();
   const { kpis, loading, error, refetch } = useShopifyKpis(selectedBusinessId);
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ export default function DashboardPage() {
       await api.post(`/demo/${selectedBusinessId}/load`);
       refetch();
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || "Failed to load demo data";
+      const msg = err?.response?.data?.error || err?.message || t("dashboard.demo.load");
       setDemoError(msg);
     } finally {
       setLoadingDemo(false);
@@ -51,28 +53,30 @@ export default function DashboardPage() {
   const name = me ? `${me.first_name ?? ""} ${me.last_name ?? ""}`.trim() || me.email : "—";
 
   const fmt = (amount: number) =>
-    new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(amount);
+    new Intl.NumberFormat(language === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(amount);
 
   const marginColor = (pct: number) =>
     pct < 0 ? "text-red-400" : pct < 15 ? "text-orange-400" : "text-emerald-400";
 
-  // Signaux critiques affichés dans le header
+  const severityLabel = (severity: "critical" | "warning" | "info") =>
+    t(`insights.severity.${severity}`);
+
   const signals = kpis && !loading
     ? [
         kpis.negativeProfitCount > 0 && {
-          label: `${kpis.negativeProfitCount} product${kpis.negativeProfitCount > 1 ? "s" : ""} losing money`,
+          label: t("dashboard.signal.losingMoney", { count: kpis.negativeProfitCount, plural: kpis.negativeProfitCount > 1 ? "s" : "" }),
           dot: "bg-red-400",
           pill: "bg-red-500/10 text-red-300 ring-1 ring-red-500/20 hover:bg-red-500/20",
           to: "/dashboard/products",
         },
         kpis.missingCostsCount > 0 && {
-          label: `${kpis.missingCostsCount} missing cost${kpis.missingCostsCount > 1 ? "s" : ""}`,
+          label: t("dashboard.signal.missingCost", { count: kpis.missingCostsCount, plural: kpis.missingCostsCount > 1 ? "s" : "" }),
           dot: "bg-orange-400",
           pill: "bg-orange-500/10 text-orange-300 ring-1 ring-orange-500/20 hover:bg-orange-500/20",
           to: "/dashboard/products",
         },
         kpis.recentInsights.length > 0 && {
-          label: `${kpis.recentInsights.length} active insight${kpis.recentInsights.length > 1 ? "s" : ""}`,
+          label: t("dashboard.signal.activeInsight", { count: kpis.recentInsights.length, plural: kpis.recentInsights.length > 1 ? "s" : "" }),
           dot: "bg-blue-400",
           pill: "bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/20 hover:bg-blue-500/20",
           to: "/dashboard/insights",
@@ -89,18 +93,17 @@ export default function DashboardPage() {
 
       <div className="relative mx-auto max-w-6xl px-6 py-10">
 
-        {/* ── Executive Summary Header ── */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* ── Header ── */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">
-              {loadingMe ? "..." : `Welcome back, ${name}.`}
+            <h1 className="text-2xl font-bold tracking-tight">
+              {loadingMe ? "..." : t("dashboard.welcome", { name })}
             </h1>
-            <p className="mt-0.5 text-sm text-white/40">Shopify profit overview</p>
+            <p className="mt-1 text-sm text-white/40">{t("dashboard.subtitle")}</p>
           </div>
 
-          {/* Status signals — n'apparaissent que si des données existent */}
           {signals.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 sm:mt-1">
               {signals.map((s) => (
                 <button
                   key={s.label}
@@ -115,145 +118,152 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Séparateur */}
         <div className="mt-6 border-t border-white/5" />
 
-        {/* Demo banner — visible si aucune donnée de profitabilité */}
+        {/* Demo banner */}
         {selectedBusinessId && !loading && (!kpis || kpis.productsTracked === 0) && (
           <div className="mt-6 rounded-2xl bg-accent/10 px-6 py-4 ring-1 ring-accent/20">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-semibold">No profitability data yet</div>
-                <div className="mt-0.5 text-xs text-white/50">
-                  Load demo data to see Kairos in action — 6 real scenarios in 1 click.
+                <div className="text-sm font-semibold">{t("dashboard.demo.emptyTitle")}</div>
+                <div className="mt-0.5 text-xs text-white/40">
+                  {t("dashboard.demo.emptyText")}
                 </div>
               </div>
               <button
                 onClick={handleLoadDemo}
                 disabled={loadingDemo}
-                className="ml-4 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent/80 disabled:opacity-50"
+                className="ml-4 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50"
               >
-                {loadingDemo ? "Loading…" : "Load Demo Data"}
+                {loadingDemo ? t("dashboard.demo.loading") : t("dashboard.demo.load")}
               </button>
             </div>
             {demoError && (
               <div className="mt-3 text-xs text-orange-400">
                 {demoError.includes("produit") || demoError.includes("product")
-                  ? "Shopify sync required first — go to Settings → connect your store → Sync."
+                  ? t("dashboard.demo.shopifyRequired")
                   : demoError}
               </div>
             )}
           </div>
         )}
 
-        {/* Erreur */}
         {error && (
           <div className="mt-6 rounded-2xl bg-red-500/10 p-4 text-center text-sm text-red-300 ring-1 ring-red-500/20">
             {error}
           </div>
         )}
 
-        {/* No business */}
         {!selectedBusinessId && !loadingBusiness && (
-          <div className="mt-6 rounded-2xl bg-yellow-500/10 p-4 text-center text-sm text-yellow-300 ring-1 ring-yellow-500/20">
-            Please select a business to view your dashboard
+          <div className="mt-6 rounded-2xl bg-warning/10 p-4 text-center text-sm text-orange-300 ring-1 ring-warning/20">
+            {t("dashboard.noBusiness")}
           </div>
         )}
 
         {selectedBusinessId && (
-          <div className="mt-6 space-y-6">
+          <div className="mt-8 space-y-8">
 
-            {/* ── Row 1 — Métriques globales ── */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card className="p-6">
-                <div className="text-xs text-white/50 uppercase tracking-wider">Total Revenue</div>
-                <div className="mt-2 text-2xl font-semibold">
-                  {loading ? "..." : fmt(kpis?.totalRevenue ?? 0)}
-                </div>
-                <div className="mt-1 text-xs text-white/40">
-                  {kpis?.productsTracked ?? 0} products tracked
-                </div>
-              </Card>
+            {/* ── Row 1 — Global metrics ── */}
+            <div className="space-y-3">
+              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-widest">{t("dashboard.section.overview")}</div>
+              <div className="grid gap-4 md:grid-cols-4">
 
-              <Card className="p-6">
-                <div className="text-xs text-white/50 uppercase tracking-wider">Real Profit</div>
-                <div className={`mt-2 text-2xl font-semibold ${kpis ? marginColor(kpis.totalProfit) : ""}`}>
-                  {loading ? "..." : fmt(kpis?.totalProfit ?? 0)}
-                </div>
-                <div className="mt-1 text-xs text-white/40">After COGS</div>
-              </Card>
+                <Card className="p-6">
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.totalRevenue")}</div>
+                  <div className="mt-3 text-3xl font-bold tabular-nums">
+                    {loading ? "—" : fmt(kpis?.totalRevenue ?? 0)}
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">
+                    {t("dashboard.kpi.productsTracked", { count: kpis?.productsTracked ?? 0 })}
+                  </div>
+                </Card>
 
-              <Card className="p-6">
-                <div className="text-xs text-white/50 uppercase tracking-wider">Avg Margin</div>
-                <div className={`mt-2 text-2xl font-semibold ${kpis ? marginColor(kpis.avgMarginPct) : ""}`}>
-                  {loading ? "..." : `${kpis?.avgMarginPct ?? 0}%`}
-                </div>
-                <div className="mt-1 text-xs text-white/40">Weighted by revenue</div>
-              </Card>
+                <Card className="p-6">
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.realProfit")}</div>
+                  <div className={`mt-3 text-3xl font-bold tabular-nums ${kpis ? marginColor(kpis.totalProfit) : ""}`}>
+                    {loading ? "—" : fmt(kpis?.totalProfit ?? 0)}
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">{t("dashboard.kpi.afterCogs")}</div>
+                </Card>
 
-              <Card className={`p-6 ${kpis && kpis.missingCostsCount > 0 ? "ring-1 ring-orange-500/30" : ""}`}>
-                <div className="text-xs text-white/50 uppercase tracking-wider">Missing Costs</div>
-                <div className={`mt-2 text-2xl font-semibold ${kpis && kpis.missingCostsCount > 0 ? "text-orange-400" : "text-white/60"}`}>
-                  {loading ? "..." : kpis?.missingCostsCount ?? 0}
-                </div>
-                {kpis && kpis.missingCostsCount > 0 ? (
-                  <button
-                    onClick={() => navigate("/dashboard/products")}
-                    className="mt-1 text-xs text-orange-400/80 hover:text-orange-300 transition text-left"
-                  >
-                    Fix in Products →
-                  </button>
-                ) : (
-                  <div className="mt-1 text-xs text-white/40">All costs entered</div>
-                )}
-              </Card>
+                <Card className="p-6">
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.avgMargin")}</div>
+                  <div className={`mt-3 text-3xl font-bold tabular-nums ${kpis ? marginColor(kpis.avgMarginPct) : ""}`}>
+                    {loading ? "—" : `${kpis?.avgMarginPct ?? 0}%`}
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">{t("dashboard.kpi.weightedByRevenue")}</div>
+                </Card>
+
+                <Card className={`p-6 ${kpis && kpis.missingCostsCount > 0 ? "ring-1 ring-orange-500/40" : ""}`}>
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.missingCosts")}</div>
+                  <div className={`mt-3 text-3xl font-bold tabular-nums ${kpis && kpis.missingCostsCount > 0 ? "text-orange-400" : "text-white/70"}`}>
+                    {loading ? "—" : kpis?.missingCostsCount ?? 0}
+                  </div>
+                  {kpis && kpis.missingCostsCount > 0 ? (
+                    <button
+                      onClick={() => navigate("/dashboard/products")}
+                      className="mt-2 text-xs text-orange-400/70 hover:text-orange-300 transition text-left"
+                    >
+                      {t("dashboard.kpi.fixInProducts")}
+                    </button>
+                  ) : (
+                    <div className="mt-2 text-xs text-white/40">{t("dashboard.kpi.allCostsEntered")}</div>
+                  )}
+                </Card>
+
+              </div>
             </div>
 
-            {/* ── Row 2 — Signaux de risque ── */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card className={`p-6 ${kpis && kpis.negativeProfitCount > 0 ? "ring-1 ring-red-500/30" : ""}`}>
-                <div className="text-xs text-white/50 uppercase tracking-wider">Products Losing Money</div>
-                <div className={`mt-2 text-2xl font-semibold ${kpis && kpis.negativeProfitCount > 0 ? "text-red-400" : "text-white/60"}`}>
-                  {loading ? "..." : kpis?.negativeProfitCount ?? 0}
-                </div>
-                <div className="mt-1 text-xs text-white/40">Negative gross profit</div>
-              </Card>
+            {/* ── Row 2 — Risk signals ── */}
+            <div className="space-y-3">
+              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-widest">{t("dashboard.section.riskSignals")}</div>
+              <div className="grid gap-4 md:grid-cols-4">
 
-              <Card className={`p-6 ${kpis && kpis.lowMarginCount > 0 ? "ring-1 ring-orange-500/20" : ""}`}>
-                <div className="text-xs text-white/50 uppercase tracking-wider">Low Margin</div>
-                <div className={`mt-2 text-2xl font-semibold ${kpis && kpis.lowMarginCount > 0 ? "text-orange-400" : "text-white/60"}`}>
-                  {loading ? "..." : kpis?.lowMarginCount ?? 0}
-                </div>
-                <div className="mt-1 text-xs text-white/40">Products under 15% margin</div>
-              </Card>
+                <Card className={`p-6 ${kpis && kpis.negativeProfitCount > 0 ? "ring-1 ring-red-500/40 bg-red-500/[0.03]" : ""}`}>
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.productsLosingMoney")}</div>
+                  <div className={`mt-3 text-3xl font-bold tabular-nums ${kpis && kpis.negativeProfitCount > 0 ? "text-red-400" : "text-white/70"}`}>
+                    {loading ? "—" : kpis?.negativeProfitCount ?? 0}
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">{t("dashboard.kpi.negativeGrossProfit")}</div>
+                </Card>
 
-              <Card className="p-6">
-                <div className="text-xs text-white/50 uppercase tracking-wider">Top Profit Product</div>
-                {loading ? (
-                  <div className="mt-2 text-2xl font-semibold">...</div>
-                ) : kpis?.topProfitProduct ? (
-                  <>
-                    <div className="mt-2 text-sm font-semibold text-emerald-400 leading-tight truncate">
-                      {kpis.topProfitProduct.title}
-                    </div>
-                    <div className="mt-1 text-xs text-white/40">
-                      {fmt(kpis.topProfitProduct.profit)} · {kpis.topProfitProduct.marginPct}% margin
-                    </div>
-                  </>
-                ) : (
-                  <div className="mt-2 text-sm text-white/40">No data yet</div>
-                )}
-              </Card>
+                <Card className={`p-6 ${kpis && kpis.lowMarginCount > 0 ? "ring-1 ring-orange-500/30" : ""}`}>
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.lowMargin")}</div>
+                  <div className={`mt-3 text-3xl font-bold tabular-nums ${kpis && kpis.lowMarginCount > 0 ? "text-orange-400" : "text-white/70"}`}>
+                    {loading ? "—" : kpis?.lowMarginCount ?? 0}
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">{t("dashboard.kpi.productsUnderMargin")}</div>
+                </Card>
 
-              <Card className={`p-6 ${kpis && kpis.revenueAtRisk > 0 ? "ring-1 ring-red-500/20" : ""}`}>
-                <div className="text-xs text-white/50 uppercase tracking-wider">Revenue at Risk</div>
-                <div className={`mt-2 text-2xl font-semibold ${kpis && kpis.revenueAtRisk > 0 ? "text-red-400" : "text-white/60"}`}>
-                  {loading ? "..." : fmt(kpis?.revenueAtRisk ?? 0)}
-                </div>
-                <div className="mt-1 text-xs text-white/40">
-                  Negative margin or missing cost
-                </div>
-              </Card>
+                <Card className="p-6">
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.topProfitProduct")}</div>
+                  {loading ? (
+                    <div className="mt-3 text-2xl font-bold">—</div>
+                  ) : kpis?.topProfitProduct ? (
+                    <>
+                      <div className="mt-3 text-sm font-semibold text-emerald-400 leading-tight truncate">
+                        {kpis.topProfitProduct.title}
+                      </div>
+                      <div className="mt-1.5 text-xs text-white/40">
+                        {fmt(kpis.topProfitProduct.profit)} · {t("dashboard.product.margin", { margin: kpis.topProfitProduct.marginPct })}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-3 text-sm text-white/40">{t("common.noDataYet")}</div>
+                  )}
+                </Card>
+
+                <Card className={`p-6 ${kpis && kpis.revenueAtRisk > 0 ? "ring-1 ring-red-500/30 bg-red-500/[0.03]" : ""}`}>
+                  <div className="text-xs font-medium text-white/40 uppercase tracking-wider">{t("dashboard.kpi.revenueAtRisk")}</div>
+                  <div className={`mt-3 text-3xl font-bold tabular-nums ${kpis && kpis.revenueAtRisk > 0 ? "text-red-400" : "text-white/70"}`}>
+                    {loading ? "—" : fmt(kpis?.revenueAtRisk ?? 0)}
+                  </div>
+                  <div className="mt-2 text-xs text-white/40">
+                    {t("dashboard.kpi.riskRevenueNote")}
+                  </div>
+                </Card>
+
+              </div>
             </div>
 
             {/* ── Panels ── */}
@@ -261,68 +271,72 @@ export default function DashboardPage() {
 
               {/* Top Products by Profit */}
               <Card className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="text-sm font-semibold">Top Products by Profit</div>
+                <div className="mb-5 flex items-center justify-between">
+                  <div className="text-base font-semibold">{t("dashboard.panel.topProducts")}</div>
                   <button
                     onClick={() => navigate("/dashboard/products")}
-                    className="text-xs text-white/40 hover:text-white/70 transition"
+                    className="text-xs text-white/40 hover:text-accent transition"
                   >
-                    View all →
+                    {t("dashboard.cta.viewAll")}
                   </button>
                 </div>
                 {loading ? (
-                  <div className="flex h-48 items-center justify-center text-sm text-white/40">Loading...</div>
+                  <div className="flex h-48 items-center justify-center text-sm text-white/40">{t("common.loading")}</div>
                 ) : kpis?.topProductsByProfit && kpis.topProductsByProfit.length > 0 ? (
                   <div className="space-y-2">
                     {kpis.topProductsByProfit.map((p) => (
-                      <div key={p.productId} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                      <div key={p.productId} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3.5 hover:bg-white/[0.08] transition-colors">
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">{p.title}</div>
-                          <div className="text-xs text-white/40">{p.unitsSold} sold · {fmt(p.revenue)} rev</div>
+                          <div className="truncate text-sm font-semibold">{p.title}</div>
+                          <div className="mt-0.5 text-xs text-white/40">
+                            {t("dashboard.product.soldRevenue", { sold: p.unitsSold, revenue: fmt(p.revenue) })}
+                          </div>
                         </div>
                         <div className="ml-4 text-right shrink-0">
-                          <div className={`text-sm font-semibold ${marginColor(p.marginPct)}`}>
+                          <div className={`text-sm font-bold tabular-nums ${marginColor(p.marginPct)}`}>
                             {fmt(p.grossProfit)}
                           </div>
-                          <div className={`text-xs ${marginColor(p.marginPct)}`}>{p.marginPct}%</div>
+                          <div className={`text-xs font-medium ${marginColor(p.marginPct)}`}>{p.marginPct}%</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex h-48 items-center justify-center text-sm text-white/40">
-                    No profitability data — compute it in Products
+                    {t("dashboard.empty.noProfitability")}
                   </div>
                 )}
               </Card>
 
               {/* Highest Risk Products */}
               <Card className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="text-sm font-semibold">Highest Risk Products</div>
+                <div className="mb-5 flex items-center justify-between">
+                  <div className="text-base font-semibold">{t("dashboard.panel.highestRisk")}</div>
                   <button
                     onClick={() => navigate("/dashboard/insights")}
-                    className="text-xs text-white/40 hover:text-white/70 transition"
+                    className="text-xs text-white/40 hover:text-accent transition"
                   >
-                    See insights →
+                    {t("dashboard.cta.seeInsights")}
                   </button>
                 </div>
                 {loading ? (
-                  <div className="flex h-48 items-center justify-center text-sm text-white/40">Loading...</div>
+                  <div className="flex h-48 items-center justify-center text-sm text-white/40">{t("common.loading")}</div>
                 ) : kpis?.highestRiskProducts && kpis.highestRiskProducts.length > 0 ? (
                   <div className="space-y-2">
                     {kpis.highestRiskProducts.map((p) => (
-                      <div key={p.productId} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/5">
+                      <div key={p.productId} className="flex items-center justify-between rounded-xl bg-red-500/5 px-4 py-3.5 ring-1 ring-red-500/10 hover:bg-red-500/[0.08] transition-colors">
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">{p.title}</div>
-                          <div className="text-xs text-white/40">{fmt(p.revenue)} revenue</div>
+                          <div className="truncate text-sm font-semibold">{p.title}</div>
+                          <div className="mt-0.5 text-xs text-white/40">
+                            {t("dashboard.product.revenue", { revenue: fmt(p.revenue) })}
+                          </div>
                         </div>
                         <div className="ml-4 text-right shrink-0">
-                          <div className={`text-sm font-semibold ${p.marginPct < 0 ? "text-red-400" : "text-orange-400"}`}>
+                          <div className={`text-sm font-bold tabular-nums ${p.marginPct < 0 ? "text-red-400" : "text-orange-400"}`}>
                             {p.marginPct}%
                           </div>
-                          <div className={`text-[11px] uppercase tracking-wide ${p.riskReason === "negative_margin" ? "text-red-400/70" : "text-orange-400/70"}`}>
-                            {p.riskReason === "negative_margin" ? "losing money" : "no cost"}
+                          <div className={`text-[11px] font-medium uppercase tracking-wide ${p.riskReason === "negative_margin" ? "text-red-400/70" : "text-orange-400/70"}`}>
+                            {p.riskReason === "negative_margin" ? t("dashboard.risk.losingMoney") : t("dashboard.risk.noCost")}
                           </div>
                         </div>
                       </div>
@@ -330,24 +344,24 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="flex h-48 items-center justify-center text-sm text-emerald-400/60">
-                    No risk signals detected
+                    {t("dashboard.empty.noRisk")}
                   </div>
                 )}
               </Card>
 
               {/* Active Insights */}
               <Card className="p-6 md:col-span-2">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="text-sm font-semibold">Active Insights</div>
+                <div className="mb-5 flex items-center justify-between">
+                  <div className="text-base font-semibold">{t("dashboard.panel.activeInsights")}</div>
                   <button
                     onClick={() => navigate("/dashboard/insights")}
-                    className="text-xs text-white/40 hover:text-white/70 transition"
+                    className="text-xs text-white/40 hover:text-accent transition"
                   >
-                    View all →
+                    {t("dashboard.cta.viewAll")}
                   </button>
                 </div>
                 {loading ? (
-                  <div className="flex h-20 items-center justify-center text-sm text-white/40">Loading...</div>
+                  <div className="flex h-20 items-center justify-center text-sm text-white/40">{t("common.loading")}</div>
                 ) : kpis?.recentInsights && kpis.recentInsights.length > 0 ? (
                   <div className="grid gap-3 md:grid-cols-3">
                     {kpis.recentInsights.map((insight, i) => (
@@ -355,20 +369,20 @@ export default function DashboardPage() {
                         key={i}
                         className={`rounded-xl p-4 ring-1 ${SEVERITY_STYLES[insight.severity]}`}
                       >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`h-2 w-2 rounded-full ${SEVERITY_DOT[insight.severity]}`} />
-                          <span className="text-xs font-medium uppercase tracking-wider opacity-70">
-                            {insight.severity}
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className={`h-1.5 w-1.5 rounded-full ${SEVERITY_DOT[insight.severity]}`} />
+                          <span className="text-[10px] font-semibold uppercase tracking-widest opacity-60">
+                            {severityLabel(insight.severity)}
                           </span>
                         </div>
                         <div className="text-sm font-semibold leading-snug">{insight.title}</div>
-                        <div className="mt-1 text-xs opacity-70 line-clamp-2">{insight.message}</div>
+                        <div className="mt-1.5 text-xs opacity-50 line-clamp-2">{insight.message}</div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="flex h-20 items-center justify-center text-sm text-white/40">
-                    No insights yet — compute them in Insights
+                    {t("dashboard.empty.noInsights")}
                   </div>
                 )}
               </Card>

@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Building2 } from "lucide-react";
 import { useBusinessContext } from "../../business/BusinessContext";
+import { useI18n } from "../../i18n/useI18n";
 
 export default function BusinessSelector() {
   const { businesses, selectedBusinessId, selectedBusiness, selectBusiness, loading, error } =
     useBusinessContext();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -19,13 +21,13 @@ export default function BusinessSelector() {
   }, []);
 
   if (loading) {
-    return <div className="text-xs text-white/40">Loading...</div>;
+    return <div className="text-xs text-white/40">{t("business.loading")}</div>;
   }
   if (error) {
-    return <div className="text-xs text-danger">Error loading businesses</div>;
+    return <div className="text-xs text-danger">{t("business.error")}</div>;
   }
   if (businesses.length === 0) {
-    return <div className="text-xs text-warning">No businesses found</div>;
+    return <div className="text-xs text-warning">{t("business.empty")}</div>;
   }
 
   return (
@@ -36,7 +38,7 @@ export default function BusinessSelector() {
       >
         <Building2 className="h-3.5 w-3.5 shrink-0 text-white/40" />
         <span className="max-w-[140px] truncate font-medium">
-          {selectedBusiness?.name ?? "Select business"}
+          {selectedBusiness?.name ?? t("business.select")}
         </span>
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 text-white/40 transition-transform duration-150 ${

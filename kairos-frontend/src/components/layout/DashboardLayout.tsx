@@ -4,19 +4,23 @@ import Sidebar from "./Sidebar";
 import BusinessSelector from "../dashboard/BusinessSelector";
 import ChatDrawer from "../kairos/ChatDrawer";
 import { useAuth } from "../../auth/AuthContext";
+import { LanguageSwitcher } from "../../i18n/LanguageSwitcher";
+import { useI18n } from "../../i18n/useI18n";
+import type { TranslationKey } from "../../i18n/I18nProvider";
 
-const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/dashboard/products": "Products",
-  "/dashboard/insights": "Insights",
-  "/dashboard/settings": "Settings",
+const PAGE_TITLE_KEYS: Record<string, TranslationKey> = {
+  "/dashboard": "nav.dashboard",
+  "/dashboard/products": "nav.products",
+  "/dashboard/insights": "nav.insights",
+  "/dashboard/settings": "nav.settings",
 };
 
 export default function DashboardLayout() {
   const { user, loading: loadingMe } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
 
-  const pageTitle = PAGE_TITLES[location.pathname] ?? "Dashboard";
+  const pageTitle = t(PAGE_TITLE_KEYS[location.pathname] ?? "nav.dashboard");
 
   const initials = useMemo(() => {
     if (!user?.email) return "?";
@@ -50,9 +54,10 @@ export default function DashboardLayout() {
               {/* Right : business selector + user chip */}
               <div className="flex items-center gap-4">
                 <BusinessSelector />
+                <LanguageSwitcher compact />
 
                 {loadingMe ? (
-                  <div className="text-xs text-white/40">Loading...</div>
+                  <div className="text-xs text-white/40">{t("common.loading")}</div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <div className="hidden text-right leading-tight sm:block">

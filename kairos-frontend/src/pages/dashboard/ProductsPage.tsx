@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useBusinessContext } from "../../business/BusinessContext";
 import { getProducts, createCost, computeProfitability, importCostsCsv } from "../../services/productService";
 import { Card } from "../../components/ui/Card";
+import { useI18n } from "../../i18n/useI18n";
 
 
 interface ProductCost {
@@ -21,6 +22,7 @@ interface Product {
 }
 
 export default function ProductsPage() {
+    const { t } = useI18n();
     const {selectedBusinessId} = useBusinessContext();
     const [searchParams] = useSearchParams();
     const highlightParam = searchParams.get("highlight");
@@ -45,7 +47,7 @@ export default function ProductsPage() {
             const data = await getProducts(selectedBusinessId);
             setProducts(data);
         } catch {
-            setError("Impossible de charger les produits");
+            setError(t("products.error.load"));
             setLoading(false);
             return;
         }
@@ -89,7 +91,7 @@ export default function ProductsPage() {
             setCsvResult(result);
             await fetchProducts();
         } catch {
-            setError("Erreur lors de l'import CSV");
+            setError(t("products.error.csv"));
         } finally {
             setCsvImporting(false);
             e.target.value = "";
@@ -108,7 +110,7 @@ export default function ProductsPage() {
         setCostInput("");
         await fetchProducts(); // refresh
       }catch{
-        setError("Erreur lors de la sauvegarde du coût");
+        setError(t("products.error.saveCost"));
       }finally{
         setSaving(false);
       }
@@ -117,20 +119,20 @@ export default function ProductsPage() {
     return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold">Produits</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("products.title")}</h1>
         <label className={`cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition ${csvImporting ? "opacity-40 pointer-events-none" : ""}`}>
-          {csvImporting ? "Import en cours..." : "Importer CSV"}
+          {csvImporting ? t("products.importing") : t("products.importCsv")}
           <input type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
         </label>
       </div>
 
       {csvResult && (
         <div className="mb-6 rounded-xl bg-emerald-500/10 p-4 text-sm text-emerald-300 ring-1 ring-emerald-500/20">
-          {csvResult.imported} coût(s) importé(s).
+          {t("products.importedCosts", { count: csvResult.imported })}
           {csvResult.errors.length > 0 && (
             <ul className="mt-2 text-orange-400">
               {csvResult.errors.map((e) => (
-                <li key={e.row}>Ligne {e.row} : {e.reason}</li>
+                <li key={e.row}>{t("products.importRowError", { row: e.row, reason: e.reason })}</li>
               ))}
             </ul>
           )}
@@ -148,22 +150,22 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5 text-left text-xs text-white/40">
-                <th className="px-6 py-4">Produit</th>
-                <th className="px-6 py-4">Vendeur</th>
-                <th className="px-6 py-4">Statut</th>
-                <th className="px-6 py-4">Coût unitaire</th>
-                <th className="px-6 py-4">Marge brute</th>
+                <th className="px-6 py-4">{t("products.table.product")}</th>
+                <th className="px-6 py-4">{t("products.table.vendor")}</th>
+                <th className="px-6 py-4">{t("products.table.status")}</th>
+                <th className="px-6 py-4">{t("products.table.unitCost")}</th>
+                <th className="px-6 py-4">{t("products.table.margin")}</th>
                 <th className="px-6 py-4"></th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-white/40">Loading...</td>
+                  <td colSpan={6} className="px-6 py-12 text-center text-white/40">{t("common.loading")}</td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-white/40">Aucun produit — lance une sync Shopify dans Settings</td>
+                  <td colSpan={6} className="px-6 py-12 text-center text-white/40">{t("products.empty")}</td>
                 </tr>
               ) : (
                 products.map((p) => {
@@ -175,30 +177,34 @@ export default function ProductsPage() {
                     <tr
                       key={p.id}
                       data-product-id={p.id}
-                      className={`border-b border-white/5 transition-colors duration-500 ${
+                      className={`border-b border-white/5 transition-colors duration-300 ${
                         isHighlighted
                           ? "bg-violet-500/15 ring-2 ring-inset ring-violet-400/60"
                           : isNegative
-                            ? "bg-red-500/5"
-                            : ""
+                            ? "bg-red-500/5 hover:bg-red-500/[0.08]"
+                            : "hover:bg-white/[0.04]"
                       }`}
                     >
-                      <td className="px-6 py-4 font-medium">
+                      <td className="px-6 py-4 font-semibold">
                         <div className="flex items-center gap-2">
                           {p.title}
                           {!latestCost && (
                             <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[11px] text-orange-400 ring-1 ring-orange-500/20">
-                              ⚠ Coût manquant
+                              {t("products.badge.missingCost")}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-white/60">{p.vendor ?? "—"}</td>
-                      <td className="px-6 py-4 text-white/60">{p.status}</td>
+                      <td className="px-6 py-4 text-xs text-white/40">{p.vendor ?? "—"}</td>
+                      <td className="px-6 py-4">
+                        <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-white/40 ring-1 ring-white/10">
+                          {p.status}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         {latestCost
                           ? <span className="text-emerald-300">${parseFloat(latestCost.cost_per_unit).toFixed(2)}</span>
-                          : <span className="text-orange-400/80">Non défini</span>
+                          : <span className="text-orange-400/80">{t("products.cost.undefined")}</span>
                         }
                       </td>
                       <td className="px-6 py-4">
@@ -206,15 +212,18 @@ export default function ProductsPage() {
                           ? <span className={margin >= 15 ? "text-emerald-300" : margin >= 0 ? "text-orange-400" : "text-red-400 font-semibold"}>
                               {margin.toFixed(1)}%
                             </span>
-                          : <span className="text-white/30">—</span>
+                          : <span className="text-white/40">—</span>
                         }
                       </td>
                       <td className="px-6 py-4">
                         <button
                           onClick={() => { setModalProduct(p); setCostInput(latestCost?.cost_per_unit ?? ""); }}
-                          className="rounded-lg bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10 transition"
+                          className={latestCost
+                            ? "rounded-lg bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 transition"
+                            : "rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-400 ring-1 ring-orange-500/20 hover:bg-orange-500/15 transition"
+                          }
                         >
-                          {latestCost ? "Modifier" : "Entrer coût"}
+                          {latestCost ? t("products.action.edit") : t("products.action.enterCost")}
                         </button>
                       </td>
                     </tr>
@@ -229,11 +238,11 @@ export default function ProductsPage() {
       {/* Modal */}
       {modalProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-2xl bg-[#1a1a2e] p-6 ring-1 ring-white/10">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 ring-1 ring-white/10">
             <h2 className="mb-1 text-lg font-semibold">{modalProduct.title}</h2>
-            <p className="mb-6 text-sm text-white/50">Saisir le coût unitaire (fournisseur)</p>
+            <p className="mb-6 text-sm text-white/50">{t("products.modal.subtitle")}</p>
 
-            <label className="mb-1 block text-xs text-white/40">Coût par unité ($)</label>
+            <label className="mb-1 block text-xs text-white/40">{t("products.modal.unitCost")}</label>
             <input
               type="number"
               min="0"
@@ -241,7 +250,7 @@ export default function ProductsPage() {
               value={costInput}
               onChange={(e) => setCostInput(e.target.value)}
               className="w-full rounded-xl bg-white/5 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-white/30"
-              placeholder="ex: 12.50"
+              placeholder={t("products.modal.placeholder")}
             />
 
             <div className="mt-6 flex justify-end gap-3">
@@ -249,14 +258,14 @@ export default function ProductsPage() {
                 onClick={() => setModalProduct(null)}
                 className="rounded-xl px-4 py-2 text-sm text-white/50 hover:text-white transition"
               >
-                Annuler
+                {t("common.cancel")}
               </button>
               <button
                 onClick={handleSaveCost}
                 disabled={saving || !costInput}
-                className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition disabled:opacity-40"
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover transition disabled:opacity-40"
               >
-                {saving ? "Sauvegarde..." : "Sauvegarder"}
+                {saving ? t("common.saving") : t("common.save")}
               </button>
             </div>
           </div>

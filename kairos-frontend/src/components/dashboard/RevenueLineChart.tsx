@@ -8,6 +8,7 @@ import {
     Tooltip,
     Legend,
 } from "recharts";
+import { useI18n } from "../../i18n/useI18n";
 
 
 type MonthlyTrend = {
@@ -21,6 +22,8 @@ type Props = {
 };
 
 export function RevenueLineChart({ data }: Props) {
+    const { language, t } = useI18n();
+
     return(
         // ResponsiveContainer : Rend le graphique responsive (il s'adapte à la largeur du parent)
         <ResponsiveContainer width="100%" height={300}>
@@ -43,13 +46,13 @@ export function RevenueLineChart({ data }: Props) {
                 {/* Tooltip : Le popup qui apparaît quand tu hover un point */}
                 <Tooltip
                 contentStyle={{
-                    backgroundColor: "#1a1a2e",
+                    backgroundColor: "#161B22",
                     border: "1px solid rgba(255,255,255,0.1)",
                     borderRadius: "12px",
                     color: "#fff",
                 }}
                 formatter={(value) =>
-                    new Intl.NumberFormat("en-CA", {
+                    new Intl.NumberFormat(language === "fr" ? "fr-CA" : "en-CA", {
                     style: "currency",
                     currency: "CAD",
                     }).format(value as number)
@@ -61,7 +64,7 @@ export function RevenueLineChart({ data }: Props) {
                 <Line
                 type="monotone"
                 dataKey="income"
-                name="Income"
+                name={t("dashboard.chart.income")}
                 stroke="#6ee7b7"
                 strokeWidth={2}
                 dot={{ r: 4 }}
@@ -71,7 +74,7 @@ export function RevenueLineChart({ data }: Props) {
                 <Line
                 type="monotone"
                 dataKey="expenses"
-                name="Expenses"
+                name={t("dashboard.chart.expenses")}
                 stroke="#fca5a5"
                 strokeWidth={2}
                 dot={{ r: 4 }}

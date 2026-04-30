@@ -9,12 +9,15 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { cn } from "../../lib/cn";
+import { LanguageSwitcher } from "../../i18n/LanguageSwitcher";
+import { useI18n } from "../../i18n/useI18n";
 
 type Mode = "login" | "signup";
 
 export default function AuthPage() {
   const { login, signup } = useAuth();
   const { refreshBusinesses } = useBusinessContext();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
@@ -23,15 +26,15 @@ export default function AuthPage() {
 
   const fields = isSignup
     ? ([
-        { name: "first_name", label: "First name", type: "text", autoComplete: "given-name" },
-        { name: "last_name", label: "Last name", type: "text", autoComplete: "family-name" },
-        { name: "email", label: "Email", type: "email", autoComplete: "email" },
-        { name: "password", label: "Password", type: "password", autoComplete: "new-password" },
-        { name: "confirm_password", label: "Confirm password", type: "password", autoComplete: "new-password" },
+        { name: "first_name", label: t("auth.firstName"), type: "text", autoComplete: "given-name" },
+        { name: "last_name", label: t("auth.lastName"), type: "text", autoComplete: "family-name" },
+        { name: "email", label: t("auth.email"), type: "email", autoComplete: "email" },
+        { name: "password", label: t("auth.password"), type: "password", autoComplete: "new-password" },
+        { name: "confirm_password", label: t("auth.confirmPassword"), type: "password", autoComplete: "new-password" },
       ] as const)
     : ([
-        { name: "email", label: "Email", type: "email", autoComplete: "email" },
-        { name: "password", label: "Password", type: "password", autoComplete: "current-password" },
+        { name: "email", label: t("auth.email"), type: "email", autoComplete: "email" },
+        { name: "password", label: t("auth.password"), type: "password", autoComplete: "current-password" },
       ] as const);
 
   const schema = useMemo(() => (isSignup ? signupSchema : loginSchema), [isSignup]);
@@ -52,13 +55,27 @@ export default function AuthPage() {
     setError(null);
   }
 
+  function validationMessage(issue: z.core.$ZodIssue) {
+    const field = issue.path[0];
+    if (field === "email") return t("auth.validation.email");
+    if (field === "password") return t("auth.validation.passwordMin");
+    if (field === "first_name" || field === "last_name") return t("auth.validation.min2");
+    if (field === "confirm_password") {
+      return issue.code === "custom"
+        ? t("auth.validation.passwordsMatch")
+        : t("auth.validation.confirmRequired");
+    }
+    return t("auth.validation.invalidForm");
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
     const result = schema.safeParse(values);
     if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Invalid form");
+      const issue = result.error.issues[0];
+      setError(issue ? validationMessage(issue) : t("auth.validation.invalidForm"));
       return;
     }
 
@@ -73,7 +90,7 @@ export default function AuthPage() {
       navigate("/dashboard");
     } catch (err: any) {
       const serverMessage = err?.response?.data?.error;
-      setError(serverMessage ?? err?.message ?? "Something went wrong. Please try again.");
+      setError(serverMessage ?? err?.message ?? t("auth.error.generic"));
     } finally {
       setLoading(false);
     }
@@ -86,19 +103,20 @@ export default function AuthPage() {
       </div>
 
       <main className="relative mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
+        <div className="absolute right-6 top-6">
+          <LanguageSwitcher />
+        </div>
         <div className="mx-auto w-full max-w-md">
           <div className="mb-6 text-center">
             <div className="inline-flex rounded-full bg-white/5 px-4 py-2 text-xs text-white/70 ring-1 ring-white/10">
-              {isSignup ? "Create your Kairos account" : "Welcome back"}
+              {isSignup ? t("auth.badge.signup") : t("auth.badge.login")}
             </div>
 
             <h1 className="mt-5 text-3xl font-semibold tracking-tight">
-              {isSignup ? "Sign up" : "Log in"}
+              {isSignup ? t("auth.signup") : t("auth.login")}
             </h1>
             <p className="mt-2 text-sm text-white/60">
-              {isSignup
-                ? "Join the private beta and see your real profit."
-                : "Access your dashboard and your business intelligence."}
+              {isSignup ? t("auth.subtitle.signup") : t("auth.subtitle.login")}
             </p>
           </div>
 
@@ -112,7 +130,7 @@ export default function AuthPage() {
                   !isSignup ? "bg-white text-black" : "text-white/70 hover:text-white"
                 )}
               >
-                Log in
+                {t("auth.login")}
               </button>
               <button
                 type="button"
@@ -122,7 +140,7 @@ export default function AuthPage() {
                   isSignup ? "bg-white text-black" : "text-white/70 hover:text-white"
                 )}
               >
-                Sign up
+                {t("auth.signup")}
               </button>
             </div>
 
@@ -149,11 +167,11 @@ export default function AuthPage() {
               ))}
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Please wait..." : isSignup ? "Create account" : "Log in"}
+                {loading ? t("auth.pleaseWait") : isSignup ? t("auth.createAccount") : t("auth.login")}
               </Button>
 
               <div className="text-center text-xs text-white/50">
-                By continuing you agree to our Terms & Privacy.
+                {t("auth.terms")}
               </div>
             </form>
           </Card>
@@ -163,7 +181,7 @@ export default function AuthPage() {
               className="text-sm text-white/60 hover:text-white"
               onClick={() => navigate("/")}
             >
-              ← Back to landing
+              {t("auth.backToLanding")}
             </button>
           </div>
         </div>
