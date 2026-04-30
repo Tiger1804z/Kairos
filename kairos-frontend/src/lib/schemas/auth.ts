@@ -12,7 +12,7 @@ const passwordField = z
 
 export const loginSchema = z.object({
   email: emailField,
-  password: passwordField,
+  password: z.string().min(1, "Password is required"),
 });
 
 export const signupSchema = z
