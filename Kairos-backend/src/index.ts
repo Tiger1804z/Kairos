@@ -1,28 +1,3 @@
-/**
- * ============================================================================
- * Kairos API — Point d'entrée du serveur Express
- * ============================================================================
- * Initialise l'app Express, configure CORS, charge les routes et démarre
- * le serveur HTTP.
- *
- * Architecture des routes:
- *   /auth          → authRoutes       (public — pas de JWT requis)
- *   /* (reste)     → requireAuth      (JWT obligatoire pour toutes les routes suivantes)
- *   /users         → userRoutes
- *   /businesses    → businessRoutes
- *   /clients       → clientRoutes
- *   /engagements   → engagementsRoutes
- *   /engagementItems → engagementItemRoutes
- *   /transactions  → transactionsRoutes
- *   /reports       → reportsRoutes
- *   /documents     → documentRoutes
- *   /query-logs    → queryLogsRoutes
- *   /ai            → aiRoutes
- *   /dashboard     → dashboardRoutes
- *   /onboarding    → onboardingRoutes
- *   /import        → importRoutes
- */
-
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
@@ -51,34 +26,50 @@ import insightRoutes from "./routes/insightRoutes";
 import shopifyDashboardRoutes from "./routes/shopifyDashboardRoutes";
 import demoRoutes from "./routes/demoRoutes";
 
-
 dotenv.config();
 
 const app = express();
 
 app.use(express.json());
 
+/**
+ * 🔥 FIX CORS PRODUCTION + LOCAL
+ */
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Autorise les requêtes sans origin (ex: Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Route de santé (health check)
+// Health check
 app.get("/", (_req, res) => {
   res.json({ message: "Kairos API is running" });
 });
 
-// Routes publiques (sans JWT)
+// Public routes
 app.use("/auth", authRoutes);
 
-// Shopify OAuth callback — public (Shopify redirige ici, pas de JWT)
+// Shopify callback (public)
 app.get("/shopify/callback", shopifyCallback);
 
-// Toutes les routes suivantes nécessitent un JWT valide
+// Protected routes
 app.use(requireAuth);
 
 app.use("/users", userRoutes);
