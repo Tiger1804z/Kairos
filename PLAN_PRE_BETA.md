@@ -2,7 +2,7 @@
 
 **Dernière mise à jour :** 2026-04-30
 **Branche active :** `focus-shopify`
-**Statut :** Produit fonctionnel ✅ — Dev launcher opérationnel ✅ — Sprint E terminé ✅ — Phase : Beta privée
+**Statut :** Produit fonctionnel ✅ — Dev launcher opérationnel ✅ — Sprint E terminé ✅ — Auth Safety Pass terminé ✅ — Phase : Beta privée
 
 ---
 
@@ -35,6 +35,7 @@
 | **Sprint C — Products + Insights polish** | ✅ |
 | **Sprint D — Chat UI polish** | ✅ |
 | **Sprint E — Header + Navigation polish** | ✅ |
+| **Auth Safety Pass — Zod + rate limiting** | ✅ |
 
 ---
 
@@ -148,6 +149,20 @@ Sans lancer une refonte. Sans rouvrir de gros blocs. Sans casser ce qui est vali
 
 ---
 
+### Auth Safety Pass ✅ TERMINÉ
+
+**Implémenté le 2026-04-30**
+
+- **`Kairos-backend/src/schemas/auth.ts`** (nouveau) : `loginSchema` + `signupSchema` Zod — email `.trim().toLowerCase().email()`, password `min(12)`
+- **`authController.ts`** : validation Zod sur signup + login, plus de confiance aveugle au frontend, messages d'erreur humains
+- **`authRoutes.ts`** : rate limiting `express-rate-limit` — 20 req / 15 min par IP sur `/signup` et `/login`
+- **`kairos-frontend/src/lib/schemas/auth.ts`** (nouveau) : schémas centralisés front — `loginSchema`, `signupSchema` (+ `confirm_password` + `.refine()`), `forgotPasswordSchema`, `resetPasswordSchema` prêts
+- **`AuthPage.tsx`** : import depuis schemas centralisés, champ `confirm_password` sur signup, messages d'erreur serveur directement affichés
+- **Sécurité vérifiée** : password jamais loggé ni retourné ✅, anti-énumération login préservé ✅, email normalisé avant stockage ✅
+- **Reste à faire plus tard** : forgot/reset password flows (schémas prêts), email verification, refresh token, CORS prod
+
+---
+
 ### Sprint opérationnel — Dev Launcher ✅
 
 **Commande unique depuis la racine :**
@@ -179,6 +194,7 @@ npm run dev:python     → uvicorn port 8002 (kairos-shopify-engine/.venv)
 - [x] Chat UI au même niveau visuel que le dashboard ✅
 - [x] Header / sidebar sans inconsistance visible ✅
 - [x] Dev launcher fonctionnel (1 commande = tout démarre) ✅
+- [x] Auth sécurisée : Zod front + back, rate limiting, messages safe ✅
 - [ ] Demo mode validé de bout en bout
 - [ ] 7 parcours E2E toujours verts après le polish
 - [ ] Aucune régression introduite par le polish UI

@@ -12,7 +12,7 @@ type SignupInput = {
   last_name: string;
   email: string;
   password: string;
-  role?:  "owner" | "employee";
+  role?: "owner" | "employee" | undefined;
 };
 
 /**

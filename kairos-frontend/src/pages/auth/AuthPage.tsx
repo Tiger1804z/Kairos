@@ -1,30 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import axios from "axios";
 import { useAuth } from "../../auth/AuthContext";
 import { useBusinessContext } from "../../business/BusinessContext";
+import { loginSchema, signupSchema } from "../../lib/schemas/auth";
 
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { cn } from "../../lib/cn";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:3000";
-
 type Mode = "login" | "signup";
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Min 6 characters"),
-});
-
-const signupSchema = z.object({
-  first_name: z.string().min(2, "Min 2 characters"),
-  last_name: z.string().min(2, "Min 2 characters"),
-  email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Min 6 characters"),
-});
 
 export default function AuthPage() {
   const { login, signup } = useAuth();
@@ -34,12 +20,14 @@ export default function AuthPage() {
 
   const mode = (params.get("mode") as Mode) ?? "login";
   const isSignup = mode === "signup";
+
   const fields = isSignup
     ? ([
         { name: "first_name", label: "First name", type: "text", autoComplete: "given-name" },
         { name: "last_name", label: "Last name", type: "text", autoComplete: "family-name" },
         { name: "email", label: "Email", type: "email", autoComplete: "email" },
         { name: "password", label: "Password", type: "password", autoComplete: "new-password" },
+        { name: "confirm_password", label: "Confirm password", type: "password", autoComplete: "new-password" },
       ] as const)
     : ([
         { name: "email", label: "Email", type: "email", autoComplete: "email" },
@@ -56,6 +44,7 @@ export default function AuthPage() {
     last_name: "",
     email: "",
     password: "",
+    confirm_password: "",
   });
 
   function setMode(next: Mode) {
@@ -63,7 +52,7 @@ export default function AuthPage() {
     setError(null);
   }
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -80,10 +69,11 @@ export default function AuthPage() {
       } else {
         await login(result.data.email, result.data.password);
       }
-      await refreshBusinesses(); // sync le contexte avant navigation
+      await refreshBusinesses();
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err?.response?.data?.error || err?.message || "Request failed");
+      const serverMessage = err?.response?.data?.error;
+      setError(serverMessage ?? err?.message ?? "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -107,7 +97,7 @@ export default function AuthPage() {
             </h1>
             <p className="mt-2 text-sm text-white/60">
               {isSignup
-                ? "Start building with clarity in minutes."
+                ? "Join the private beta and see your real profit."
                 : "Access your dashboard and your business intelligence."}
             </p>
           </div>
