@@ -1,4 +1,4 @@
-import preview from "../../assets/dashboard-preview.png";
+import preview from "../../assets/KairosHero.png";
 
 
 

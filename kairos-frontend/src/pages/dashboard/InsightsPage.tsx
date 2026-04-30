@@ -6,20 +6,32 @@ import { Card } from "../../components/ui/Card";
 
 const SEVERITY_ORDER: InsightSeverity[] = ["critical", "warning", "info"];
 
-const SEVERITY_STYLES: Record<InsightSeverity, { bar: string; badge: string; label: string }> = {
+const SEVERITY_STYLES: Record<InsightSeverity, {
+  bar: string;
+  badge: string;
+  card: string;
+  heading: string;
+  label: string;
+}> = {
   critical: {
     bar: "bg-red-500",
     badge: "bg-red-500/10 text-red-400 ring-1 ring-red-500/30",
+    card: "bg-red-500/[0.07] ring-1 ring-red-500/30",
+    heading: "text-red-400",
     label: "Critique",
   },
   warning: {
-    bar: "bg-yellow-400",
-    badge: "bg-yellow-400/10 text-yellow-300 ring-1 ring-yellow-400/30",
+    bar: "bg-warning",
+    badge: "bg-warning/10 text-orange-300 ring-1 ring-warning/20",
+    card: "bg-orange-500/[0.06] ring-1 ring-orange-500/25",
+    heading: "text-orange-400",
     label: "Attention",
   },
   info: {
     bar: "bg-blue-400",
     badge: "bg-blue-400/10 text-blue-300 ring-1 ring-blue-400/30",
+    card: "bg-white/[0.06] ring-1 ring-white/10",
+    heading: "text-blue-400",
     label: "Info",
   },
 };
@@ -28,25 +40,25 @@ function InsightCard({ insight, onViewProduct }: { insight: Insight; onViewProdu
   const style = SEVERITY_STYLES[insight.severity];
   const productId = insight.metadata?.product_id ?? null;
   return (
-    <div className="flex gap-4 rounded-xl bg-white/5 p-4 ring-1 ring-white/10">
-      <div className={`mt-1 h-full w-1 shrink-0 rounded-full ${style.bar}`} />
-      <div className="flex flex-1 flex-col gap-1">
-        <div className="flex items-center gap-2">
+    <div className={`flex gap-4 rounded-xl p-4 ${style.card}`}>
+      <div className={`self-stretch w-1 shrink-0 rounded-full ${style.bar}`} />
+      <div className="flex flex-1 flex-col gap-1.5">
+        <div>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.badge}`}>
             {style.label}
           </span>
         </div>
-        <p className="text-sm font-medium text-white">{insight.title}</p>
-        <p className="text-xs text-white/60">{insight.message}</p>
+        <p className="text-sm font-semibold text-white leading-snug">{insight.title}</p>
+        <p className="text-sm text-white/70 leading-relaxed">{insight.message}</p>
         {insight.action && (
-          <p className="text-xs font-medium text-white/40">
+          <p className="text-xs font-medium text-accent/80">
             → {insight.action}
           </p>
         )}
         {productId && (
           <button
             onClick={() => onViewProduct(productId)}
-            className="mt-2 self-start rounded-lg bg-white/5 px-3 py-1 text-xs text-white/60 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
+            className="mt-1 self-start inline-flex items-center gap-1.5 rounded-lg bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent ring-1 ring-accent/20 transition hover:bg-accent/15"
           >
             Voir le produit →
           </button>
@@ -112,8 +124,8 @@ export default function InsightsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Insights</h1>
-          <p className="mt-1 text-sm text-white/50">
+          <h1 className="text-2xl font-bold tracking-tight">Insights</h1>
+          <p className="mt-1 text-sm text-white/40">
             Alertes et opportunités détectées automatiquement sur vos produits.
           </p>
         </div>
@@ -133,26 +145,27 @@ export default function InsightsPage() {
         </div>
       )}
 
-      {/* Loading */}
+      {/* Content */}
       {loading ? (
         <p className="text-sm text-white/40">Chargement…</p>
       ) : insights.length === 0 ? (
         <Card>
-          <p className="text-sm text-white/50">
-            Aucun insight disponible. Cliquez sur <strong>Recalculer</strong> pour lancer l'analyse.
+          <p className="p-6 text-sm text-white/40">
+            Aucun insight disponible. Cliquez sur{" "}
+            <strong className="text-white/70">Recalculer</strong> pour lancer l'analyse.
           </p>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {SEVERITY_ORDER.map((sev) => {
             const group = grouped[sev];
             if (group.length === 0) return null;
             const style = SEVERITY_STYLES[sev];
             return (
               <section key={sev}>
-                <h2 className={`mb-3 text-xs font-semibold uppercase tracking-widest ${style.badge.split(" ")[1]}`}>
-                  {style.label} ({group.length})
-                </h2>
+                <div className={`mb-5 text-xs font-semibold uppercase tracking-widest ${style.heading}`}>
+                  {style.label} · {group.length}
+                </div>
                 <div className="space-y-3">
                   {group.map((insight) => (
                     <InsightCard key={insight.id} insight={insight} onViewProduct={handleViewProduct} />

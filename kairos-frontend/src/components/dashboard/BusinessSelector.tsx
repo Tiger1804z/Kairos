@@ -1,68 +1,75 @@
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, Building2 } from "lucide-react";
 import { useBusinessContext } from "../../business/BusinessContext";
 
- export default function BusinessSelector() {
-    const { businesses, selectedBusinessId, selectBusiness,loading,error } = useBusinessContext();
+export default function BusinessSelector() {
+  const { businesses, selectedBusinessId, selectedBusiness, selectBusiness, loading, error } =
+    useBusinessContext();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-    if (loading) {
-         return (
-            <div className="text-xs text-white/50">
-                Loading businesses...
-            </div>
-        );
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    if (error) {
-        return (
-            <div className="text-xs text-red-500">
-                 Failed to load businesses: {error}
-            </div>
-        );
-    }
+  if (loading) {
+    return <div className="text-xs text-white/40">Loading...</div>;
+  }
+  if (error) {
+    return <div className="text-xs text-danger">Error loading businesses</div>;
+  }
+  if (businesses.length === 0) {
+    return <div className="text-xs text-warning">No businesses found</div>;
+  }
 
-    if (businesses.length === 0) {
-        return (
-            <div className="text-xs text-yellow-500">
-                No businesses found.
-            </div>
-        );
-    }
-
-    return (
-    <div className="relative">
-      <select
-        value={selectedBusinessId ?? ""}
-        onChange={(e) => selectBusiness(Number(e.target.value))}
-        className="appearance-none rounded-lg bg-white/5 px-4 py-2 pr-10 text-sm text-white ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent"
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-white ring-1 ring-white/10 transition duration-150 hover:bg-white/[0.08] hover:ring-white/20 focus:outline-none"
       >
-        <option value="" disabled>
-          Select a business
-        </option>
-        {businesses.map((business) => (
-          <option key={business.id_business} value={business.id_business} className="bg-bg text-white">
-            {business.name}
-          </option>
-        ))}
-      </select>
+        <Building2 className="h-3.5 w-3.5 shrink-0 text-white/40" />
+        <span className="max-w-[140px] truncate font-medium">
+          {selectedBusiness?.name ?? "Select business"}
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-white/40 transition-transform duration-150 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
 
-      {/* Icône dropdown */}
-      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-        <svg
-          className="h-4 w-4 text-white/60"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </div>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[200px] rounded-xl bg-surface py-1 shadow-xl ring-1 ring-white/10">
+          {businesses.map((b) => (
+            <button
+              key={b.id_business}
+              onClick={() => {
+                selectBusiness(b.id_business);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition duration-100 hover:bg-white/5 ${
+                b.id_business === selectedBusinessId
+                  ? "font-medium text-accent"
+                  : "text-white/70"
+              }`}
+            >
+              <div
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                  b.id_business === selectedBusinessId ? "bg-accent" : "bg-transparent"
+                }`}
+              />
+              {b.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
-
-
 }
-
