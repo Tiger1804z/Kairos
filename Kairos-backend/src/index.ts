@@ -37,13 +37,15 @@ app.use(express.json());
  */
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://kairos-kohl-zeta.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
+
+console.log("Allowed CORS origins:", allowedOrigins);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Autorise les requêtes sans origin (ex: Postman)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
