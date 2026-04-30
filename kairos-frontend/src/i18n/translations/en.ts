@@ -85,6 +85,7 @@ export const en = {
   "auth.backToLanding": "<- Back to landing",
   "auth.validation.invalidForm": "Invalid form",
   "auth.validation.email": "Invalid email address",
+  "auth.validation.passwordRequired": "Password is required",
   "auth.validation.passwordMin": "Password must be at least 12 characters",
   "auth.validation.min2": "Min 2 characters",
   "auth.validation.confirmRequired": "Please confirm your password",

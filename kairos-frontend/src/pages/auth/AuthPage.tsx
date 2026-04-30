@@ -37,7 +37,7 @@ export default function AuthPage() {
         { name: "password", label: t("auth.password"), type: "password", autoComplete: "current-password" },
       ] as const);
 
-  const schema = useMemo(() => (isSignup ? signupSchema : loginSchema), [isSignup]);
+  const schema = useMemo(() => (mode === "login" ? loginSchema : signupSchema), [mode]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +58,11 @@ export default function AuthPage() {
   function validationMessage(issue: z.core.$ZodIssue) {
     const field = issue.path[0];
     if (field === "email") return t("auth.validation.email");
-    if (field === "password") return t("auth.validation.passwordMin");
+    if (field === "password") {
+      return mode === "login"
+        ? t("auth.validation.passwordRequired")
+        : t("auth.validation.passwordMin");
+    }
     if (field === "first_name" || field === "last_name") return t("auth.validation.min2");
     if (field === "confirm_password") {
       return issue.code === "custom"

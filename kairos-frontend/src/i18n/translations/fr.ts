@@ -87,6 +87,7 @@ export const fr: Record<keyof typeof en, string> = {
   "auth.backToLanding": "<- Retour à l'accueil",
   "auth.validation.invalidForm": "Formulaire invalide",
   "auth.validation.email": "Adresse email invalide",
+  "auth.validation.passwordRequired": "Le mot de passe est requis",
   "auth.validation.passwordMin": "Le mot de passe doit contenir au moins 12 caractères",
   "auth.validation.min2": "Minimum 2 caractères",
   "auth.validation.confirmRequired": "Veuillez confirmer votre mot de passe",
