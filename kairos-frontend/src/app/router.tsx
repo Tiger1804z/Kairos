@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
+import { RouteErrorPage } from "../components/ui/ErrorBoundary";
 import LandingPage from "../pages/landing/LandingPage";
 import AuthPage from "../pages/auth/AuthPage";
 
@@ -34,22 +35,24 @@ import InsightsPage from "../pages/dashboard/InsightsPage";
 // /dashboard/reports -> ReportsPage
 // /dashboard/settings -> SettingsPage
 export const router = createBrowserRouter([
-  {path: "/", element: <LandingPage />},
-  {path: "/auth", element: <AuthPage />},
+  {path: "/", element: <LandingPage />, errorElement: <RouteErrorPage />},
+  {path: "/auth", element: <AuthPage />, errorElement: <RouteErrorPage />},
   {
     element: <RequireAuth />,
+    errorElement: <RouteErrorPage />,
     children: [
       {path: "/onboarding", element: <OnboardingPage />},
       { path: "/shopify/success", element: <ShopifySuccessPage /> },
       {
         path: "/dashboard",
         element: <DashboardLayout />,
+        errorElement: <RouteErrorPage />,
         children: [{index: true, element: <DashboardPage />},
-          // on ne mets pas de / devant les paths enfants car react-router les prefixe automatiquement avec /dashboard/ 
+          // on ne mets pas de / devant les paths enfants car react-router les prefixe automatiquement avec /dashboard/
           {path:"transactions",element: <TransactionsPage />},
           {path:"clients",element: <ClientPage />},
           {path:"clients/:id",element: <ClientDetailPage />},
-          {path:"engagements",element: <EngagementPage/>},  
+          {path:"engagements",element: <EngagementPage/>},
           {path:"engagements/:id",element: <EngagementDetailPage />},
           {path:"reports",element: <ReportsPage />},
           {path:"settings",element: <SettingsPage />},
@@ -59,4 +62,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {path: "*", element: <RouteErrorPage />},
 ]); 

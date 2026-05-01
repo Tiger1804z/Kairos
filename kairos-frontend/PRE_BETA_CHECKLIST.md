@@ -56,8 +56,9 @@ S'assurer que Kairos est prêt pour des testeurs réels (beta privée) en élimi
 ---
 
 ## 3. Error handling UX — ✅ CORRIGÉ
-- **`src/components/ui/ErrorBoundary.tsx`** (nouveau) : class component React, UI propre avec boutons `/dashboard` et `/auth?mode=login`
+- **`src/components/ui/ErrorBoundary.tsx`** : `ErrorBoundary` (class, wraps app) + `RouteErrorPage` (functional, utilisé par le router)
 - **`src/app/App.tsx`** : app enrobée dans `<ErrorBoundary>`
+- **`src/app/router.tsx`** : `errorElement={<RouteErrorPage />}` sur toutes les routes principales + route `path: "*"` catch-all pour les URLs inconnues (`/index.html`, `/script.js`, etc.)
 - Build : ✅ 0 erreur
 - Status : **fermé**
 
