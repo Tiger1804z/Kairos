@@ -85,17 +85,17 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-full overflow-x-hidden">
       {/* Glow — overflow-hidden indispensable pour éviter le scroll horizontal mobile */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-[-260px] h-[560px] w-[880px] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl py-4">
+      <div className="relative mx-auto w-full max-w-6xl min-w-0 py-4">
 
         {/* ── Header ── */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight">
               {loadingMe ? "..." : t("dashboard.welcome", { name })}
             </h1>
@@ -103,15 +103,15 @@ export default function DashboardPage() {
           </div>
 
           {signals.length > 0 && (
-            <div className="flex flex-wrap gap-2 sm:mt-1">
+            <div className="flex min-w-0 flex-wrap gap-2 sm:mt-1">
               {signals.map((s) => (
                 <button
                   key={s.label}
                   onClick={() => navigate(s.to)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${s.pill}`}
+                  className={`flex max-w-full items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${s.pill}`}
                 >
                   <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-                  {s.label}
+                  <span className="truncate">{s.label}</span>
                 </button>
               ))}
             </div>
@@ -270,9 +270,9 @@ export default function DashboardPage() {
             <div className="grid gap-6 md:grid-cols-2">
 
               {/* Top Products by Profit */}
-              <Card className="p-6">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="text-base font-semibold">{t("dashboard.panel.topProducts")}</div>
+              <Card className="min-w-0 overflow-hidden p-6">
+                <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
+                  <div className="min-w-0 truncate text-base font-semibold">{t("dashboard.panel.topProducts")}</div>
                   <button
                     onClick={() => navigate("/dashboard/products")}
                     className="text-xs text-white/40 hover:text-accent transition"
@@ -285,7 +285,7 @@ export default function DashboardPage() {
                 ) : kpis?.topProductsByProfit && kpis.topProductsByProfit.length > 0 ? (
                   <div className="space-y-2">
                     {kpis.topProductsByProfit.map((p) => (
-                      <div key={p.productId} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3.5 hover:bg-white/[0.08] transition-colors">
+                      <div key={p.productId} className="flex min-w-0 items-center justify-between rounded-xl bg-white/5 px-4 py-3.5 transition-colors hover:bg-white/[0.08]">
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-semibold">{p.title}</div>
                           <div className="mt-0.5 text-xs text-white/40">
@@ -309,9 +309,9 @@ export default function DashboardPage() {
               </Card>
 
               {/* Highest Risk Products */}
-              <Card className="p-6">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="text-base font-semibold">{t("dashboard.panel.highestRisk")}</div>
+              <Card className="min-w-0 overflow-hidden p-6">
+                <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
+                  <div className="min-w-0 truncate text-base font-semibold">{t("dashboard.panel.highestRisk")}</div>
                   <button
                     onClick={() => navigate("/dashboard/insights")}
                     className="text-xs text-white/40 hover:text-accent transition"
@@ -324,7 +324,7 @@ export default function DashboardPage() {
                 ) : kpis?.highestRiskProducts && kpis.highestRiskProducts.length > 0 ? (
                   <div className="space-y-2">
                     {kpis.highestRiskProducts.map((p) => (
-                      <div key={p.productId} className="flex items-center justify-between rounded-xl bg-red-500/5 px-4 py-3.5 ring-1 ring-red-500/10 hover:bg-red-500/[0.08] transition-colors">
+                      <div key={p.productId} className="flex min-w-0 items-center justify-between rounded-xl bg-red-500/5 px-4 py-3.5 ring-1 ring-red-500/10 transition-colors hover:bg-red-500/[0.08]">
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-semibold">{p.title}</div>
                           <div className="mt-0.5 text-xs text-white/40">
@@ -350,9 +350,9 @@ export default function DashboardPage() {
               </Card>
 
               {/* Active Insights */}
-              <Card className="p-6 md:col-span-2">
-                <div className="mb-5 flex items-center justify-between">
-                  <div className="text-base font-semibold">{t("dashboard.panel.activeInsights")}</div>
+              <Card className="min-w-0 overflow-hidden p-6 md:col-span-2">
+                <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
+                  <div className="min-w-0 truncate text-base font-semibold">{t("dashboard.panel.activeInsights")}</div>
                   <button
                     onClick={() => navigate("/dashboard/insights")}
                     className="text-xs text-white/40 hover:text-accent transition"
@@ -367,7 +367,7 @@ export default function DashboardPage() {
                     {kpis.recentInsights.map((insight, i) => (
                       <div
                         key={i}
-                        className={`rounded-xl p-4 ring-1 ${SEVERITY_STYLES[insight.severity]}`}
+                        className={`min-w-0 overflow-hidden rounded-xl p-4 ring-1 ${SEVERITY_STYLES[insight.severity]}`}
                       >
                         <div className="flex items-center gap-2 mb-2.5">
                           <span className={`h-1.5 w-1.5 rounded-full ${SEVERITY_DOT[insight.severity]}`} />
@@ -375,8 +375,8 @@ export default function DashboardPage() {
                             {severityLabel(insight.severity)}
                           </span>
                         </div>
-                        <div className="text-sm font-semibold leading-snug">{insight.title}</div>
-                        <div className="mt-1.5 text-xs opacity-50 line-clamp-2">{insight.message}</div>
+                        <div className="break-words text-sm font-semibold leading-snug">{insight.title}</div>
+                        <div className="mt-1.5 line-clamp-2 break-words text-xs opacity-50">{insight.message}</div>
                       </div>
                     ))}
                   </div>

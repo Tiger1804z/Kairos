@@ -117,7 +117,7 @@ export default function ProductsPage() {
     }
 
     return (
-    <div className="mx-auto max-w-6xl py-4 sm:py-8">
+    <div className="mx-auto w-full max-w-6xl min-w-0 overflow-x-hidden py-4 sm:py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
         <h1 className="text-2xl font-bold tracking-tight">{t("products.title")}</h1>
         <label className={`cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition ${csvImporting ? "opacity-40 pointer-events-none" : ""}`}>
@@ -145,8 +145,8 @@ export default function ProductsPage() {
         </div>
       )}
 
-      <Card>
-        <div className="overflow-x-auto">
+      <Card className="min-w-0 max-w-full overflow-hidden">
+        <div className="max-w-full overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5 text-left text-xs text-white/40">
@@ -238,7 +238,7 @@ export default function ProductsPage() {
       {/* Modal */}
       {modalProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-2xl bg-card p-6 ring-1 ring-white/10">
+          <div className="w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-card p-6 ring-1 ring-white/10">
             <h2 className="mb-1 text-lg font-semibold">{modalProduct.title}</h2>
             <p className="mb-6 text-sm text-white/50">{t("products.modal.subtitle")}</p>
 

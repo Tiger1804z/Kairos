@@ -23,6 +23,43 @@
 
 ---
 
+## Latest Codex Updates — Mobile Responsiveness Fix
+
+**Mise à jour :** 2026-05-01
+
+Codex a corrigé le bug critique de scroll horizontal mobile sur le dashboard. Objectif : zéro swipe gauche/droite sur mobile, sans refonte et sans changement backend.
+
+**Cause exacte identifiée :**
+- Source principale : mobile bottom navigation dans `src/components/layout/Sidebar.tsx`.
+- Le bottom nav fixe utilisait `left-0 right-0 flex justify-around` avec 5 items et `px-3`.
+- Sur largeurs mobiles étroites, les largeurs intrinsèques des items, surtout avec les labels traduits, pouvaient dépasser `100vw`.
+
+**Fichiers modifiés :**
+- `src/styles/globals.css`
+- `src/components/layout/DashboardLayout.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/dashboard/BusinessSelector.tsx`
+- `src/components/kairos/ChatDrawer.tsx`
+- `src/components/kairos/ChatModal.tsx`
+- `src/pages/dashboard/DashboardPage.tsx`
+- `src/pages/dashboard/ProductsPage.tsx`
+- `src/pages/dashboard/InsightsPage.tsx`
+- `src/pages/dashboard/SettingsPage.tsx`
+
+**Résumé du fix :**
+- `html`, `body`, `#root` hard-cappés à `100vw` avec `overflow-x: hidden`
+- Mobile bottom nav convertie en `grid grid-cols-5 w-full max-w-full`
+- Ajout de `min-w-0`, `truncate`, et padding réduit sur les items du bottom nav
+- Wrappers dashboard renforcés avec `w-full max-w-full overflow-x-hidden min-w-0`
+- `BusinessSelector`, bouton Ask Kairos, drawer/modal, cards et containers texte capés pour ne pas dépasser le viewport
+- Comportement desktop préservé
+
+**Vérification :**
+- `npm run build` passe ✅
+- Le scroll horizontal mobile devrait maintenant être éliminé
+
+---
+
 ## 1. État réel actuel du projet
 
 > Kairos est techniquement complet, visuellement polish, déployé en production, et maintenant utilisable sur mobile.
@@ -59,6 +96,7 @@
 | **Auth login vs signup validation séparée** | ✅ |
 | **Dashboard demo fonctionnel** | ✅ |
 | **Sprint F — Mobile UX (bottom nav, paddings, header responsive)** | ✅ |
+| **Mobile horizontal overflow corrigé** | ✅ |
 
 ---
 
@@ -185,6 +223,7 @@ Sans lancer une refonte. Sans rouvrir de gros blocs. Sans casser ce qui est vali
 - **Headers pages** → `flex-wrap gap-3` sur ProductsPage et InsightsPage
 - **AuthPage** → `py-10 sm:py-16 px-4 sm:px-6` (réduit sur mobile)
 - **pb-24 mobile** → contenu non caché derrière bottom nav + FAB
+- **Scroll horizontal mobile corrigé** → bottom nav fixe convertie en grid 5 colonnes, wrappers/dashboard/cards/FAB/drawer capés à `100vw`
 - **Build validé** → `tsc -b` + `vite build` ✅ (7s, 0 erreur TypeScript)
 
 ---
@@ -244,7 +283,7 @@ npm run dev:python     → uvicorn port 8002 (kairos-shopify-engine/.venv)
 - [x] Header / sidebar sans inconsistance visible ✅
 - [x] Dev launcher fonctionnel (1 commande = tout démarre) ✅
 - [x] Auth sécurisée : Zod front + back, rate limiting, messages safe ✅
-- [x] Mobile utilisable : navigation, paddings, header, FAB ✅
+- [x] Mobile utilisable : navigation, paddings, header, FAB, zéro overflow horizontal attendu ✅
 
 ### Validation finale (à faire avant d'inviter des bêta-testeurs)
 - [ ] Demo mode validé de bout en bout en prod
@@ -333,6 +372,7 @@ Sprint E  →  Header + sidebar + détails finaux                        ✅
 Auth Pass →  Zod front + back, rate limiting, validation séparée      ✅
 Déploiement → Vercel + Render + CORS + routing SPA                    ✅
 Sprint F  →  Mobile UX (navigation, paddings, FAB, header)            ✅
+Codex    →  Mobile horizontal overflow fix                            ✅
 ```
 
 ---

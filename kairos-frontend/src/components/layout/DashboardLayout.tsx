@@ -36,14 +36,14 @@ export default function DashboardLayout() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-bg text-white">
-      <div className="flex min-h-screen">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-bg text-white">
+      <div className="flex min-h-screen w-full max-w-full overflow-x-hidden">
         <Sidebar />
 
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 overflow-x-hidden">
           {/* Top bar */}
           <header className="sticky top-0 z-40 border-b border-white/5 bg-bg/70 backdrop-blur">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 md:py-3.5">
+            <div className="mx-auto flex w-full max-w-7xl min-w-0 items-center justify-between gap-2 px-4 py-3 md:px-6 md:py-3.5">
               {/* Breadcrumb */}
               <div className="flex min-w-0 items-center gap-1.5 text-sm">
                 <span className="hidden font-semibold tracking-wide text-white/25 sm:inline">KAIROS</span>
@@ -52,7 +52,7 @@ export default function DashboardLayout() {
               </div>
 
               {/* Right : business selector + user chip */}
-              <div className="flex shrink-0 items-center gap-2 md:gap-4">
+              <div className="flex min-w-0 shrink items-center justify-end gap-2 md:shrink-0 md:gap-4">
                 <BusinessSelector />
                 <div className="hidden sm:block">
                   <LanguageSwitcher compact />
@@ -79,7 +79,7 @@ export default function DashboardLayout() {
           </header>
 
           {/* Content — pb-24 sur mobile pour laisser place à la bottom nav + FAB */}
-          <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:px-6 md:py-10 md:pb-10">
+          <div className="mx-auto w-full max-w-7xl min-w-0 overflow-x-hidden px-4 py-6 pb-24 md:px-6 md:py-10 md:pb-10">
             <Outlet context={{ me: user, loadingMe }} />
           </div>
         </main>

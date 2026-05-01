@@ -36,7 +36,7 @@ export default function ChatDrawer() {
       {/* Bouton flottant — remonté sur mobile pour laisser place à la bottom nav */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-4 z-50 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-accent-hover md:bottom-6 md:right-6"
+        className="fixed bottom-20 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-accent-hover md:bottom-6 md:right-6"
       >
         <MessageCircle className="h-4 w-4" />
         {t("chat.askKairos")}
@@ -52,7 +52,7 @@ export default function ChatDrawer() {
 
       {/* Drawer */}
       <div
-        className={`fixed bottom-0 right-0 z-50 flex h-[560px] w-full max-w-md flex-col rounded-tl-2xl bg-surface ring-1 ring-white/10 shadow-2xl transition-transform duration-300 ${
+        className={`fixed bottom-0 left-0 right-0 z-50 flex h-[560px] w-full max-w-full flex-col bg-surface ring-1 ring-white/10 shadow-2xl transition-transform duration-300 sm:left-auto sm:max-w-md sm:rounded-tl-2xl ${
           open && !expanded ? "translate-y-0" : "translate-y-full"
         }`}
       >
@@ -157,7 +157,7 @@ export default function ChatDrawer() {
         <div className="border-t border-white/10 bg-white/[0.02] px-5 py-4 flex gap-3">
           <input
             type="text"
-            className="flex-1 rounded-xl bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/40 ring-1 ring-white/10 focus:outline-none focus:ring-accent/30"
+            className="min-w-0 flex-1 rounded-xl bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/40 ring-1 ring-white/10 focus:outline-none focus:ring-accent/30"
             placeholder={t("chat.input.placeholder")}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -168,7 +168,7 @@ export default function ChatDrawer() {
           <button
             onClick={handleAsk}
             disabled={loading || !question.trim()}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             {t("chat.send")}
           </button>

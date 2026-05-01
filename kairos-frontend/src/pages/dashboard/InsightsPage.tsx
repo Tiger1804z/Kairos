@@ -38,18 +38,18 @@ function InsightCard({ insight, onViewProduct }: { insight: Insight; onViewProdu
   const { t } = useI18n();
   const productId = insight.metadata?.product_id ?? null;
   return (
-    <div className={`flex gap-4 rounded-xl p-4 ${style.card}`}>
+    <div className={`flex min-w-0 gap-4 overflow-hidden rounded-xl p-4 ${style.card}`}>
       <div className={`self-stretch w-1 shrink-0 rounded-full ${style.bar}`} />
-      <div className="flex flex-1 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.badge}`}>
             {t(`insights.severity.${insight.severity}`)}
           </span>
         </div>
-        <p className="text-sm font-semibold text-white leading-snug">{insight.title}</p>
-        <p className="text-sm text-white/70 leading-relaxed">{insight.message}</p>
+        <p className="break-words text-sm font-semibold leading-snug text-white">{insight.title}</p>
+        <p className="break-words text-sm leading-relaxed text-white/70">{insight.message}</p>
         {insight.action && (
-          <p className="text-xs font-medium text-accent/80">
+          <p className="break-words text-xs font-medium text-accent/80">
             → {insight.action}
           </p>
         )}
@@ -119,10 +119,10 @@ export default function InsightsPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden space-y-8">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{t("insights.title")}</h1>
           <p className="mt-1 text-sm text-white/40">
             {t("insights.subtitle")}

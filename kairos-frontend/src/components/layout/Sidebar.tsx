@@ -87,7 +87,7 @@ export default function Sidebar() {
       </aside>
 
       {/* ── Mobile bottom navigation ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-white/5 bg-bg/95 pb-safe pt-1 backdrop-blur md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 grid w-full max-w-full grid-cols-5 border-t border-white/5 bg-bg/95 pb-safe pt-1 backdrop-blur md:hidden">
         {nav.map((n) => (
           <NavLink
             key={n.to}
@@ -95,7 +95,7 @@ export default function Sidebar() {
             end={n.to === "/dashboard"}
             className={({ isActive }) =>
               cn(
-                "flex flex-col items-center gap-0.5 px-3 py-2 text-[10px] font-medium transition",
+                "flex min-w-0 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition",
                 isActive ? "text-accent" : "text-white/40"
               )
             }
@@ -108,17 +108,17 @@ export default function Sidebar() {
                     isActive ? "text-accent" : "text-white/30"
                   )}
                 />
-                <span>{t(n.labelKey as TranslationKey)}</span>
+                <span className="block max-w-full truncate">{t(n.labelKey as TranslationKey)}</span>
               </>
             )}
           </NavLink>
         ))}
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center gap-0.5 px-3 py-2 text-[10px] font-medium text-white/40 transition"
+          className="flex min-w-0 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium text-white/40 transition"
         >
           <LogOut className="h-5 w-5 text-white/30" />
-          <span>{t("nav.signOut")}</span>
+          <span className="block max-w-full truncate">{t("nav.signOut")}</span>
         </button>
       </nav>
     </>

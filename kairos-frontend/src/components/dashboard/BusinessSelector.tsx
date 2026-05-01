@@ -31,13 +31,13 @@ export default function BusinessSelector() {
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative min-w-0" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-white ring-1 ring-white/10 transition duration-150 hover:bg-white/[0.08] hover:ring-white/20 focus:outline-none"
+        className="flex max-w-[44vw] items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-white ring-1 ring-white/10 transition duration-150 hover:bg-white/[0.08] hover:ring-white/20 focus:outline-none sm:max-w-none"
       >
         <Building2 className="h-3.5 w-3.5 shrink-0 text-white/40" />
-        <span className="max-w-[140px] truncate font-medium">
+        <span className="min-w-0 max-w-[140px] truncate font-medium">
           {selectedBusiness?.name ?? t("business.select")}
         </span>
         <ChevronDown
@@ -48,7 +48,7 @@ export default function BusinessSelector() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[200px] rounded-xl bg-surface py-1 shadow-xl ring-1 ring-white/10">
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-[min(200px,calc(100vw-2rem))] rounded-xl bg-surface py-1 shadow-xl ring-1 ring-white/10">
           {businesses.map((b) => (
             <button
               key={b.id_business}

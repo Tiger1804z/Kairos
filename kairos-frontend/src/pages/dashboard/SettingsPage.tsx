@@ -92,7 +92,7 @@ export default function SettingsPage() {
   if (!selectedBusiness) return <div className="px-6 py-12 text-white/40">{t("settings.noBusiness")}</div>;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 space-y-8">
+    <div className="mx-auto w-full max-w-3xl min-w-0 overflow-x-hidden py-4 sm:py-8">
       <h1 className="text-2xl font-semibold">{t("settings.title")}</h1>
 
       {/* Infos business */}
@@ -123,13 +123,13 @@ export default function SettingsPage() {
         {shopifyStatus?.connected === false && (
           <div className="space-y-4">
             <p className="text-sm text-white/60">{t("settings.connectText")}</p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 type="text"
                 value={shopDomain}
                 onChange={(e) => setShopDomain(e.target.value)}
                 placeholder={t("settings.shopPlaceholder")}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/10 text-sm text-white placeholder-white/30 outline-none focus:ring-1 focus:ring-white/30"
+                className="min-w-0 flex-1 px-4 py-2 rounded-lg bg-white/10 text-sm text-white placeholder-white/30 outline-none focus:ring-1 focus:ring-white/30"
               />
               <button
                 onClick={handleConnect}
