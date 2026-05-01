@@ -91,7 +91,7 @@ export default function DashboardPage() {
         <div className="absolute left-1/2 top-[-260px] h-[560px] w-[880px] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-6 py-10">
+      <div className="relative mx-auto max-w-6xl py-4">
 
         {/* ── Header ── */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -122,8 +122,8 @@ export default function DashboardPage() {
 
         {/* Demo banner */}
         {selectedBusinessId && !loading && (!kpis || kpis.productsTracked === 0) && (
-          <div className="mt-6 rounded-2xl bg-accent/10 px-6 py-4 ring-1 ring-accent/20">
-            <div className="flex items-center justify-between">
+          <div className="mt-6 rounded-2xl bg-accent/10 px-5 py-4 ring-1 ring-accent/20">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-sm font-semibold">{t("dashboard.demo.emptyTitle")}</div>
                 <div className="mt-0.5 text-xs text-white/40">
@@ -133,7 +133,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleLoadDemo}
                 disabled={loadingDemo}
-                className="ml-4 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50"
+                className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50"
               >
                 {loadingDemo ? t("dashboard.demo.loading") : t("dashboard.demo.load")}
               </button>

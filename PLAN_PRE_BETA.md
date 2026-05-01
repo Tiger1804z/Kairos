@@ -1,15 +1,31 @@
 # PLAN_PRE_BETA.md — Kairos : Feuille de route vers la beta privée
 
-**Dernière mise à jour :** 2026-04-30
+**Dernière mise à jour :** 2026-05-01
 **Branche active :** `focus-shopify`
-**Statut :** Produit fonctionnel ✅ — Dev launcher opérationnel ✅ — Sprint E terminé ✅ — Auth Safety Pass terminé ✅ — Phase : Beta privée
+**Statut :** Produit déployé en production ✅ — Sprint F Mobile terminé ✅ — Phase : **Beta privée prête**
+
+---
+
+## 0. Déploiements production (depuis 2026-04-30)
+
+| Service | Plateforme | État |
+|---|---|---|
+| Frontend React/Vite | **Vercel** | ✅ Live |
+| Backend Node/Express | **Render** | ✅ Live |
+| Python FastAPI (Shopify Engine) | **Render** | ✅ Live |
+| Base de données | **Neon (PostgreSQL cloud)** | ✅ Live |
+
+**Corrections infrastructure appliquées :**
+- CORS prod : origines Vercel autorisées explicitement dans le backend
+- Routing SPA : `vercel.json` avec rewrite `/*` → `/index.html` (fix refresh 404)
+- Auth login : validation Zod distincte login vs signup (mot de passe sans `min(12)` côté login)
+- Scripts de démarrage backend ajustés pour Render
 
 ---
 
 ## 1. État réel actuel du projet
 
-> Kairos est techniquement complet et visuellement polish jusqu'au chat inclus.
-> Il reste Sprint E (Header/Navigation) pour finaliser la cohérence globale avant beta privée.
+> Kairos est techniquement complet, visuellement polish, déployé en production, et maintenant utilisable sur mobile.
 
 ### Ce qui est terminé et validé ✅
 
@@ -36,6 +52,13 @@
 | **Sprint D — Chat UI polish** | ✅ |
 | **Sprint E — Header + Navigation polish** | ✅ |
 | **Auth Safety Pass — Zod + rate limiting** | ✅ |
+| **Déploiement Vercel (frontend)** | ✅ |
+| **Déploiement Render (backend + Python)** | ✅ |
+| **CORS prod corrigé** | ✅ |
+| **Routing SPA Vercel corrigé (vercel.json)** | ✅ |
+| **Auth login vs signup validation séparée** | ✅ |
+| **Dashboard demo fonctionnel** | ✅ |
+| **Sprint F — Mobile UX (bottom nav, paddings, header responsive)** | ✅ |
 
 ---
 
@@ -149,6 +172,23 @@ Sans lancer une refonte. Sans rouvrir de gros blocs. Sans casser ce qui est vali
 
 ---
 
+### Sprint F — Mobile UX ✅ TERMINÉ
+
+**Implémenté le 2026-05-01**
+
+**Problèmes résolus :**
+- **Navigation mobile absente** → bottom nav fixe (`Sidebar.tsx`) avec 4 routes + déconnexion, visible `md:hidden`
+- **Double padding horizontal** → DashboardLayout `px-6 py-10` → `px-4 md:px-6 py-6 md:py-10`, pages DashboardPage/ProductsPage : `px-6` redondant supprimé
+- **Header overflow** → breadcrumb `KAIROS /` masqué sur mobile, LanguageSwitcher masqué mobile, gaps réduits
+- **FAB chat collision bottom nav** → `bottom-6` → `bottom-20 md:bottom-6`, `right-4 md:right-6`
+- **Demo banner** → `flex-col gap-3 sm:flex-row` sur mobile
+- **Headers pages** → `flex-wrap gap-3` sur ProductsPage et InsightsPage
+- **AuthPage** → `py-10 sm:py-16 px-4 sm:px-6` (réduit sur mobile)
+- **pb-24 mobile** → contenu non caché derrière bottom nav + FAB
+- **Build validé** → `tsc -b` + `vite build` ✅ (7s, 0 erreur TypeScript)
+
+---
+
 ### Auth Safety Pass ✅ TERMINÉ
 
 **Implémenté le 2026-04-30**
@@ -187,6 +227,15 @@ npm run dev:python     → uvicorn port 8002 (kairos-shopify-engine/.venv)
 
 ## 5. Checklist de readiness beta
 
+### Infrastructure ✅
+- [x] Frontend déployé Vercel ✅
+- [x] Backend déployé Render ✅
+- [x] Python Engine déployé Render ✅
+- [x] CORS prod configuré ✅
+- [x] Routing SPA (refresh sans 404) ✅
+- [x] Auth login/signup fonctionnels en prod ✅
+
+### Produit ✅
 - [x] Design system verrouillé (palette, états, typo, radius) ✅
 - [x] Dashboard visuellement premium et cohérent ✅
 - [x] Products page lisible et clean depuis un insight ✅
@@ -195,10 +244,14 @@ npm run dev:python     → uvicorn port 8002 (kairos-shopify-engine/.venv)
 - [x] Header / sidebar sans inconsistance visible ✅
 - [x] Dev launcher fonctionnel (1 commande = tout démarre) ✅
 - [x] Auth sécurisée : Zod front + back, rate limiting, messages safe ✅
-- [ ] Demo mode validé de bout en bout
+- [x] Mobile utilisable : navigation, paddings, header, FAB ✅
+
+### Validation finale (à faire avant d'inviter des bêta-testeurs)
+- [ ] Demo mode validé de bout en bout en prod
 - [ ] 7 parcours E2E toujours verts après le polish
-- [ ] Aucune régression introduite par le polish UI
-- [ ] Aucune erreur console visible lors d'un test de parcours complet
+- [ ] Aucune erreur console visible en prod (DevTools)
+- [ ] Test sur vrai device mobile (iPhone / Android)
+- [ ] Vérifier que le drawer chat ferme bien sur mobile
 
 ---
 
@@ -277,6 +330,9 @@ Sprint B  →  Dashboard polish                                         ✅
 Sprint C  →  Products + Insights polish                               ✅
 Sprint D  →  Chat UI                                                  ✅
 Sprint E  →  Header + sidebar + détails finaux                        ✅
+Auth Pass →  Zod front + back, rate limiting, validation séparée      ✅
+Déploiement → Vercel + Render + CORS + routing SPA                    ✅
+Sprint F  →  Mobile UX (navigation, paddings, FAB, header)            ✅
 ```
 
 ---

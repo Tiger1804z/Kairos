@@ -106,7 +106,7 @@ export default function AuthPage() {
         <div className="absolute left-1/2 top-[-260px] h-[560px] w-[880px] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" />
       </div>
 
-      <main className="relative mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
+      <main className="relative mx-auto flex min-h-screen max-w-6xl items-center px-4 py-10 sm:px-6 sm:py-16">
         <div className="absolute right-6 top-6">
           <LanguageSwitcher />
         </div>

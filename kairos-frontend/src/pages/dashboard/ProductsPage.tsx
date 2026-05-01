@@ -117,8 +117,8 @@ export default function ProductsPage() {
     }
 
     return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
-      <div className="flex items-center justify-between mb-8">
+    <div className="mx-auto max-w-6xl py-4 sm:py-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
         <h1 className="text-2xl font-bold tracking-tight">{t("products.title")}</h1>
         <label className={`cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition ${csvImporting ? "opacity-40 pointer-events-none" : ""}`}>
           {csvImporting ? t("products.importing") : t("products.importCsv")}

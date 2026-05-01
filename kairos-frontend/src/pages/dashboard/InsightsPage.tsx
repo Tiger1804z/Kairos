@@ -121,7 +121,7 @@ export default function InsightsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("insights.title")}</h1>
           <p className="mt-1 text-sm text-white/40">
@@ -131,7 +131,7 @@ export default function InsightsPage() {
         <button
           onClick={handleCompute}
           disabled={computing || !selectedBusinessId}
-          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10 transition hover:bg-white/20 disabled:opacity-50"
+          className="shrink-0 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10 transition hover:bg-white/20 disabled:opacity-50"
         >
           {computing ? t("insights.computing") : t("insights.recalculate")}
         </button>

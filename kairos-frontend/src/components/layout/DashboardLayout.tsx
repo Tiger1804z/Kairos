@@ -40,26 +40,28 @@ export default function DashboardLayout() {
       <div className="flex min-h-screen">
         <Sidebar />
 
-        <main className="flex-1">
+        <main className="min-w-0 flex-1">
           {/* Top bar */}
           <header className="sticky top-0 z-40 border-b border-white/5 bg-bg/70 backdrop-blur">
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
+            <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 md:py-3.5">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-semibold tracking-wide text-white/25">KAIROS</span>
-                <span className="text-white/15">/</span>
-                <span className="font-medium text-white/80">{pageTitle}</span>
+              <div className="flex min-w-0 items-center gap-1.5 text-sm">
+                <span className="hidden font-semibold tracking-wide text-white/25 sm:inline">KAIROS</span>
+                <span className="hidden text-white/15 sm:inline">/</span>
+                <span className="truncate font-medium text-white/80">{pageTitle}</span>
               </div>
 
               {/* Right : business selector + user chip */}
-              <div className="flex items-center gap-4">
+              <div className="flex shrink-0 items-center gap-2 md:gap-4">
                 <BusinessSelector />
-                <LanguageSwitcher compact />
+                <div className="hidden sm:block">
+                  <LanguageSwitcher compact />
+                </div>
 
                 {loadingMe ? (
                   <div className="text-xs text-white/40">{t("common.loading")}</div>
                 ) : (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 md:gap-3">
                     <div className="hidden text-right leading-tight sm:block">
                       <div className="text-sm font-medium text-white">{displayName}</div>
                       <div className="text-[10px] uppercase tracking-wider text-white/40">
@@ -67,7 +69,7 @@ export default function DashboardLayout() {
                       </div>
                     </div>
 
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 ring-1 ring-accent/30">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/20 ring-1 ring-accent/30 md:h-9 md:w-9">
                       <span className="text-sm font-semibold text-accent">{initials}</span>
                     </div>
                   </div>
@@ -76,8 +78,8 @@ export default function DashboardLayout() {
             </div>
           </header>
 
-          {/* Content */}
-          <div className="mx-auto max-w-7xl px-6 py-10">
+          {/* Content — pb-24 sur mobile pour laisser place à la bottom nav + FAB */}
+          <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:px-6 md:py-10 md:pb-10">
             <Outlet context={{ me: user, loadingMe }} />
           </div>
         </main>
