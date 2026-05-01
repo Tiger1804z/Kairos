@@ -55,9 +55,10 @@ export function BusinessProvider({ children }: { children: ReactNode }){
         }
     };
 
-    // charger les businesses au montage
+    // charger les businesses au montage — uniquement si un token existe
     useEffect(() => {
-        fetchBusinesses();
+        const token = localStorage.getItem("auth_token");
+        if (token) fetchBusinesses();
     }, []);
 
     // fonction pour selectionner un business
