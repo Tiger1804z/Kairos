@@ -86,8 +86,8 @@ export default function DashboardPage() {
 
   return (
     <div className="relative">
-      {/* Glow */}
-      <div className="pointer-events-none absolute inset-0">
+      {/* Glow — overflow-hidden indispensable pour éviter le scroll horizontal mobile */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-[-260px] h-[560px] w-[880px] -translate-x-1/2 rounded-full bg-accent/10 blur-3xl" />
       </div>
 
