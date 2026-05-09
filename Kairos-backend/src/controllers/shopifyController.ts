@@ -89,6 +89,10 @@ export const shopifyCallback = async (req: Request, res: Response): Promise<void
 
         res.redirect(`${process.env.FRONTEND_URL}/shopify/success?businessId=${businessId}`);
     } catch (err: any) {
+        if (err?.code === "STORE_ALREADY_CONNECTED") {
+            res.redirect(`${process.env.FRONTEND_URL}/shopify/success?error=store_already_connected`);
+            return;
+        }
         const detail = err?.response?.data ?? err?.message ?? "inconnu";
         console.error("[shopifyCallback] erreur:", detail);
         res.status(500).json({ error: "Echec de l'echange de token", detail });

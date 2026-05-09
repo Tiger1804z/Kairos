@@ -9,8 +9,11 @@ export default function ShopifySuccessPage() {
 
     const [fromOnboarding] = useState(() => sessionStorage.getItem("shopify_from_onboarding") === "1");
     const businessId = searchParams.get("businessId");
+    const error = searchParams.get("error");
 
     useEffect(() => {
+        if (error) return;
+
         const timer = setTimeout(async () => {
             sessionStorage.removeItem("shopify_from_onboarding");
             sessionStorage.removeItem("onboarding_business_id");
@@ -29,7 +32,27 @@ export default function ShopifySuccessPage() {
         }, 3000);
 
         return () => clearTimeout(timer);
-    }, [navigate, refreshBusinesses, businessId, fromOnboarding]);
+    }, [navigate, refreshBusinesses, businessId, fromOnboarding, error]);
+
+    if (error === "store_already_connected") {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+              <div className="bg-white rounded-xl shadow p-10 flex flex-col items-center gap-4 max-w-md text-center">
+                <div className="text-4xl">⚠️</div>
+                <h1 className="text-2xl font-bold text-gray-800">Store already connected</h1>
+                <p className="text-gray-600">
+                  This Shopify store is already connected to another Kairos account. Disconnect it there first or contact support.
+                </p>
+                <button
+                  onClick={() => navigate("/dashboard/settings")}
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                >
+                  Back to Settings
+                </button>
+              </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">

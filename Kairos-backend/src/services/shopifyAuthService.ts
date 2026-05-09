@@ -54,7 +54,15 @@ export const saveShopifyStore = async (
     shop: string,
     accessToken: string
 ) => {
-  return await prisma.shopifyStore.upsert({  
+  const existing = await prisma.shopifyStore.findUnique({ where: { shop_domain: shop } });
+  if (existing && existing.business_id !== businessId) {
+      console.error(`[shopify] Store already connected to another business — shop=${shop}, existing_business_id=${existing.business_id}, attempted_business_id=${businessId}`);
+      const err: any = new Error("STORE_ALREADY_CONNECTED");
+      err.code = "STORE_ALREADY_CONNECTED";
+      throw err;
+  }
+
+  return await prisma.shopifyStore.upsert({
     where:  { shop_domain: shop },
     update: { business_id: businessId, access_token: accessToken, status: "active", last_sync_at: null },
     create: {
