@@ -7,10 +7,13 @@ import {
 } from "../services/aiService";
 import { isSafeSQL } from "../services/sqlGuard";
 
+import { askShopifyChat } from "../services/shopifyEngineClient";
+
 // logging
 import { createQueryLogService } from "../services/queryLogsService";
 import { createReportService } from "../services/reportsService";
 import { QueryActionType, QueryStatus, ReportType } from "../../generated/prisma/client";
+
 
 export const aiDailyFinanceSummary = async (req: Request, res: Response) => {
   const t0 = Date.now();
@@ -87,7 +90,7 @@ export const aiDailyFinanceSummary = async (req: Request, res: Response) => {
       natural_query: `Daily summary ${dateStr}`,
       action_type: QueryActionType.summary,
       status: QueryStatus.success,
-      model_used: "gpt-4o-mini",
+      model_used: "gpt-5.2",
       execution_time_ms: Date.now() - t0,
       executed_at: new Date(),
     });
@@ -197,7 +200,7 @@ export const aiAsk = async (req: Request, res: Response) => {
       action_type: QueryActionType.sql_select,
       generated_sql: sql,
       status: QueryStatus.success,
-      model_used: "gpt-4o-mini",
+      model_used: "gpt-5.2",
       execution_time_ms: Date.now() - t0,
       executed_at: new Date(),
     });
@@ -287,11 +290,187 @@ const safeLogError = async (args: {
       generated_sql: args.sql ?? null,
       status: args.status,
       error_message: args.message,
-      model_used: "gpt-4o-mini",
+      model_used: "gpt-5.2",
       execution_time_ms: Date.now() - args.t0,
       executed_at: new Date(),
     });
   } catch (e) {
     console.error("Failed to create query log (error):", e);
   }
+};
+
+export const aiAskShopify = async (req: Request, res: Response) => {
+  const t0 = Date.now();
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+  const userId = req.user!.user_id;
+  const question = req.body.question?.toString()?.trim();
+  const conversationId: number | undefined = req.body.conversationId ? parseInt(req.body.conversationId, 10) : undefined;
+
+  if (!question || question.length < 3) {
+    return res.status(400).json({ error: "QUESTION_REQUIRED" });
+  }
+
+  // 1. Charger ou créer la conversation
+  let conversation;
+  if (conversationId) {
+    conversation = await prisma.chatConversation.findFirst({
+      where: { id: conversationId, business_id: businessId },
+    });
+    if (!conversation) {
+      return res.status(404).json({ error: "CONVERSATION_NOT_FOUND" });
+    }
+  } else {
+    conversation = await prisma.chatConversation.create({
+      data: {
+        business_id: businessId,
+        user_id: userId,
+        title: question.slice(0, 80),
+      },
+    });
+  }
+
+  // 2. Charger les 10 derniers messages (historique)
+  const recentMessages = await prisma.chatMessage.findMany({
+    where: { conversation_id: conversation.id },
+    orderBy: { created_at: "asc" },
+    take: 10,
+  });
+
+  const history = recentMessages.map((m) => ({
+    role: m.role as "user" | "assistant",
+    content: m.content,
+  }));
+
+  // 3. Fetch snapshots
+  const allSnapshots = await prisma.profitabilitySnapshot.findMany({
+    where: { business_id: businessId },
+    orderBy: { period_end: "desc" },
+    include: { product: { select: { title: true } } },
+  });
+
+  const seen = new Set<string>();
+  const snapshots = allSnapshots.filter((s) => {
+    if (seen.has(s.product_id)) return false;
+    seen.add(s.product_id);
+    return true;
+  });
+
+  // 4. Fetch insights
+  const insights = await prisma.insight.findMany({
+    where: { business_id: businessId },
+    orderBy: { created_at: "desc" },
+  });
+
+  // 5. Appel Python avec historique
+  const result = await askShopifyChat({
+    business_id: businessId,
+    question,
+    history,
+    snapshots: snapshots.map((s) => ({
+      product_id: s.product_id,
+      product_name: s.product?.title ?? s.product_id,
+      revenue: Number(s.revenue),
+      cogs: Number(s.cogs),
+      gross_profit: Number(s.gross_profit),
+      gross_margin_pct: Number(s.gross_margin_pct),
+      units_sold: s.units_sold,
+      has_cost: Number(s.cogs) > 0,
+    })),
+    insights: insights.map((i) => {
+      const meta = (i.metadata ?? {}) as { product_id?: string; value?: number };
+      return {
+        type: i.type,
+        title: i.title,
+        description: i.message,
+        severity: i.severity,
+        product_id: meta.product_id ?? "",
+        value: meta.value ?? 0,
+      };
+    }),
+  });
+
+  // 6. Sauvegarder les 2 messages en DB (métadonnées d'intent sur le message user)
+  await prisma.chatMessage.createMany({
+    data: [
+      {
+        conversation_id: conversation.id,
+        role: "user",
+        content: question,
+        intent_family: result.intent_family ?? "unknown",
+        routing_status: result.routing_status ?? "unknown",
+        execution_time_ms: Date.now() - t0,
+      },
+      { conversation_id: conversation.id, role: "assistant", content: result.answer },
+    ],
+  });
+
+  // 7. Mettre à jour updated_at de la conversation
+  await prisma.chatConversation.update({
+    where: { id: conversation.id },
+    data: { updated_at: new Date() },
+  });
+
+  return res.status(200).json({
+    answer: result.answer,
+    conversationId: conversation.id,
+  });
+}
+
+export const getConversations = async (req: Request, res: Response) => {
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+
+  const conversations = await prisma.chatConversation.findMany({
+    where: { business_id: businessId },
+    orderBy: { updated_at: "desc" },
+    select: {
+      id: true,
+      title: true,
+      created_at: true,
+      updated_at: true,
+    },
+  });
+
+  return res.status(200).json({ conversations });
+};
+
+export const getChatLogs = async (req: Request, res: Response) => {
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+  const limit = Math.min(parseInt(req.query.limit?.toString() ?? "50", 10), 200);
+
+  const messages = await prisma.chatMessage.findMany({
+    where: {
+      role: "user",
+      conversation: { business_id: businessId },
+    },
+    orderBy: { created_at: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      content: true,
+      intent_family: true,
+      routing_status: true,
+      execution_time_ms: true,
+      created_at: true,
+      conversation: { select: { id: true, title: true } },
+    },
+  });
+
+  return res.status(200).json({ logs: messages, count: messages.length });
+};
+
+export const getConversationMessages = async (req: Request, res: Response) => {
+  const conversationId = parseInt(req.params.conversationId ?? "", 10);
+
+  const messages = await prisma.chatMessage.findMany({
+    where: { conversation_id: conversationId },
+    orderBy: { created_at: "asc" },
+    select: {
+      id: true,
+      role: true,
+      content: true,
+      created_at: true,
+    },
+  });
+
+  return res.status(200).json({ messages });
 };

@@ -3,6 +3,7 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/cn";
+import { useI18n } from "../../i18n/useI18n";
 
 type Props = {
   placeholder?: string;
@@ -11,11 +12,12 @@ type Props = {
 };
 
 export default function AskKairosInput({
-  placeholder = `Ask anything about your business data... (e.g., "Show me revenue trends by client")`,
+  placeholder,
   onAsk,
   className,
 }: Props) {
   const [value, setValue] = useState("");
+  const { t } = useI18n();
 
   function submit() {
     const v = value.trim();
@@ -37,12 +39,12 @@ export default function AskKairosInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t("chat.input.placeholder")}
           className="border-0 bg-transparent ring-0 focus:ring-0"
         />
       </div>
       <Button onClick={submit} className="rounded-xl px-4">
-        Ask Kairos <ArrowRight className="ml-2 h-4 w-4" />
+        {t("chat.askKairos")} <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>
   );

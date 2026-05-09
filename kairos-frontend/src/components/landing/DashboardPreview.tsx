@@ -1,8 +1,10 @@
-import preview from "../../assets/dashboard-preview.png";
+import preview from "../../assets/KairosHero.png";
+import { useI18n } from "../../i18n/useI18n";
 
 
 
 export default function DashboardPreview(){
+    const { t } = useI18n();
     return(
     <section className="relative mx-auto mt-14 max-w-6xl px-6">
       {/* glow derrière */}
@@ -31,7 +33,7 @@ export default function DashboardPreview(){
           {/* image */}
           <img
             src={preview}
-            alt="Kairos dashboard preview"
+            alt={t("landing.preview.alt")}
             className="block h-auto w-full"
             draggable={false}
           />

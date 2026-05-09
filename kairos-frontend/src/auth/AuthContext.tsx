@@ -48,12 +48,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function login(email: string, password: string) {
+    localStorage.removeItem("selected_business_id");
     const res = await api.post("/auth/login", { email, password });
     localStorage.setItem("auth_token", res.data.token);
     setUser(res.data.user);
   }
 
   async function signup(data: { first_name: string; last_name: string; email: string; password: string }) {
+    localStorage.removeItem("selected_business_id");
     const res = await api.post("/auth/signup", data);
     localStorage.setItem("auth_token", res.data.token);
     setUser(res.data.user);
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   function logout() {
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("selected_business_id");
     setUser(null);
   }
 

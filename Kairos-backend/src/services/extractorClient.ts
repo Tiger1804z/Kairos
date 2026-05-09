@@ -86,6 +86,7 @@ export const extractUploadViaPython = async (
   const url = `${EXTRACTOR_URL}/extract-upload`;
 
   const form = new FormData();
+  
   form.append("file", fs.createReadStream(req.file_path), {
     filename: req.original_name,
     contentType: req.mime_type ?? "application/octet-stream",

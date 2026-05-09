@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --import tsx src/index.ts",
-    "start": "node dist/index.js",
-    "seed": "tsx prisma/seeds.ts"
+    "start": "node --import tsx src/index.ts",
+    "db:deploy": "prisma migrate deploy",
+    "seed": "tsx prisma/seeds.ts",
+    "seed:db": "tsx prisma/seedShopifyTestData.ts"
   },
   "prisma": {
     "seed": "npm run seed"
@@ -21,7 +22,7 @@
     "@types/express": "^5.0.5",
     "@types/form-data": "^2.2.1",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^2.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "^24.10.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
@@ -36,14 +37,16 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.4.1",
     "form-data": "^4.0.5",
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.11.0",
-    "multer": "^2.0.2",
+    "multer": "^2.1.1",
     "openai": "^6.13.0",
     "pdf-parse": "^2.4.5",
     "prisma": "^7.0.1",
     "undici": "^7.18.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.1"
   }
 }

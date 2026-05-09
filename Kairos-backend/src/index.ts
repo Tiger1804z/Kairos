@@ -1,28 +1,3 @@
-/**
- * ============================================================================
- * Kairos API — Point d'entrée du serveur Express
- * ============================================================================
- * Initialise l'app Express, configure CORS, charge les routes et démarre
- * le serveur HTTP.
- *
- * Architecture des routes:
- *   /auth          → authRoutes       (public — pas de JWT requis)
- *   /* (reste)     → requireAuth      (JWT obligatoire pour toutes les routes suivantes)
- *   /users         → userRoutes
- *   /businesses    → businessRoutes
- *   /clients       → clientRoutes
- *   /engagements   → engagementsRoutes
- *   /engagementItems → engagementItemRoutes
- *   /transactions  → transactionsRoutes
- *   /reports       → reportsRoutes
- *   /documents     → documentRoutes
- *   /query-logs    → queryLogsRoutes
- *   /ai            → aiRoutes
- *   /dashboard     → dashboardRoutes
- *   /onboarding    → onboardingRoutes
- *   /import        → importRoutes
- */
-
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
@@ -42,6 +17,14 @@ import dashboardRoutes from "./routes/dashboardRoutes";
 import onboardingRoutes from "./routes/onboardingRoutes";
 import importRoutes from "./routes/importRoutes";
 import { requireAuth } from "./middleware/authMiddleware";
+import shopifyRoutes from "./routes/shopifyRoutes";
+import { shopifyCallback } from "./controllers/shopifyController";
+import costRoutes from "./routes/costRoutes";
+import productRoutes from "./routes/productRoutes";
+import profitabilityRoutes from "./routes/profitabilityRoutes";
+import insightRoutes from "./routes/insightRoutes";
+import shopifyDashboardRoutes from "./routes/shopifyDashboardRoutes";
+import demoRoutes from "./routes/demoRoutes";
 
 dotenv.config();
 
@@ -49,24 +32,46 @@ const app = express();
 
 app.use(express.json());
 
+/**
+ * 🔥 FIX CORS PRODUCTION + LOCAL
+ */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://kairos-kohl-zeta.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+console.log("Allowed CORS origins:", allowedOrigins);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Route de santé (health check)
+// Health check
 app.get("/", (_req, res) => {
   res.json({ message: "Kairos API is running" });
 });
 
-// Routes publiques (sans JWT)
+// Public routes
 app.use("/auth", authRoutes);
 
-// Toutes les routes suivantes nécessitent un JWT valide
+// Shopify callback (public)
+app.get("/shopify/callback", shopifyCallback);
+
+// Protected routes
 app.use(requireAuth);
 
 app.use("/users", userRoutes);
@@ -82,9 +87,19 @@ app.use("/ai", aiRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/onboarding", onboardingRoutes);
 app.use("/import", importRoutes);
+app.use("/shopify", shopifyRoutes);
+app.use("/costs", costRoutes);
+app.use("/products", productRoutes);
+app.use("/profitability", profitabilityRoutes);
+app.use("/insights", insightRoutes);
+app.use("/shopify-dashboard", shopifyDashboardRoutes);
+app.use("/demo", demoRoutes);
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`[shopify] Configured SHOPIFY_SCOPES: ${process.env.SHOPIFY_SCOPES ?? "(not set)"}`);
+  console.log(`[shopify] SHOPIFY_APP_URL: ${process.env.SHOPIFY_APP_URL ?? "(not set)"}`);
+  console.log(`[shopify] SHOPIFY_API_KEY set: ${!!process.env.SHOPIFY_API_KEY}`);
 });

@@ -1,84 +1,76 @@
-/**
- * useAskKairos — Hook pour interroger l'IA Kairos via /ai/ask
- *
- * Gère le cycle complet d'une question:
- *   1. Valide qu'un business est sélectionné
- *   2. Envoie la question (+ période optionnelle) au backend
- *   3. Expose la réponse IA, le SQL généré et les métadonnées
- *   4. Expose reset() pour effacer la réponse précédente
- */
-import {useState} from 'react';
-import {api} from '../lib/api';
-import { useBusinessContext } from '../business/BusinessContext';
+import { useState, useEffect, useCallback } from "react";
+import { api } from "../lib/api";
+import { useBusinessContext } from "../business/BusinessContext";
 
-
-export type AskKairosResponse = {
-    sql: string;
-    normalized: any;
-    aiText: string;
-    report_id: number;
-    query_id: number;
-    meta:{
-        business_id: number;
-        business_name: string;
-        period: string;
-        execution_time_ms: number;
-    };
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
 };
 
 export function useAskKairos() {
-    const {selectedBusiness} = useBusinessContext();
-    const [loading, setLoading] = useState(false);
-    const [response, setResponse] = useState<AskKairosResponse | null>(null);
-    const [error, setError] = useState<string | null>(null);
+  const { selectedBusiness } = useBusinessContext();
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-    async function ask(question: string,options?: {start?: string, end?: string}) {
+  // Auto-load de la dernière conversation au montage
+  const loadLastConversation = useCallback(async () => {
+    if (!selectedBusiness) return;
+    try {
+      const res = await api.get(`/ai/shopify/${selectedBusiness.id_business}/conversations`);
+      const conversations = res.data.conversations;
+      if (conversations.length === 0) return;
 
-        // valider qu'un business est selectionné
-        if (!selectedBusiness) {
-            setError("No business selected");
-            return;
-        }
-        // reinitialiser les etats avant le call
-        setLoading(true);  // activer le loading
-        setResponse(null); //Effacer les reponses precedentes
-        setError(null); // Effacer les erreurs precedentes
-
-        try {
-            //construire le payload
-            const payload : any= {
-                business_id: selectedBusiness.id_business,  // requis par requireBusinessAccess (backend)
-                question,
-            };
-            // est ce que options est fourni et contient start/end ?(une période) si oui on les ajoute au payload pour le backend
-            if(options?.start) payload.start = options.start;
-            if(options?.end) payload.end = options.end;
-
-            // faire le call a l'API
-            const res = await api.post<AskKairosResponse>("/ai/ask", payload);
-            setResponse(res.data); // stocker la reponse dans le state
-        } catch (err: any) {
-            // gestions des erreurs selon le type
-            const errorData = err?.response?.data;
-            if (errorData?.error === "UNSAFE_SQL") {
-                // SQL NON SAFE provenant de l'API
-                setError("Unsafe SQL  detected in the response. The query was blocked for your security.");
-            } else if (errorData?.error === "BUSINESS_NOT_FOUND") {
-                setError("Business not found. Please select a valid business and try again.");
-            } else {
-                // Erreur generique
-                setError(err?.response?.data?.error || err?.message || "Request failed");
-            }
-        } finally {
-            setLoading(false); // desactiver le loading dans tous les cas
-        }
+      const last = conversations[0];
+      const msgsRes = await api.get(`/ai/shopify/conversations/${last.id}`);
+      setConversationId(last.id);
+      setMessages(msgsRes.data.messages.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+      })));
+    } catch {
+      // Pas de conversation existante, on démarre vide
     }
+  }, [selectedBusiness]);
 
-    function reset() {
-        setResponse(null);
-        setError(null);
-        setLoading(false);
+  useEffect(() => {
+    setMessages([]);
+    setConversationId(null);
+    loadLastConversation();
+  }, [loadLastConversation]);
+
+  async function ask(question: string) {
+    if (!selectedBusiness) return;
+
+    // Ajoute le message user immédiatement (UX optimiste)
+    setMessages((prev) => [...prev, { role: "user", content: question }]);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await api.post(`/ai/shopify/${selectedBusiness.id_business}/ask`, {
+        question,
+        conversationId,
+      });
+      setConversationId(res.data.conversationId);
+      setMessages((prev) => [...prev, { role: "assistant", content: res.data.answer }]);
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err?.message || "Request failed");
+      // Retire le message user optimiste si erreur
+      setMessages((prev) => prev.slice(0, -1));
+    } finally {
+      setLoading(false);
     }
+  }
 
-    return { ask, reset,response, loading, error };
-};
+  function newConversation() {
+    setMessages([]);
+    setConversationId(null);
+    setError(null);
+  }
+
+  const [expanded, setExpanded] = useState(false);
+
+  return { ask, newConversation, messages, loading, error, conversationId, expanded, setExpanded };
+}

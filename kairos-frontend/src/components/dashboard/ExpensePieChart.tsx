@@ -7,6 +7,7 @@ import {
     Legend,
 
 } from "recharts";
+import { useI18n } from "../../i18n/useI18n";
 
 type ExpenseByCategory = {
     category: string;
@@ -22,6 +23,8 @@ const COLORS = ["#6ee7b7", "#93c5fd", "#fca5a5", "#fcd34d", "#c4b5fd", "#f9a8d4"
 
 
 export default function ExpensePieChart({ data }: Props) {
+    const { language } = useI18n();
+
     return (
          // ResponsiveContainer : Adapte la taille au parent
         <ResponsiveContainer width="100%" height={300}>
@@ -57,13 +60,13 @@ export default function ExpensePieChart({ data }: Props) {
             {/* Tooltip : Le popup au hover avec le montant formatté en CAD */}
             <Tooltip
             contentStyle={{
-                backgroundColor: "#1a1a2e",
+                backgroundColor: "#161B22",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "12px",
                 color: "#fff",
             }}
             formatter={(value) =>
-                new Intl.NumberFormat("en-CA", {
+                new Intl.NumberFormat(language === "fr" ? "fr-CA" : "en-CA", {
                 style: "currency",
                 currency: "CAD",
                 }).format(value as number)

@@ -23,3 +23,22 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Intercepteur de réponse : gestion globale des 401
+// Si le backend rejette avec 401 ET qu'un token existait (session expirée),
+// on nettoie le localStorage et on redirige vers la page de login.
+// Le guard sur /auth évite les boucles de redirection.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const token = localStorage.getItem("auth_token");
+      if (token && !window.location.pathname.startsWith("/auth")) {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("selected_business_id");
+        window.location.href = "/auth?mode=login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);

@@ -1,102 +1,161 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import BusinessInfoStep from "./BusinessInfoStep";
-import CsvWizardStep from "./CsvWizardStep";
-import ImportResultStep from "./ImportResultStep";
+import { useBusinessContext } from "../../business/BusinessContext";
+import { connectShopify } from "../../services/shopifyService";
+import { api } from "../../lib/api";
+import { Card } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 
-// ============================================================================
-// OnboardingPage - Wizard multi-etapes pour creer un business + importer ses donnees
-// ============================================================================
-// c'est le "parent" qui controle quelle etape est affichee
-// chaque step est un composant independant qui recoit des callbacks (onNext, onComplete, onBack)
-// quand un step est fini, il appelle le callback et le parent change d'etape
+const CURRENCIES = ["CAD", "USD", "EUR", "GBP"];
+
+type View = "choice" | "shopify" | "manual";
 
 export default function OnboardingPage() {
-  // si on arrive depuis Settings avec { reimport: true, businessId }, on saute le step 0
-  const location = useLocation();
-  const isReimport = location.state?.reimport === true;
-  const initialBusinessId = location.state?.businessId ?? null;
+  const { refreshBusinesses } = useBusinessContext();
+  const navigate = useNavigate();
+  const [view, setView] = useState<View>("choice");
+  const [businessName, setBusinessName] = useState("");
+  const [businessCurrency, setBusinessCurrency] = useState("CAD");
+  const [shopDomain, setShopDomain] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // step = numero de l'etape courante (0 a 2)
-  // 0 = creer le business, 1 = wizard CSV, 2 = resultat
-  const [step, setStep] = useState(isReimport ? 1 : 0);
+  async function handleNext() {
+    await refreshBusinesses();
+    navigate("/dashboard");
+  }
 
-  // l'id du business cree au step 0 (ou passé via state si reimport)
-  // on en a besoin aux etapes suivantes pour savoir dans quel business importer
-  const [businessId, setBusinessId] = useState<number | null>(initialBusinessId);
+  async function handleConnectShopify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!businessName.trim() || !shopDomain.trim()) return;
+    setConnecting(true);
+    setError(null);
+    try {
+      // create business first so backend callback has a valid businessId
+      const bizRes = await api.post("/onboarding/business", {
+        name: businessName.trim(),
+        currency: businessCurrency,
+      });
+      const businessId = bizRes.data?.business?.id_business ?? bizRes.data?.id_business;
+      if (!businessId) {
+        setError("Erreur: impossible de récupérer l'identifiant du business créé.");
+        setConnecting(false);
+        return;
+      }
 
-  // le resultat de l'import (compteurs + erreurs) retourne par le backend
-  // on le stocke ici pour l'afficher au step 2 (page resultat)
-  const [importResult, setImportResult] = useState<any>(null);
+      await refreshBusinesses();
+      sessionStorage.setItem("shopify_from_onboarding", "1");
 
-  // labels des 3 etapes pour le progress bar en haut
-  const steps = ["Business", "Import", "Résultat"];
+      const data = await connectShopify(shopDomain.trim(), businessId);
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch (err: any) {
+      const errCode = err.response?.data?.error;
+      const errMsg =
+        errCode === "BUSINESS_NAME_ALREADY_EXISTS"
+          ? "Un business avec ce nom existe déjà."
+          : (err.response?.data?.message ?? "Erreur lors de la connexion Shopify.");
+      setError(errMsg);
+      setConnecting(false);
+    }
+  }
+
+  if (view === "manual") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg px-4 text-white">
+        <div className="w-full max-w-2xl">
+          <BusinessInfoStep onNext={handleNext} />
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "shopify") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg px-4 text-white">
+        <div className="w-full max-w-md">
+          <Card className="p-8">
+            <h2 className="text-xl font-semibold">Connecter votre boutique Shopify</h2>
+            <p className="mt-1 text-sm text-white/60">
+              Créez votre business et connectez votre boutique en une étape.
+            </p>
+            <form onSubmit={handleConnectShopify} className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1 block text-sm text-white/60">Nom du business *</label>
+                <Input
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Ex: Acme Corp"
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-white/60">Devise *</label>
+                <select
+                  value={businessCurrency}
+                  onChange={(e) => setBusinessCurrency(e.target.value)}
+                  className="w-full rounded-xl bg-white/5 px-4 py-3 text-sm text-white ring-1 ring-white/10 focus:outline-none focus:ring-white/20"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c} value={c} className="bg-gray-900">{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-white/60">Domaine Shopify *</label>
+                <Input
+                  value={shopDomain}
+                  onChange={(e) => setShopDomain(e.target.value)}
+                  placeholder="votre-boutique.myshopify.com"
+                  required
+                />
+              </div>
+              {error && (
+                <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/20">
+                  {error}
+                </div>
+              )}
+              <Button type="submit" disabled={connecting} className="w-full">
+                {connecting ? "Connexion..." : "Connecter →"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setView("choice")}
+                className="w-full text-center text-sm text-white/40 transition hover:text-white/60"
+              >
+                ← Retour
+              </button>
+            </form>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4 text-white">
-      <div className="w-full max-w-2xl">
-
-        {/* progress bar : les 3 cercles numerotes avec les lignes entre chaque */}
-        <div className="mb-8 flex items-center justify-center gap-2">
-          {steps.map((label, i) => (
-            <div key={label} className="flex items-center gap-2">
-              {/* cercle : blanc si etape completee ou courante, grise sinon */}
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                  i <= step
-                    ? "bg-white text-black"
-                    : "bg-white/10 text-white/40"
-                }`}
-              >
-                {i + 1}
-              </div>
-              {/* nom de l'etape a cote du cercle */}
-              <span
-                className={`text-sm ${
-                  i <= step ? "text-white" : "text-white/40"
-                }`}
-              >
-                {label}
-              </span>
-              {/* petite ligne entre les cercles (pas apres le dernier) */}
-              {i < 2 && (
-                <div
-                  className={`h-px w-8 ${
-                    i < step ? "bg-white/40" : "bg-white/10"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-semibold">Bienvenue sur Kairos</h1>
+          <p className="mt-2 text-sm text-white/60">
+            Connectez votre boutique Shopify pour démarrer automatiquement.
+          </p>
         </div>
-
-        {/* step 0 : formulaire pour creer le business (nom, devise, industrie) */}
-        {/* quand le user submit, onNext recoit l'id du business cree par le backend */}
-        {step === 0 && (
-          <BusinessInfoStep
-            onNext={(id: number) => {
-              setBusinessId(id); // on garde l'id pour les prochaines etapes
-              setStep(1);        // on passe directement au wizard CSV
-            }}
-          />
-        )}
-
-        {/* step 1 : le gros wizard CSV (upload, preview, mapping des colonnes, import) */}
-        {/* onBack permet de revenir au step 0 si le user veut changer le nom du business */}
-        {step === 1 && (
-          <CsvWizardStep
-            businessId={businessId!}
-            onComplete={(result: any) => {
-              setImportResult(result); // sauvegarder le resultat pour le step final
-              setStep(2);
-            }}
-            onBack={() => setStep(0)}
-          />
-        )}
-
-        {/* step 2 : page finale - affiche combien de lignes importees, les erreurs, etc */}
-        {/* + bouton pour aller au dashboard */}
-        {step === 2 && <ImportResultStep result={importResult} />}
+        <div className="space-y-3">
+          <Button className="w-full" onClick={() => setView("shopify")}>
+            Connecter ma boutique Shopify
+          </Button>
+          <button
+            type="button"
+            onClick={() => setView("manual")}
+            className="w-full rounded-xl px-4 py-3 text-sm text-white/50 ring-1 ring-white/10 transition hover:text-white/70 hover:ring-white/20"
+          >
+            Continuer sans Shopify
+          </button>
+        </div>
       </div>
     </div>
   );

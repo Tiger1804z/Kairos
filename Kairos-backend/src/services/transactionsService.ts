@@ -2,7 +2,7 @@
  * ============================================================================
  * Transactions Service
  * ============================================================================
- * CRUD des transactions financières, scoped par business (multi-tenant).
+ * CRUD des transactions financières, scoped par business (multi-tenant(les données sont isolées par entreprise)).
  * Vérifie que le client et l'engagement appartiennent bien au business
  * avant toute insertion ou mise à jour.
  */

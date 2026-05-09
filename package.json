@@ -1,4 +1,17 @@
 {
+  "name": "kairos",
+  "version": "1.0.0",
+  "description": "Kairos — True Profit Intelligence for Shopify",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names \"frontend,backend,python\" --prefix-colors \"cyan,green,yellow\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:python\"",
+    "dev:frontend": "cd kairos-frontend && npm run dev",
+    "dev:backend": "cd Kairos-backend && npm run dev",
+    "dev:python": "cd Kairos-backend\\kairos-shopify-engine && .\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --port 8002"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
   "dependencies": {
     "jsonwebtoken": "^9.0.3"
   }
