@@ -51,12 +51,12 @@ export default function SettingsPage() {
   }, [selectedBusiness]);
 
   async function handleConnect() {
-    if (!shopDomain.trim()) return;
+    if (!shopDomain.trim() || !selectedBusiness) return;
     setConnecting(true);
-    const data = await connectShopify(shopDomain.trim());
+    const data = await connectShopify(shopDomain.trim(), selectedBusiness.id_business);
     setConnecting(false);
     if (data.authUrl) {
-      window.location.href = data.authUrl; // redirect vers Shopify OAuth
+      window.location.href = data.authUrl;
     }
   }
 

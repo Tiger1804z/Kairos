@@ -99,4 +99,7 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`[shopify] Configured SHOPIFY_SCOPES: ${process.env.SHOPIFY_SCOPES ?? "(not set)"}`);
+  console.log(`[shopify] SHOPIFY_APP_URL: ${process.env.SHOPIFY_APP_URL ?? "(not set)"}`);
+  console.log(`[shopify] SHOPIFY_API_KEY set: ${!!process.env.SHOPIFY_API_KEY}`);
 });

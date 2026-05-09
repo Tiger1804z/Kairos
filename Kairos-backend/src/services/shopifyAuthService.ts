@@ -31,6 +31,20 @@ export const exchangeCodeForToken = async (
         client_secret: API_SECRET,
         code
     });
+
+    const grantedScope: string = res.data.scope ?? "(not returned)";
+    console.log(`[shopify] OAuth token exchange complete for ${shop}`);
+    console.log(`[shopify] Requested scopes: ${SCOPES}`);
+    console.log(`[shopify] Granted scopes:   ${grantedScope}`);
+
+    const requested = SCOPES.split(",").map((s: string) => s.trim());
+    const granted   = grantedScope.split(",").map((s: string) => s.trim());
+    const missing   = requested.filter((s: string) => !granted.includes(s));
+    if (missing.length > 0) {
+        console.error(`[shopify] SCOPE MISMATCH — missing from granted token: ${missing.join(", ")}`);
+        console.error(`[shopify] Re-authorization required. Token does NOT have: ${missing.join(", ")}`);
+    }
+
     return res.data.access_token;
 };
 
@@ -42,7 +56,7 @@ export const saveShopifyStore = async (
 ) => {
   return await prisma.shopifyStore.upsert({  
     where:  { shop_domain: shop },
-    update: { access_token: accessToken, status: "active", last_sync_at: null },
+    update: { business_id: businessId, access_token: accessToken, status: "active", last_sync_at: null },
     create: {
       business_id:      businessId,
       shop_domain:      shop,

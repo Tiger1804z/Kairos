@@ -5,8 +5,8 @@ export async function getShopifyStatus(businessId: number) {
   return res.data;
 }
 
-export async function connectShopify(shop: string) {
-  const res = await api.post("/shopify/connect", { shop });
+export async function connectShopify(shop: string, businessId: number) {
+  const res = await api.post("/shopify/connect", { shop, businessId });
   return res.data;
 }
 

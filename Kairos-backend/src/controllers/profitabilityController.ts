@@ -2,49 +2,47 @@ import type { Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import { computeProfitability } from "../services/shopifyEngineClient";
 
-export async function handleComputeProfitability(req: Request, res: Response) {
-  const businessId = parseInt(req.params.businessId ?? "", 10);
+export async function computeProfitabilityForBusiness(businessId: number): Promise<void> {
   const now = new Date();
-  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1); // 1er du mois
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const periodEnd = now;
 
-  // 1. Récupérer tous les order_items du business (via orders)
   const orderItems = await prisma.orderItem.findMany({
     where: {
       order: { business_id: businessId },
-      product_id: { not: null },
     },
-    select: {
-      product_id: true,
-      quantity: true,
-      unit_price: true,
-    },
+    include: { order: true },
   });
 
-  // 2. Récupérer le dernier coût par produit
+  console.log(`[profitability] orderItems count for business ${businessId}:`, orderItems.length);
+
   const costs = await prisma.productCost.findMany({
     where: {
       product: { business_id: businessId },
       variant_id: null,
     },
-    orderBy: { effective_from: "desc" },
-    distinct: ["product_id"],
-    select: {
-      product_id: true,
-      cost_per_unit: true,
-    },
+    select: { product_id: true, cost_per_unit: true },
   });
 
+  console.log(`[profitability] product costs count for business ${businessId}:`, costs.length);
+
   if (orderItems.length === 0) {
-    return res.json({ snapshots: [] });
+    console.log(`[profitability] No order items found for business ${businessId} — orders may not have synced yet`);
+    return;
   }
 
-  // 3. Appeler Python
+  const itemsWithProduct = orderItems.filter((i) => i.product_id !== null);
+  console.log(`[profitability] items with linked product: ${itemsWithProduct.length}/${orderItems.length}`);
+
+  if (itemsWithProduct.length === 0) {
+    console.log(`[profitability] All order items have null product_id for business ${businessId} — products not linked during sync`);
+  }
+
   const snapshots = await computeProfitability({
     business_id: businessId,
     period_start: periodStart.toISOString().split("T")[0]!,
     period_end: periodEnd.toISOString().split("T")[0]!,
-    order_items: orderItems.map((i) => ({
+    order_items: itemsWithProduct.map((i) => ({
       product_id: i.product_id!,
       quantity: i.quantity,
       unit_price: Number(i.unit_price),
@@ -55,7 +53,6 @@ export async function handleComputeProfitability(req: Request, res: Response) {
     })),
   });
 
-  // 4. Stocker les snapshots en DB (upsert par product + période)
   for (const s of snapshots) {
     await prisma.profitabilitySnapshot.upsert({
       where: {
@@ -89,5 +86,15 @@ export async function handleComputeProfitability(req: Request, res: Response) {
     });
   }
 
-  return res.json({ snapshots });
+  console.log(`[profitability] Compute completed: ${snapshots.length} snapshots for business ${businessId}`);
+}
+
+export async function handleComputeProfitability(req: Request, res: Response) {
+  const businessId = parseInt(req.params.businessId ?? "", 10);
+  if (isNaN(businessId)) {
+    return res.status(400).json({ error: "Invalid businessId" });
+  }
+
+  await computeProfitabilityForBusiness(businessId);
+  return res.json({ ok: true });
 }
