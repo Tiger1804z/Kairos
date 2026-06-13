@@ -10,7 +10,8 @@
     "seed": "tsx prisma/seeds.ts",
     "seed:db": "tsx prisma/seedShopifyTestData.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "migrate:tokens": "tsx scripts/migrate-tokens.ts"
   },
   "prisma": {
     "seed": "npm run seed"

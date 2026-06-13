@@ -110,7 +110,7 @@ Clé : `Buffer.from(process.env.SHOPIFY_TOKEN_ENCRYPTION_KEY, 'base64')` doit fa
 **Area:** security, shopify
 **Risk:** critical
 **Estimate:** M
-**Status:** Backlog
+**Status:** Done ✅ — 2026-06-13
 
 ### Contexte
 
@@ -127,21 +127,21 @@ Utiliser le helper de S0-T01 pour chiffrer le token à l'écriture et le déchif
 
 ### Tâches
 
-- [ ] Dans `shopifyAuthService.ts`, identifier toutes les lignes qui écrivent `access_token`
-- [ ] Appeler `encryptToken(token)` avant tout `prisma.shopifyStore.create/update` sur `access_token`
-- [ ] Identifier toutes les lectures de `access_token` depuis `ShopifyStore`
-- [ ] Appeler `decryptToken(store.access_token)` avant tout usage du token (appels API Shopify)
-- [ ] Vérifier que le token déchiffré n'est jamais retourné dans une réponse API
-- [ ] Vérifier que le token déchiffré n'est jamais loggé
-- [ ] S'assurer que `shopifySyncService.ts` et autres services qui lisent le token passent par le decrypt
+- [x] Dans `shopifyAuthService.ts`, identifier toutes les lignes qui écrivent `access_token`
+- [x] Appeler `encryptToken(token)` avant tout `prisma.shopifyStore.create/update` sur `access_token`
+- [x] Identifier toutes les lectures de `access_token` depuis `ShopifyStore`
+- [x] Appeler `decryptToken(store.access_token)` avant tout usage du token (appels API Shopify)
+- [x] Vérifier que le token déchiffré n'est jamais retourné dans une réponse API
+- [x] Vérifier que le token déchiffré n'est jamais loggé
+- [x] S'assurer que `shopifySyncService.ts` et autres services qui lisent le token passent par le decrypt
 
 ### Critères d'acceptation
 
-- [ ] Après OAuth callback, `shopify_stores.access_token` en base contient une string chiffrée (pas le token brut)
-- [ ] Les appels API Shopify fonctionnent correctement (le token est bien décrypté avant usage)
-- [ ] Aucune réponse API ne retourne `access_token` au frontend
-- [ ] Aucun log ne contient le token en clair
-- [ ] Le token chiffré en base a le format `iv:authTag:ciphertext`
+- [x] Après OAuth callback, `shopify_stores.access_token` en base contient une string chiffrée (pas le token brut)
+- [x] Les appels API Shopify fonctionnent correctement (le token est bien décrypté avant usage)
+- [x] Aucune réponse API ne retourne `access_token` au frontend
+- [x] Aucun log ne contient le token en clair
+- [x] Le token chiffré en base a le format `iv:authTag:ciphertext`
 
 ### Tests recommandés
 
@@ -176,7 +176,7 @@ Ne pas modifier le type du champ Prisma pour l'instant — le champ reste `Strin
 **Area:** security, data
 **Risk:** critical
 **Estimate:** M
-**Status:** Backlog
+**Status:** Done ✅ — 2026-06-13
 
 ### Contexte
 
@@ -999,7 +999,7 @@ Ne pas sur-valider — se concentrer sur les inputs qui peuvent causer des probl
 
 ## Critères de complétion Sprint 0
 
-- [ ] Zéro token OAuth Shopify en clair en base de données  ← S0-T01 ✅ (helper prêt), S0-T02 à faire
+- [x] Zéro token OAuth Shopify en clair en base de données  ← S0-T01 ✅, S0-T02 ✅, S0-T03 ✅
 - [ ] Zéro route business-scoped sans `requireBusinessAccess`
 - [ ] Zéro SQL LLM accessible en production
 - [ ] Zéro page legacy visible dans la navigation beta
