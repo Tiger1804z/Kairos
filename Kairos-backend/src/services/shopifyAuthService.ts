@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import axios from 'axios';
 import prisma from '../prisma/prisma';
+import { encryptToken } from '../utils/crypto';
 
 const API_KEY    = process.env.SHOPIFY_API_KEY!;
 const API_SECRET = process.env.SHOPIFY_API_SECRET!;
@@ -62,13 +63,19 @@ export const saveShopifyStore = async (
       throw err;
   }
 
+  // Chiffrement du token AVANT toute écriture en base (D-SEC2).
+  // Le token en clair n'est jamais persisté — seule la version chiffrée entre en DB.
+  // Format stocké : iv:authTag:ciphertext (base64), voir src/utils/crypto.ts.
+  // SECURITY: ne jamais logger accessToken ici.
+  const encryptedToken = encryptToken(accessToken);
+
   return await prisma.shopifyStore.upsert({
     where:  { shop_domain: shop },
-    update: { business_id: businessId, access_token: accessToken, status: "active", last_sync_at: null },
+    update: { business_id: businessId, access_token: encryptedToken, status: "active", last_sync_at: null },
     create: {
       business_id:      businessId,
       shop_domain:      shop,
-      access_token:     accessToken,
+      access_token:     encryptedToken,
       shopify_store_id: shop,
     },
     });
