@@ -5,6 +5,6 @@ export default defineConfig({
     // Vitest s'exécute dans Node.js (pas de DOM navigateur)
     environment: "node",
     // Cherche les fichiers *.test.ts dans tout src/
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
   },
 });
