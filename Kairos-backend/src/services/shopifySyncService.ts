@@ -94,7 +94,7 @@ export async function syncProducts(businessId: number, store: ShopifyStore): Pro
             const shopifyProductId = p.legacyResourceId;
             const status = (p.status as string).toLowerCase();
 
-            console.log(`[shopify] Upserting product  shopify_product_id=${shopifyProductId}, title="${p.title}"`);
+            console.log(`[shopify] Upserting product shopify_product_id=${shopifyProductId}`);
             let product : {id: string};
             try  {
                 product = await prisma.product.upsert({
@@ -104,7 +104,7 @@ export async function syncProducts(businessId: number, store: ShopifyStore): Pro
                 });
                 
             }catch(err: any) {
-                console.error(`[shopify] ERROR upserting product shopify_product_id=${shopifyProductId}, title="${p.title}": ${err.message}`); 
+                console.error(`[shopify] ERROR upserting product shopify_product_id=${shopifyProductId}: ${err.message}`);
                 throw err;
             }
 
@@ -231,7 +231,7 @@ export async function syncOrders(businessId: number, store: ShopifyStore): Promi
                     ? await prisma.product.findFirst({ where: { shopify_product_id: String(item.product_id), business_id: businessId }, select: { id: true } })
                     : null;
                 if (item.product_id && !product) {
-                    console.warn(`[syncOrders] product not found in DB: shopify_product_id=${item.product_id}, business=${businessId}, title="${item.title}"`);
+                    console.warn(`[syncOrders] product not found in DB: shopify_product_id=${item.product_id}, business=${businessId}`);
                 }
 
                 const variant = item.variant_id
