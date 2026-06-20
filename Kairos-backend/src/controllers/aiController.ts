@@ -133,6 +133,31 @@ export const aiDailyFinanceSummary = async (req: Request, res: Response) => {
 };
 
 export const aiAsk = async (req: Request, res: Response) => {
+  // ──────────────────────────────────────────────────────────────────────────
+  // S0-T06 — SQL LLM legacy DÉSACTIVÉ pour la beta (décision D-SEC4).
+  //
+  // Cette route demandait à un LLM de GÉNÉRER du SQL (generateSQLFromQuestion),
+  // puis l'exécutait via prisma.$queryRawUnsafe(). Interdit en beta :
+  //   - le LLM ne doit jamais produire du SQL exécuté en production ;
+  //   - le LLM ne doit pas calculer les chiffres financiers ;
+  //   - ce chemin expose des tables legacy (transactions, clients, documents…).
+  //
+  // Le code legacy plus bas (generateSQLFromQuestion, isSafeSQL/sqlGuard,
+  // $queryRawUnsafe) reste présent POUR RÉFÉRENCE mais INACTIF par défaut.
+  // Réactivation explicite (JAMAIS en prod) : LEGACY_AI_SQL_ENABLED="true".
+  // Par défaut (flag absent ou ≠ "true") → 410 Gone, zéro SQL LLM exécuté.
+  //
+  // NB: ce guard est volontairement la TOUTE PREMIÈRE instruction afin qu'aucun
+  // appel à generateSQLFromQuestion ni $queryRawUnsafe ne soit atteignable
+  // tant que le flag n'est pas explicitement activé.
+  // ──────────────────────────────────────────────────────────────────────────
+  if (process.env.LEGACY_AI_SQL_ENABLED !== "true") {
+    return res.status(410).json({
+      error: "FEATURE_DISABLED_FOR_BETA",
+      message: "Legacy SQL AI is disabled for beta.",
+    });
+  }
+
   const t0 = Date.now();
 
   const businessId = (req as any).businessId as number;
