@@ -96,11 +96,8 @@ export const extractUploadViaPython = async (
   form.append("mode", req.mode ?? "auto");
   if (req.file_type) form.append("file_type", req.file_type);
 
-  console.log("[extractUploadViaPython] URL =", url);
-  console.log("[extractUploadViaPython] file_path =", req.file_path);
-  console.log("[extractUploadViaPython] original_name =", req.original_name);
-  console.log("[extractUploadViaPython] file_type =", req.file_type);
-  console.log("[extractUploadViaPython] mode =", req.mode ?? "auto");
+  // SECURITY: ne pas logger file_path/original_name (chemins disque + PII business).
+  console.log(`[extractUploadViaPython] request file_type=${req.file_type ?? "auto"} mode=${req.mode ?? "auto"}`);
 
   try {
     const res = await axios.post(url, form, {
