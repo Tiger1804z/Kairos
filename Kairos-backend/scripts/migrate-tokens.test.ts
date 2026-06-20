@@ -41,8 +41,9 @@ import {
   isEncryptedTokenCandidate,
   classifyToken,
   buildMigrationPlan,
+  buildBackupPayload,
 } from "./migrate-tokens";
-import { encryptToken } from "../src/utils/crypto";
+import { encryptToken, decryptToken } from "../src/utils/crypto";
 
 // ─────────────────────────────────────────────────────────────
 // Clé de test
@@ -273,5 +274,85 @@ describe("buildMigrationPlan — agrégation et idempotence", () => {
     expect(plan.toMigrate).toHaveLength(0);
     expect(plan.alreadyEncrypted).toHaveLength(0);
     expect(plan.corrupted).toHaveLength(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Tests : buildBackupPayload (correction sécurité S0-T03)
+// ─────────────────────────────────────────────────────────────
+// OBJECTIF : prouver que le fichier backup ne contient JAMAIS de token en clair,
+// tout en restant déchiffrable pour le rollback.
+
+describe("buildBackupPayload — backup chiffrée, jamais de plaintext", () => {
+  // Valeurs « secrètes » volontairement reconnaissables → on vérifie ensuite
+  // qu'elles n'apparaissent NULLE PART dans le JSON sérialisé.
+  const PLAINTEXT_A = "shpat_SECRET_PLAINTEXT_boutique_A";
+  const PLAINTEXT_B = "shpat_SECRET_PLAINTEXT_boutique_B";
+
+  const stores = [
+    { id: "s1", shop_domain: "a.myshopify.com", access_token: PLAINTEXT_A },
+    { id: "s2", shop_domain: "b.myshopify.com", access_token: PLAINTEXT_B },
+  ];
+
+  it("ne contient JAMAIS le token plaintext dans le JSON sérialisé", () => {
+    // Le test le plus important : on sérialise tout le payload et on cherche
+    // les tokens en clair. Ils ne doivent apparaître nulle part.
+    const serialized = JSON.stringify(buildBackupPayload(stores));
+    expect(serialized).not.toContain(PLAINTEXT_A);
+    expect(serialized).not.toContain(PLAINTEXT_B);
+  });
+
+  it("n'expose aucun champ 'access_token' (plaintext) sur les entrées", () => {
+    const payload = buildBackupPayload(stores);
+    for (const entry of payload.stores) {
+      // Le champ plaintext ne doit pas exister du tout
+      expect(entry).not.toHaveProperty("access_token");
+      // Seul le champ chiffré existe
+      expect(entry.access_token_encrypted).toBeTruthy();
+    }
+  });
+
+  it("stocke une version chiffrée au format iv:authTag:ciphertext", () => {
+    const payload = buildBackupPayload(stores);
+    for (const entry of payload.stores) {
+      expect(isEncryptedTokenCandidate(entry.access_token_encrypted)).toBe(true);
+    }
+  });
+
+  it("le token chiffré se déchiffre vers la valeur originale (rollback possible)", () => {
+    // Garantie de rollback : decryptToken redonne exactement l'original.
+    const payload = buildBackupPayload(stores);
+    expect(decryptToken(payload.stores[0]!.access_token_encrypted)).toBe(PLAINTEXT_A);
+    expect(decryptToken(payload.stores[1]!.access_token_encrypted)).toBe(PLAINTEXT_B);
+  });
+
+  it("conserve id et shop_domain (nécessaires au rollback ciblé)", () => {
+    const payload = buildBackupPayload(stores);
+    expect(payload.stores[0]!.id).toBe("s1");
+    expect(payload.stores[0]!.shop_domain).toBe("a.myshopify.com");
+    expect(payload.stores[1]!.id).toBe("s2");
+  });
+
+  it("préserve aussi les tokens DÉJÀ chiffrés (round-trip exact)", () => {
+    // Un store déjà migré : son access_token est déjà un ciphertext.
+    // buildBackupPayload le re-chiffre ; decryptToken doit redonner CE ciphertext.
+    const alreadyEncrypted = encryptToken("shpat_token_deja_migre");
+    const payload = buildBackupPayload([
+      { id: "s3", shop_domain: "c.myshopify.com", access_token: alreadyEncrypted },
+    ]);
+    expect(decryptToken(payload.stores[0]!.access_token_encrypted)).toBe(alreadyEncrypted);
+  });
+
+  it("inclut un warning de sécurité et la note de chiffrement", () => {
+    const payload = buildBackupPayload(stores);
+    expect(payload._WARNING).toBeTruthy();
+    expect(payload._encryption).toContain("decryptToken");
+  });
+
+  it("propage l'erreur si la clé de chiffrement est absente (→ refus d'écrire)", () => {
+    // Si encryptToken échoue, buildBackupPayload doit throw. createBackup propage,
+    // donc main() refuse d'écrire en base sans backup valide.
+    delete process.env["SHOPIFY_TOKEN_ENCRYPTION_KEY"];
+    expect(() => buildBackupPayload(stores)).toThrow();
   });
 });
