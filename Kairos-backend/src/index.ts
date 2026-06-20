@@ -5,12 +5,14 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import businessRoutes from "./routes/businessRoutes";
-import clientRoutes from "./routes/clientRoutes";
-import engagementsRoutes from "./routes/engagementsRoutes";
-import engagementItemRoutes from "./routes/engagementItemRoutes";
-import transactionsRoutes from "./routes/transactionsRoutes";
-import reportsRoutes from "./routes/reportsRoutes";
-import documentRoutes from "./routes/documentRoutes";
+// S0-T07 / D-SEC5: legacy non-Shopify route imports kept for reference but not mounted
+// during the Shopify BI beta (see archived app.use block below).
+// import clientRoutes from "./routes/clientRoutes";
+// import engagementsRoutes from "./routes/engagementsRoutes";
+// import engagementItemRoutes from "./routes/engagementItemRoutes";
+// import transactionsRoutes from "./routes/transactionsRoutes";
+// import reportsRoutes from "./routes/reportsRoutes";
+// import documentRoutes from "./routes/documentRoutes";
 import queryLogsRoutes from "./routes/queryLogRoutes";
 import aiRoutes from "./routes/aiRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
@@ -76,12 +78,15 @@ app.use(requireAuth);
 
 app.use("/users", userRoutes);
 app.use("/businesses", businessRoutes);
-app.use("/clients", clientRoutes);
-app.use("/engagements", engagementsRoutes);
-app.use("/engagementItems", engagementItemRoutes);
-app.use("/transactions", transactionsRoutes);
-app.use("/reports", reportsRoutes);
-app.use("/documents", documentRoutes);
+// S0-T07 / D-SEC5:
+// Legacy non-Shopify routes are intentionally not mounted during Shopify BI beta.
+// Route files are kept for reference, but endpoints should return 404.
+// app.use("/clients", clientRoutes);
+// app.use("/engagements", engagementsRoutes);
+// app.use("/engagementItems", engagementItemRoutes);
+// app.use("/transactions", transactionsRoutes);
+// app.use("/reports", reportsRoutes);
+// app.use("/documents", documentRoutes);
 app.use("/query-logs", queryLogsRoutes);
 app.use("/ai", aiRoutes);
 app.use("/dashboard", dashboardRoutes);
