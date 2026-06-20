@@ -1,20 +1,15 @@
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
 import { login, me, signup } from "../controllers/authController";
 import { requireAuth } from "../middleware/authMiddleware";
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,                   // 20 tentatives max par IP sur la fenêtre
-  message: { error: "Too many attempts. Please try again later." },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// S0-T09 / D-SEC1: limiter centralisé (10 req/15min/IP, anti brute-force).
+// Remplace l'ancien limiter inline (20/15min) pour éviter les configs dupliquées.
+import { authRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-router.post("/signup", authLimiter, signup);
-router.post("/login", authLimiter, login);
+// Routes sensibles uniquement (pas /me, qui est une lecture légère).
+router.post("/signup", authRateLimiter, signup);
+router.post("/login", authRateLimiter, login);
 router.get("/me", requireAuth, me);
 
 export default router;

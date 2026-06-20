@@ -27,10 +27,17 @@ import profitabilityRoutes from "./routes/profitabilityRoutes";
 import insightRoutes from "./routes/insightRoutes";
 import shopifyDashboardRoutes from "./routes/shopifyDashboardRoutes";
 import demoRoutes from "./routes/demoRoutes";
+import { aiRateLimiter, oauthRateLimiter } from "./middleware/rateLimiter";
 
 dotenv.config();
 
 const app = express();
+
+// S0-T09 / D-SEC1: Render place l'app derrière un reverse proxy. Sans ceci,
+// `req.ip` serait l'IP du proxy (identique pour tous) et le rate limiting par
+// IP limiterait tout le monde sur un seul compteur. `1` = on fait confiance au
+// 1er hop seulement (pas `true`, qui laisserait spoofer X-Forwarded-For).
+app.set("trust proxy", 1);
 
 app.use(express.json());
 
@@ -70,8 +77,8 @@ app.get("/", (_req, res) => {
 // Public routes
 app.use("/auth", authRoutes);
 
-// Shopify callback (public)
-app.get("/shopify/callback", shopifyCallback);
+// Shopify callback (public) — S0-T09: 5 req/min/IP (OAuth + écriture token)
+app.get("/shopify/callback", oauthRateLimiter, shopifyCallback);
 
 // Protected routes
 app.use(requireAuth);
@@ -88,7 +95,8 @@ app.use("/businesses", businessRoutes);
 // app.use("/reports", reportsRoutes);
 // app.use("/documents", documentRoutes);
 app.use("/query-logs", queryLogsRoutes);
-app.use("/ai", aiRoutes);
+// S0-T09: 30 req/min/user (coût OpenAI) — req.user dispo (monté après requireAuth)
+app.use("/ai", aiRateLimiter, aiRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/onboarding", onboardingRoutes);
 app.use("/import", importRoutes);
