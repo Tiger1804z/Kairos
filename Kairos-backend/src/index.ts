@@ -28,8 +28,15 @@ import insightRoutes from "./routes/insightRoutes";
 import shopifyDashboardRoutes from "./routes/shopifyDashboardRoutes";
 import demoRoutes from "./routes/demoRoutes";
 import { aiRateLimiter, oauthRateLimiter } from "./middleware/rateLimiter";
+import { validateEnv } from "./utils/validateEnv";
 
 dotenv.config();
+
+// S0-T10 : fail fast. On valide les variables d'environnement critiques juste
+// après dotenv.config() et AVANT de monter les routes / app.listen. Si une
+// variable critique manque ou est invalide, validateEnv() logge les noms
+// concernés (jamais les valeurs) et arrête le processus via process.exit(1).
+validateEnv();
 
 const app = express();
 
