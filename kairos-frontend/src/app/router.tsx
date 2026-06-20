@@ -7,15 +7,17 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 
 import RequireAuth from "../auth/RequireAuth";
-import ClientPage from "../pages/dashboard/ClientPage";
-import EngagementPage from "../pages/dashboard/EngagementPage";
-import ReportsPage from "../pages/dashboard/ReportsPage";
+// S0-T08 / D-SEC5: legacy non-Shopify page imports kept for reference but not routed
+// during the Shopify BI beta (see unmounted routes below). Page files are NOT deleted.
+// import ClientPage from "../pages/dashboard/ClientPage";
+// import EngagementPage from "../pages/dashboard/EngagementPage";
+// import ReportsPage from "../pages/dashboard/ReportsPage";
 import SettingsPage from "../pages/dashboard/SettingsPage";
 
 import OnboardingPage from "../pages/onboarding/OnboardingPage";
-import TransactionsPage from "../pages/dashboard/TransactionsPage";
-import ClientDetailPage from "../pages/dashboard/ClientDetailPage";
-import EngagementDetailPage from "../pages/dashboard/EngagementDetailPage";
+// import TransactionsPage from "../pages/dashboard/TransactionsPage";
+// import ClientDetailPage from "../pages/dashboard/ClientDetailPage";
+// import EngagementDetailPage from "../pages/dashboard/EngagementDetailPage";
 import ShopifySuccessPage from "../pages/shopify/ShopifySuccessPage";
 import ProductsPage from "../pages/dashboard/ProductsPage";
 import InsightsPage from "../pages/dashboard/InsightsPage";
@@ -27,13 +29,16 @@ import InsightsPage from "../pages/dashboard/InsightsPage";
 // /onboarding -> OnboardingPage (protégé par auth)
 // /dashboard -> DashboardLayout (protégé par auth)
 // /dashboard/ -> DashboardPage
-// /dashboard/transactions -> TransactionsPage
-// /dashboard/clients -> ClientPage
-// /dashboard/clients/:id -> ClientDetailPage
-// /dashboard/engagements -> EngagementPage
-// /dashboard/engagements/:id -> EngagementDetailPage
-// /dashboard/reports -> ReportsPage
 // /dashboard/settings -> SettingsPage
+// /dashboard/products -> ProductsPage
+// /dashboard/insights -> InsightsPage
+// --- S0-T08 / D-SEC5: legacy routes below archived (not mounted) for Shopify BI beta ---
+// /dashboard/transactions -> TransactionsPage (archived)
+// /dashboard/clients -> ClientPage (archived)
+// /dashboard/clients/:id -> ClientDetailPage (archived)
+// /dashboard/engagements -> EngagementPage (archived)
+// /dashboard/engagements/:id -> EngagementDetailPage (archived)
+// /dashboard/reports -> ReportsPage (archived)
 export const router = createBrowserRouter([
   {path: "/", element: <LandingPage />, errorElement: <RouteErrorPage />},
   {path: "/auth", element: <AuthPage />, errorElement: <RouteErrorPage />},
@@ -49,12 +54,15 @@ export const router = createBrowserRouter([
         errorElement: <RouteErrorPage />,
         children: [{index: true, element: <DashboardPage />},
           // on ne mets pas de / devant les paths enfants car react-router les prefixe automatiquement avec /dashboard/
-          {path:"transactions",element: <TransactionsPage />},
-          {path:"clients",element: <ClientPage />},
-          {path:"clients/:id",element: <ClientDetailPage />},
-          {path:"engagements",element: <EngagementPage/>},
-          {path:"engagements/:id",element: <EngagementDetailPage />},
-          {path:"reports",element: <ReportsPage />},
+          // S0-T08 / D-SEC5: legacy non-Shopify routes intentionally NOT mounted during the
+          // Shopify BI beta. Direct URLs now fall through to the "*" RouteErrorPage (404-like).
+          // Backend already archived in S0-T07. Page files kept for reference.
+          // {path:"transactions",element: <TransactionsPage />},
+          // {path:"clients",element: <ClientPage />},
+          // {path:"clients/:id",element: <ClientDetailPage />},
+          // {path:"engagements",element: <EngagementPage/>},
+          // {path:"engagements/:id",element: <EngagementDetailPage />},
+          // {path:"reports",element: <ReportsPage />},
           {path:"settings",element: <SettingsPage />},
           {path:"products",element: <ProductsPage />},
           {path:"insights",element: <InsightsPage />}
