@@ -175,12 +175,10 @@ export const processDocumentByIdService = async (params: {
   // 2) Résoudre le chemin absolu de façon stable
   const absPath = toAbsoluteDiskPath(doc.storage_path);
 
-  console.log("[processDocument] doc.storage_path =", doc.storage_path);
-  console.log("[processDocument] absPath =", absPath);
-
   // Guard: fichier doit exister
+  // SECURITY: ne pas logger storage_path/absPath/nom de fichier (chemins + PII business).
   const exists = fs.existsSync(absPath);
-  console.log("[processDocument] exists? =", exists);
+  console.log(`[processDocument] id_document=${doc.id_document} file_exists=${exists}`);
 
   if (!exists) {
     throw new Error(
@@ -189,11 +187,7 @@ export const processDocumentByIdService = async (params: {
   }
 
   // 3) Extraction via Python (source of truth)
-  console.log("[processDocument] Sending file to extractor:", {
-    absPath,
-    original: doc.file_name,
-    file_type: doc.file_type,
-  });
+  console.log(`[processDocument] Sending file to extractor: id_document=${doc.id_document} file_type=${doc.file_type}`);
 
   const extracted = await extractUploadViaPython({
     file_path: absPath,

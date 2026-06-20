@@ -1,5 +1,6 @@
 import axios from "axios";
 import prisma from "../prisma/prisma";
+import { decryptToken } from "../utils/crypto";
 
 interface ShopifyStore {
     shop_domain: string;
@@ -93,7 +94,7 @@ export async function syncProducts(businessId: number, store: ShopifyStore): Pro
             const shopifyProductId = p.legacyResourceId;
             const status = (p.status as string).toLowerCase();
 
-            console.log(`[shopify] Upserting product  shopify_product_id=${shopifyProductId}, title="${p.title}"`);
+            console.log(`[shopify] Upserting product shopify_product_id=${shopifyProductId}`);
             let product : {id: string};
             try  {
                 product = await prisma.product.upsert({
@@ -103,7 +104,7 @@ export async function syncProducts(businessId: number, store: ShopifyStore): Pro
                 });
                 
             }catch(err: any) {
-                console.error(`[shopify] ERROR upserting product shopify_product_id=${shopifyProductId}, title="${p.title}": ${err.message}`); 
+                console.error(`[shopify] ERROR upserting product shopify_product_id=${shopifyProductId}: ${err.message}`);
                 throw err;
             }
 
@@ -230,7 +231,7 @@ export async function syncOrders(businessId: number, store: ShopifyStore): Promi
                     ? await prisma.product.findFirst({ where: { shopify_product_id: String(item.product_id), business_id: businessId }, select: { id: true } })
                     : null;
                 if (item.product_id && !product) {
-                    console.warn(`[syncOrders] product not found in DB: shopify_product_id=${item.product_id}, business=${businessId}, title="${item.title}"`);
+                    console.warn(`[syncOrders] product not found in DB: shopify_product_id=${item.product_id}, business=${businessId}`);
                 }
 
                 const variant = item.variant_id
@@ -297,9 +298,35 @@ export async function syncAll(businessId: number): Promise<{ products: number; c
 
     if (!store) throw new Error("Aucun store Shopify connecté pour ce business");
 
-    const products  = await syncProducts(businessId, store);
-    const customers = await syncCustomers(businessId, store).catch((err) => { console.warn("[syncAll] customers skipped:", err.message); return 0; });
-    const orders    = await syncOrders(businessId, store).catch((err) => { console.warn("[syncAll] orders skipped:", err.message); return 0; });
+    // Déchiffrement du token AES-256-GCM (D-SEC2 / S0-T02).
+    // Le déchiffrement se fait UNE SEULE FOIS ici, juste avant les appels API Shopify.
+    // Le token déchiffré reste local à cette fonction — jamais loggé, jamais retourné.
+    // SECURITY: ne jamais logger decryptedToken.
+    let decryptedToken: string;
+    try {
+        decryptedToken = decryptToken(store.access_token);
+    } catch (err: any) {
+        // Si le token en base n'est pas au format iv:authTag:ciphertext, c'est probablement
+        // un token en clair stocké AVANT S0-T02. La migration S0-T03 doit être exécutée
+        // pour chiffrer les tokens existants avant de relancer le sync.
+        throw new Error(
+            `[shopify] Impossible de déchiffrer le token Shopify pour le business ${businessId}. ` +
+            `Ce store a peut-être été connecté avant S0-T02. ` +
+            `Exécutez le script de migration S0-T03 (scripts/migrate-tokens.ts) pour chiffrer les tokens existants. ` +
+            `Erreur : ${err.message}`
+        );
+    }
+
+    // decryptedStore expose le token déchiffré aux fonctions de sync via l'interface ShopifyStore.
+    // Seuls shop_domain et access_token (déchiffré) sont nécessaires pour les appels API.
+    const decryptedStore: ShopifyStore = {
+        shop_domain:  store.shop_domain,
+        access_token: decryptedToken,
+    };
+
+    const products  = await syncProducts(businessId, decryptedStore);
+    const customers = await syncCustomers(businessId, decryptedStore).catch((err) => { console.warn("[syncAll] customers skipped:", err.message); return 0; });
+    const orders    = await syncOrders(businessId, decryptedStore).catch((err) => { console.warn("[syncAll] orders skipped:", err.message); return 0; });
 
     await prisma.shopifyStore.update({
         where: { id: store.id },
