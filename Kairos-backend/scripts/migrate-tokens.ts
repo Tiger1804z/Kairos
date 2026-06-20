@@ -27,7 +27,10 @@
  * │  SÉCURITÉ                                                           │
  * │                                                                     │
  * │  - Ce script ne log JAMAIS un token (ni plaintext ni chiffré)       │
- * │  - La backup va dans .token-migration-backups/ (dans .gitignore)    │
+ * │  - La backup NE CONTIENT JAMAIS de token en clair : chaque          │
+ * │    access_token est chiffré (AES-256-GCM) avant d'être écrit sur    │
+ * │    disque. Voir buildBackupPayload(). .gitignore protège contre le  │
+ * │    commit, PAS contre une fuite locale/serveur → d'où le chiffrement│
  * │  - Faire un backup DB complet AVANT --execute (Neon console)        │
  * │  - SUPPRIMER le fichier backup après validation                     │
  * └─────────────────────────────────────────────────────────────────────┘
@@ -37,8 +40,11 @@
  * │                                                                     │
  * │  Option 1 (recommandée) : restaurer depuis le backup DB Neon        │
  * │  Option 2 : utiliser .token-migration-backups/backup-*.json         │
- * │    → contient les valeurs originales des access_token               │
- * │    → UPDATE shopify_stores SET access_token = ? WHERE id = ?        │
+ * │    → contient access_token_encrypted (chiffré, PAS en clair)        │
+ * │    → déchiffrer d'abord : decryptToken(access_token_encrypted)      │
+ * │      (requiert SHOPIFY_TOKEN_ENCRYPTION_KEY)                         │
+ * │    → puis UPDATE shopify_stores SET access_token = <déchiffré>       │
+ * │      WHERE id = ?                                                    │
  * └─────────────────────────────────────────────────────────────────────┘
  */
 
@@ -72,6 +78,34 @@ interface MigrationPlan {
   alreadyEncrypted: StoreRecord[];
   toMigrate: StoreRecord[];
   corrupted: StoreRecord[];
+}
+
+/**
+ * UNE entrée du fichier backup, par store.
+ *
+ * SÉCURITÉ : il n'y a volontairement PAS de champ `access_token` (plaintext).
+ * Seul `access_token_encrypted` existe → impossible de lire un token en clair
+ * dans le fichier sans la clé SHOPIFY_TOKEN_ENCRYPTION_KEY.
+ */
+interface BackupStoreEntry {
+  id: string;
+  shop_domain: string;
+  /**
+   * La valeur access_token ORIGINALE (telle qu'en base avant migration),
+   * chiffrée avec encryptToken() au format `iv:authTag:ciphertext`.
+   * Pour le rollback : decryptToken(access_token_encrypted) → valeur originale.
+   */
+  access_token_encrypted: string;
+}
+
+/** Contenu complet du fichier backup JSON. Aucun token en clair. */
+interface BackupPayload {
+  _WARNING: string;
+  _created_at: string;
+  _purpose: string;
+  _encryption: string;
+  _rollback_instructions: string;
+  stores: BackupStoreEntry[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -226,25 +260,88 @@ function validateStartupConditions(): void {
 // ─────────────────────────────────────────────────────────────
 
 /**
+ * Construit le contenu (objet JS) du fichier backup — fonction PURE, sans I/O.
+ *
+ * ## Pourquoi séparée de l'écriture disque ?
+ *
+ * 1. Testabilité : on peut vérifier en test unitaire qu'AUCUN token plaintext
+ *    n'apparaît dans le payload, sans toucher au filesystem.
+ * 2. Clarté : la transformation "store → entrée backup chiffrée" est isolée.
+ *
+ * ## SÉCURITÉ — le cœur de la correction S0-T03
+ *
+ * Chaque `access_token` original est passé à `encryptToken()` AVANT d'entrer
+ * dans le payload. Le fichier ne contient donc QUE `access_token_encrypted`
+ * (format `iv:authTag:ciphertext`), jamais la valeur en clair.
+ *
+ * `.gitignore` empêche seulement le commit ; il ne protège pas contre une fuite
+ * locale (backup serveur, accès SSH, snapshot disque). Le chiffrement, lui,
+ * rend le fichier inutile sans la clé SHOPIFY_TOKEN_ENCRYPTION_KEY.
+ *
+ * ## Rollback
+ *
+ * Le round-trip `decryptToken(encryptToken(x)) === x` est garanti pour toute
+ * string. Donc `decryptToken(entry.access_token_encrypted)` redonne EXACTEMENT
+ * la valeur access_token d'origine (plaintext pour un store non migré, ou le
+ * ciphertext d'origine pour un store déjà chiffré).
+ *
+ * ## Choix de clé (compromis assumé)
+ *
+ * On réutilise la clé applicative SHOPIFY_TOKEN_ENCRYPTION_KEY. Acceptable ici :
+ * le système dépend déjà de cette clé (si elle est perdue, tous les tokens prod
+ * le sont aussi) et le rollback principal reste le snapshot DB Neon, indépendant
+ * de la clé. En échange : zéro gestion de clé supplémentaire.
+ *
+ * @param stores - L'état actuel de tous les stores (avant migration)
+ * @returns Le payload backup, chiffré, prêt à être sérialisé en JSON
+ * @throws {Error} Si encryptToken échoue (clé absente/invalide) — propagé pour
+ *                 que l'appelant refuse d'écrire en base sans backup valide.
+ */
+export function buildBackupPayload(stores: StoreRecord[]): BackupPayload {
+  return {
+    _WARNING:
+      "⚠ Fichier backup S0-T03. Tokens CHIFFRÉS (pas en clair) mais déchiffrables avec SHOPIFY_TOKEN_ENCRYPTION_KEY. NE PAS COMMITER. SUPPRIMER APRÈS VALIDATION.",
+    _created_at: new Date().toISOString(),
+    _purpose:
+      "Backup pre-migration S0-T03. access_token_encrypted = valeur originale chiffrée AES-256-GCM.",
+    _encryption:
+      "access_token_encrypted = encryptToken(access_token original), format iv:authTag:ciphertext base64. Rollback : decryptToken(access_token_encrypted).",
+    _rollback_instructions: [
+      "OPTION 1 (recommandée): restaurer depuis un backup DB Neon complet.",
+      "OPTION 2: pour chaque entrée dans 'stores':",
+      "  1. déchiffrer: original = decryptToken(access_token_encrypted)  (requiert SHOPIFY_TOKEN_ENCRYPTION_KEY)",
+      "  2. UPDATE shopify_stores SET access_token = '<original>' WHERE id = '<id>';",
+      "     OU via Prisma: prisma.shopifyStore.update({ where: { id }, data: { access_token: original } })",
+    ].join(" "),
+    // SÉCURITÉ: chaque token est chiffré ici. Aucun plaintext n'atteint le disque.
+    stores: stores.map((s) => ({
+      id: s.id,
+      shop_domain: s.shop_domain,
+      access_token_encrypted: encryptToken(s.access_token),
+    })),
+  };
+}
+
+/**
  * Crée un fichier JSON de backup avec l'état ACTUEL de tous les stores.
  *
- * ## SÉCURITÉ
+ * Le contenu (tokens chiffrés, jamais en clair) est produit par
+ * `buildBackupPayload()`. Cette fonction ne fait QUE l'I/O disque.
  *
- * Ce fichier contient les valeurs ORIGINALES des access_token (avant migration).
- * Pour les stores encore en clair, cela inclut les tokens Shopify en plaintext.
- * Ce fichier est dans .gitignore — NE JAMAIS COMMITER.
+ * Ce fichier est dans .gitignore ET chiffré — défense en profondeur.
  * SUPPRIMER ce fichier après validation réussie de la migration.
- *
- * ## Utilité pour le rollback
- *
- * Si la migration a été exécutée avec la mauvaise clé, ce fichier permet de
- * restaurer les tokens originaux via des UPDATE manuels.
  *
  * @param stores - L'état actuel de tous les stores (avant migration)
  * @returns Le chemin absolu du fichier backup créé
- * @throws Si le dossier ou le fichier ne peuvent pas être créés
+ * @throws Si le payload ne peut être construit (clé invalide), ou si le dossier
+ *         ou le fichier ne peuvent pas être créés. L'appelant DOIT alors refuser
+ *         d'écrire en base.
  */
 function createBackup(stores: StoreRecord[]): string {
+  // On construit le payload chiffré EN PREMIER. Si encryptToken échoue (clé
+  // invalide), on throw avant de créer quoi que ce soit sur disque.
+  const backup = buildBackupPayload(stores);
+
   // Le dossier backup est toujours dans le répertoire courant (Kairos-backend/)
   // Quand lancé via npm run, process.cwd() = Kairos-backend/
   const backupDir = path.join(process.cwd(), ".token-migration-backups");
@@ -263,30 +360,6 @@ function createBackup(stores: StoreRecord[]): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const filename = `backup-pre-migration-${timestamp}.json`;
   const filepath = path.join(backupDir, filename);
-
-  // Structure du fichier backup
-  // Les champs "_*" sont des métadonnées pour guider le rollback
-  const backup = {
-    _WARNING:
-      "⚠ CE FICHIER CONTIENT DES DONNÉES SENSIBLES (tokens Shopify). NE PAS COMMITER. SUPPRIMER APRÈS VALIDATION.",
-    _created_at: new Date().toISOString(),
-    _purpose:
-      "Backup pre-migration S0-T03. Contient les valeurs access_token AVANT chiffrement.",
-    _rollback_instructions: [
-      "OPTION 1 (recommandée): restaurer depuis un backup DB Neon complet.",
-      "OPTION 2: pour chaque entrée dans 'stores', exécuter:",
-      "  UPDATE shopify_stores SET access_token = '<access_token>' WHERE id = '<id>';",
-      "  OU via Prisma: prisma.shopifyStore.update({ where: { id }, data: { access_token } })",
-    ].join(" "),
-    // SÉCURITÉ: On stocke les données nécessaires au rollback.
-    // Le champ access_token ici peut contenir des tokens plaintext pour les stores non-migrés.
-    // C'est inévitable pour un rollback valide — d'où le warning ci-dessus.
-    stores: stores.map((s) => ({
-      id: s.id,
-      shop_domain: s.shop_domain,
-      access_token: s.access_token,
-    })),
-  };
 
   try {
     fs.writeFileSync(filepath, JSON.stringify(backup, null, 2), "utf8");
@@ -543,13 +616,13 @@ async function main(): Promise<void> {
     `│  ${plan.toMigrate.length} token(s) vont être modifiés dans shopify_stores.         │`
   );
   console.log(
-    "│  Un fichier backup sera créé dans .token-migration-backups/  │"
+    "│  Un fichier backup (tokens CHIFFRÉS) sera créé dans          │"
   );
   console.log(
-    "│  ⚠ SUPPRIMEZ ce fichier après validation (il contient des   │"
+    "│  .token-migration-backups/                                   │"
   );
   console.log(
-    "│     tokens Shopify sensibles).                               │"
+    "│  ⚠ SUPPRIMEZ-le après validation (déchiffrable avec la clé). │"
   );
   console.log(
     "└─────────────────────────────────────────────────────────────┘"
