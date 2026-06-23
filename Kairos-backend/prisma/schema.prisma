@@ -55,6 +55,7 @@ model Business {
   profitability_snapshots  ProfitabilitySnapshot[]
   insights                 Insight[]
   chat_conversations       ChatConversation[]
+  privacy_consent_events   PrivacyConsentEvent[]
 
   @@index([owner_id])
   @@index([is_active])
@@ -548,6 +549,16 @@ enum ReportType {
   custom
 }
 
+enum PrivacyEventType {
+  privacy_policy_accepted
+  data_processing_consent_given
+  data_processing_consent_withdrawn
+  data_export_requested
+  data_deletion_requested
+  marketing_consent_given
+  marketing_consent_withdrawn
+}
+
 enum ImportJobStatus {
   PENDING
   PROCESSING
@@ -575,4 +586,29 @@ model ImportRowError {
   row_number   Int
   message      String
   raw_row_json Json
+}
+
+/// =========================
+///    PRIVACY / COMPLIANCE
+/// =========================
+model PrivacyConsentEvent {
+  id             String           @id @default(uuid())
+  business_id    Int
+  user_id        Int?
+  event_type     PrivacyEventType
+  source         String?          @db.VarChar(100)
+  policy_version String?          @db.VarChar(50)
+  ip_address     String?          @db.VarChar(45)
+  user_agent     String?
+  /// Non-sensitive context only — never store tokens, secrets, or raw Shopify data
+  metadata       Json?
+  created_at     DateTime         @default(now())
+  // Restrict prevents silent audit trail deletion if Business is deleted — intentional, not Cascade
+  business       Business         @relation(fields: [business_id], references: [id_business], onDelete: Restrict)
+
+  @@index([business_id])
+  @@index([user_id])
+  @@index([event_type])
+  @@index([created_at])
+  @@map("privacy_consent_events")
 }
