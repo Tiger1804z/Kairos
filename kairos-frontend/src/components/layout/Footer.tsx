@@ -45,8 +45,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 text-xs text-white/30">
-          © {new Date().getFullYear()} Kairos. {t("landing.footer.rights")}
+        <div className="mt-16 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/30">
+          <span>© {new Date().getFullYear()} Kairos. {t("landing.footer.rights")}</span>
+          <Link to="/privacy" className="hover:text-white/50 transition-colors">
+            Politique de confidentialité
+          </Link>
         </div>
       </div>
     </footer>

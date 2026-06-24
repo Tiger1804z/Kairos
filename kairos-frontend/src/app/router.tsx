@@ -21,6 +21,7 @@ import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import ShopifySuccessPage from "../pages/shopify/ShopifySuccessPage";
 import ProductsPage from "../pages/dashboard/ProductsPage";
 import InsightsPage from "../pages/dashboard/InsightsPage";
+import PrivacyPage from "../pages/privacy/PrivacyPage";
 
 
 // arbre de routes de react-router :
@@ -42,6 +43,7 @@ import InsightsPage from "../pages/dashboard/InsightsPage";
 export const router = createBrowserRouter([
   {path: "/", element: <LandingPage />, errorElement: <RouteErrorPage />},
   {path: "/auth", element: <AuthPage />, errorElement: <RouteErrorPage />},
+  {path: "/privacy", element: <PrivacyPage />, errorElement: <RouteErrorPage />},
   {
     element: <RequireAuth />,
     errorElement: <RouteErrorPage />,
