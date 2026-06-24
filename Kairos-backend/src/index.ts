@@ -27,6 +27,7 @@ import profitabilityRoutes from "./routes/profitabilityRoutes";
 import insightRoutes from "./routes/insightRoutes";
 import shopifyDashboardRoutes from "./routes/shopifyDashboardRoutes";
 import demoRoutes from "./routes/demoRoutes";
+import privacyRoutes from "./routes/privacyRoutes";
 import { aiRateLimiter, oauthRateLimiter } from "./middleware/rateLimiter";
 import { validateEnv } from "./utils/validateEnv";
 
@@ -114,6 +115,7 @@ app.use("/profitability", profitabilityRoutes);
 app.use("/insights", insightRoutes);
 app.use("/shopify-dashboard", shopifyDashboardRoutes);
 app.use("/demo", demoRoutes);
+app.use("/privacy", privacyRoutes);
 
 const PORT = process.env.PORT || 3000;
 
