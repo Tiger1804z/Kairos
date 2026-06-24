@@ -192,6 +192,24 @@ et
 
 ---
 
+# ⚠️ Blockers légaux / conformité — À résoudre avant beta publique
+
+## Privacy policy (S0-T13)
+
+La page `/privacy` est une **version bêta minimale** (honnête, non trompeuse, liée depuis l'onboarding). Ce n'est pas une politique légale finale.
+
+Avant toute beta publique ou connexion de marchands Shopify réels, remplacer les placeholders suivants dans `kairos-frontend/src/pages/privacy/PrivacyPage.tsx` :
+
+- [ ] **Nom légal de l'entreprise** — placeholder "à confirmer"
+- [ ] **Responsable de la protection des renseignements personnels** — placeholder "à confirmer"
+- [ ] **Email privacy** — placeholder "privacy@exemple.com — à remplacer"
+- [ ] **Durée de conservation exacte** — actuellement formulation générique
+- [ ] **Liste complète des sous-traitants** — actuellement : Shopify, OpenAI, Render, Neon (à confirmer/compléter)
+
+> Engager des marchands réels sans politique finale = risque de conformité Loi 25 / RGPD.
+
+---
+
 # 🧠 Vision
 
 Kairos ne doit pas être :

@@ -125,7 +125,17 @@ export default function OnboardingPage() {
                   required
                 />
                 <span className="text-sm text-white/60">
-                  J'accepte la politique de confidentialité et le traitement de mes données conformément à la Loi 25 / RGPD.
+                  J'accepte la{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="underline hover:text-white/80 transition-colors"
+                  >
+                    politique de confidentialité
+                  </a>
+                  {" "}et le traitement de mes données conformément à la Loi 25.
                 </span>
               </label>
               {error && (
