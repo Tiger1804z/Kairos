@@ -4,6 +4,7 @@ import { shopifyEngineHealth } from "../services/shopifyEngineClient";
 import { connectShopify, triggerSync, getShopifyStatus } from "../controllers/shopifyController";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
 import { syncRateLimiter } from "../middleware/rateLimiter";
+import { validateBusinessIdParam } from "../middleware/validateBusinessIdParam";
 
 const router = Router();
 
@@ -23,9 +24,9 @@ router.post("/connect", connectShopify);
 // Sync manuelle — déclenche products + customers + orders
 // S0-T09: limiter AVANT requireBusinessAccess (clé = req.params.businessId, dispo
 // dès le matching de route). 5 req/min/business : opération lourde (API + DB).
-router.post("/:businessId/sync", syncRateLimiter, requireBusinessAccess({ from: "params", key: "businessId" }), triggerSync);
+router.post("/:businessId/sync", validateBusinessIdParam, syncRateLimiter, requireBusinessAccess({ from: "params", key: "businessId" }), triggerSync);
 
 // Statut de la connexion Shopify + compteurs en DB (lecture, non limitée)
-router.get("/:businessId/status", requireBusinessAccess({ from: "params", key: "businessId" }), getShopifyStatus);
+router.get("/:businessId/status", validateBusinessIdParam, requireBusinessAccess({ from: "params", key: "businessId" }), getShopifyStatus);
 
 export default router;
