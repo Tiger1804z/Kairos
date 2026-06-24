@@ -11,6 +11,8 @@ export default function BusinessInfoStep({ onNext }: { onNext: () => void }) {
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("CAD");
 
+  const [consentAccepted, setConsentAccepted] = useState(false);
+
   // etat de la requete
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export default function BusinessInfoStep({ onNext }: { onNext: () => void }) {
 
     try {
       // appel POST /onboarding/business pour creer le business
-      await api.post("/onboarding/business", { name, currency });
+      await api.post("/onboarding/business", { name, currency, consent_accepted: consentAccepted });
 
       // le backend retourne l'id du business cree
       onNext();
@@ -73,6 +75,20 @@ export default function BusinessInfoStep({ onNext }: { onNext: () => void }) {
           </select>
         </div>
 
+        {/* consentement politique de confidentialite — obligatoire, non precoché */}
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consentAccepted}
+            onChange={(e) => setConsentAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-500"
+            required
+          />
+          <span className="text-sm text-white/60">
+            J'accepte la politique de confidentialité et le traitement de mes données conformément à la Loi 25 / RGPD.
+          </span>
+        </label>
+
         {/* message d'erreur si l'appel API echoue */}
         {error && (
           <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/20">
@@ -80,7 +96,7 @@ export default function BusinessInfoStep({ onNext }: { onNext: () => void }) {
           </div>
         )}
 
-        <Button type="submit" disabled={loading} className="w-full">
+        <Button type="submit" disabled={loading || !consentAccepted} className="w-full">
           {loading ? "Création en cours..." : "Continuer →"}
         </Button>
       </form>

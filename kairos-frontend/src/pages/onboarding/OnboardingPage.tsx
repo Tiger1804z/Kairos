@@ -19,6 +19,7 @@ export default function OnboardingPage() {
   const [businessName, setBusinessName] = useState("");
   const [businessCurrency, setBusinessCurrency] = useState("CAD");
   const [shopDomain, setShopDomain] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +38,7 @@ export default function OnboardingPage() {
       const bizRes = await api.post("/onboarding/business", {
         name: businessName.trim(),
         currency: businessCurrency,
+        consent_accepted: consentAccepted,
       });
       const businessId = bizRes.data?.business?.id_business ?? bizRes.data?.id_business;
       if (!businessId) {
@@ -113,12 +115,25 @@ export default function OnboardingPage() {
                   required
                 />
               </div>
+              {/* consentement politique de confidentialite — obligatoire, non precoché */}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consentAccepted}
+                  onChange={(e) => setConsentAccepted(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-500"
+                  required
+                />
+                <span className="text-sm text-white/60">
+                  J'accepte la politique de confidentialité et le traitement de mes données conformément à la Loi 25 / RGPD.
+                </span>
+              </label>
               {error && (
                 <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-300 ring-1 ring-red-500/20">
                   {error}
                 </div>
               )}
-              <Button type="submit" disabled={connecting} className="w-full">
+              <Button type="submit" disabled={connecting || !consentAccepted} className="w-full">
                 {connecting ? "Connexion..." : "Connecter →"}
               </Button>
               <button
