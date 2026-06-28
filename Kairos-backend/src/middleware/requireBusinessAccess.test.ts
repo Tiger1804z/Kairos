@@ -12,15 +12,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Prisma — défini avec vi.hoisted pour être dispo dans vi.mock avant l'import
-const { mockBusinessFindFirst, mockConversationFindUnique } = vi.hoisted(() => ({
+const { mockBusinessFindFirst, mockConversationFindUnique, mockProductFindUnique } = vi.hoisted(() => ({
   mockBusinessFindFirst: vi.fn(),
   mockConversationFindUnique: vi.fn(),
+  mockProductFindUnique: vi.fn(),
 }));
 
 vi.mock("../prisma/prisma", () => ({
   default: {
     business: { findFirst: mockBusinessFindFirst },
     chatConversation: { findUnique: mockConversationFindUnique },
+    product: { findUnique: mockProductFindUnique },
   },
 }));
 
@@ -42,12 +44,12 @@ function makeRes() {
   return res;
 }
 
-function makeReq(opts: { user?: any; params?: any }) {
+function makeReq(opts: { user?: any; params?: any; body?: any }) {
   return {
     user: opts.user,
     params: opts.params ?? {},
     query: {},
-    body: {},
+    body: opts.body ?? {},
   } as any;
 }
 
@@ -246,5 +248,153 @@ describe("requireBusinessAccess — entity conversation (params/conversationId)"
     expect(req.businessId).toBe(42);
     // admin court-circuite l'ownership mais résout quand même le business
     expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+});
+
+// ── S0-FIX-02 : ownership costs produit (entity "product") ──────────────────
+//
+// OBJECTIF : prouver que GET /costs/:productId et POST /costs/ résolvent
+//   productId/product_id (UUID String) -> product.business_id, puis appliquent
+//   la même frontière de tenant (owner_id === user.user_id, bypass admin).
+//   Empêche l'IDOR/BOLA en lecture/écriture des COGS d'un autre business.
+//
+// POINT CLÉ : Product.id est un UUID String. Le middleware NE doit PAS le passer
+//   à Number() — sinon NaN -> 400 sur tout id produit valide, et les resolvers
+//   numériques (business/conversation/...) doivent rester intacts.
+const PRODUCT_UUID = "11111111-2222-3333-4444-555555555555";
+
+describe("requireBusinessAccess — entity product en lecture (params/productId)", () => {
+  const mw = requireBusinessAccess({
+    from: "params",
+    key: "productId",
+    entity: "product",
+  });
+
+  // ── Owner : produit résolu vers SON business → next() ──────────
+  it("laisse passer (next) l'owner du business du produit", async () => {
+    mockProductFindUnique.mockResolvedValue({ business_id: 42 });
+    mockBusinessFindFirst.mockResolvedValue({ id_business: 42 });
+
+    const req = makeReq({ user: OWNER, params: { productId: PRODUCT_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.businessId).toBe(42);
+    // l'UUID est passé tel quel (pas de Number()), lookup via product.id
+    expect(mockProductFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PRODUCT_UUID } })
+    );
+    expect(mockBusinessFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id_business: 42, owner_id: OWNER.user_id },
+      })
+    );
+  });
+
+  // ── Cœur du ticket : produit d'un AUTRE tenant → 403 ───────────
+  it("renvoie 403 quand le produit appartient à un autre business", async () => {
+    mockProductFindUnique.mockResolvedValue({ business_id: 42 });
+    mockBusinessFindFirst.mockResolvedValue(null);
+
+    const req = makeReq({ user: OTHER, params: { productId: PRODUCT_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({ error: "FORBIDDEN" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  // ── Produit inexistant → 404, aucun check ownership ────────────
+  it("renvoie 404 quand le produit n'existe pas", async () => {
+    mockProductFindUnique.mockResolvedValue(null);
+
+    const req = makeReq({ user: OWNER, params: { productId: PRODUCT_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.body).toEqual({ error: "PRODUCT_NOT_FOUND" });
+    expect(next).not.toHaveBeenCalled();
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+
+  // ── productId vide → 400, aucun lookup ─────────────────────────
+  it("renvoie 400 quand le productId est vide", async () => {
+    const req = makeReq({ user: OWNER, params: { productId: "  " } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+    expect(mockProductFindUnique).not.toHaveBeenCalled();
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+
+  // ── Admin : bypass après résolution du business ────────────────
+  it("laisse passer un admin sans vérifier l'ownership", async () => {
+    mockProductFindUnique.mockResolvedValue({ business_id: 42 });
+
+    const req = makeReq({ user: ADMIN, params: { productId: PRODUCT_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.businessId).toBe(42);
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("requireBusinessAccess — entity product en écriture (body/product_id)", () => {
+  const mw = requireBusinessAccess({
+    from: "body",
+    key: "product_id",
+    entity: "product",
+  });
+
+  // ── Owner : peut écrire sur SON produit → next() ───────────────
+  it("laisse passer (next) l'owner pour créer/màj un cost de son produit", async () => {
+    mockProductFindUnique.mockResolvedValue({ business_id: 42 });
+    mockBusinessFindFirst.mockResolvedValue({ id_business: 42 });
+
+    const req = makeReq({ user: OWNER, body: { product_id: PRODUCT_UUID, cost_per_unit: 5 } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.businessId).toBe(42);
+    expect(mockProductFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PRODUCT_UUID } })
+    );
+  });
+
+  // ── Cœur du ticket : non-owner ne peut PAS écrire → 403 ────────
+  it("renvoie 403 quand le produit appartient à un autre business", async () => {
+    mockProductFindUnique.mockResolvedValue({ business_id: 42 });
+    mockBusinessFindFirst.mockResolvedValue(null);
+
+    const req = makeReq({ user: OTHER, body: { product_id: PRODUCT_UUID, cost_per_unit: 5 } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({ error: "FORBIDDEN" });
+    expect(next).not.toHaveBeenCalled();
   });
 });
