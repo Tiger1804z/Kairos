@@ -7,7 +7,7 @@ export const requireBusinessAccess = (opts?: {
   from?: "query" | "params" | "body";
   key?: string;
  // ... dans opts.entity union:
-  entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog" | "conversation";
+  entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog" | "conversation" | "product";
 
 
 
@@ -32,14 +32,29 @@ export const requireBusinessAccess = (opts?: {
         ? (req.params as any)[key]
         : (req.body as any)[key];
 
+    // 2) Résoudre businessId selon entity
+    let businessId: number | null = null;
+
+    if (entity === "product") {
+      // Product.id est un UUID String : ne PAS le passer à Number() (casserait le
+      // lookup). On garde l'id brut et on remonte product.business_id.
+      const productId = typeof raw === "string" ? raw.trim() : "";
+      if (!productId) {
+        return res.status(400).json({ error: "INVALID_ID" });
+      }
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { business_id: true },
+      });
+      if (!product) return res.status(404).json({ error: "PRODUCT_NOT_FOUND" });
+      businessId = product.business_id;
+    } else {
+    // Entities à id numérique (business/document/.../conversation).
     const id = Number(raw);
     if (!id || Number.isNaN(id)) {
       // message générique (on ne sait pas encore si c’est business_id ou entity id)
       return res.status(400).json({ error: "INVALID_ID" });
     }
-
-    // 2) Résoudre businessId selon entity
-    let businessId: number | null = null;
 
     if (entity === "business") {
       businessId = id;
@@ -105,9 +120,7 @@ export const requireBusinessAccess = (opts?: {
       if (!conv) return res.status(404).json({ error: "CONVERSATION_NOT_FOUND" });
       businessId = conv.business_id;
     }
-
-    
-    
+    }
 
     if (!businessId) {
       return res.status(400).json({ error: "BUSINESS_ID_REQUIRED" });

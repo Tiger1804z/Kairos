@@ -36,7 +36,7 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 
 - **Légal avant beta publique** : nom légal, responsable RP (Q11), email contact, durée conservation, cartographie fournisseurs (Q12 — Render/OpenAI/Shopify/Neon). Voir [project_privacy_blocker].
 - Rétention des `privacy_consent_events` non définie. `user_id` sans FK DB.
-- Security ownership blockers: S0-FIX-01 addressed AI conversation ownership; remaining S0-T05B ownership blockers: costs read/write, import job, CSV import redesign. See docs/business-intelligence/security/S0_T05B_NON_BUSINESSID_OWNERSHIP_AUDIT.md.
+- Security ownership blockers: S0-FIX-01 and S0-FIX-02 addressed AI conversation and costs ownership; remaining S0-T05B ownership blockers: import job and CSV import redesign. See docs/business-intelligence/security/S0_T05B_NON_BUSINESSID_OWNERSHIP_AUDIT.md.
 
 ## Sources de vérité (ne pas dupliquer ici)
 
