@@ -10,8 +10,8 @@ router.get("/daily-finance-summary", requireBusinessAccess({from:"query"}), aiDa
 router.post("/ask", requireBusinessAccess({from:"body"}), aiAsk);
 router.post("/shopify/:businessId/ask", validateBusinessIdParam, validateAiMessage, requireBusinessAccess({ from: "params", key: "businessId" }), aiAskShopify);
 router.get("/shopify/:businessId/conversations", validateBusinessIdParam, requireBusinessAccess({ from: "params", key: "businessId" }), getConversations);
-// NB: pas de :businessId dans l'URL -> ownership à vérifier dans le controller (hors scope S0-T05)
-router.get("/shopify/conversations/:conversationId", getConversationMessages);
+// S0-FIX-01 : pas de :businessId dans l'URL -> ownership résolu via conversationId -> business_id
+router.get("/shopify/conversations/:conversationId", requireBusinessAccess({ from: "params", key: "conversationId", entity: "conversation" }), getConversationMessages);
 router.get("/shopify/:businessId/chat-logs", validateBusinessIdParam, requireBusinessAccess({ from: "params", key: "businessId" }), getChatLogs);
 
 export default router;

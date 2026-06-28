@@ -12,13 +12,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Prisma — défini avec vi.hoisted pour être dispo dans vi.mock avant l'import
-const { mockBusinessFindFirst } = vi.hoisted(() => ({
+const { mockBusinessFindFirst, mockConversationFindUnique } = vi.hoisted(() => ({
   mockBusinessFindFirst: vi.fn(),
+  mockConversationFindUnique: vi.fn(),
 }));
 
 vi.mock("../prisma/prisma", () => ({
   default: {
     business: { findFirst: mockBusinessFindFirst },
+    chatConversation: { findUnique: mockConversationFindUnique },
   },
 }));
 
@@ -136,6 +138,113 @@ describe("requireBusinessAccess — protection multi-tenant (params/businessId)"
     expect(next).toHaveBeenCalledOnce();
     expect(req.businessId).toBe(42);
     // admin court-circuite : pas d'appel à findFirst
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+});
+
+// ── S0-FIX-01 : ownership AI conversation (entity "conversation") ───────────
+//
+// OBJECTIF : prouver que GET /ai/shopify/conversations/:conversationId résout
+//   conversationId -> chatConversation.business_id, puis applique la même
+//   frontière de tenant (owner_id === user.user_id, bypass admin). Empêche
+//   l'IDOR/BOLA sur un id entier auto-incrémenté énumérable.
+describe("requireBusinessAccess — entity conversation (params/conversationId)", () => {
+  const mw = requireBusinessAccess({
+    from: "params",
+    key: "conversationId",
+    entity: "conversation",
+  });
+
+  // ── Owner : conversation résolue vers SON business → next() ─────
+  it("laisse passer (next) l'owner du business de la conversation", async () => {
+    // conversation 7 appartient au business 42
+    mockConversationFindUnique.mockResolvedValue({ business_id: 42 });
+    // business 42 appartient au user 1
+    mockBusinessFindFirst.mockResolvedValue({ id_business: 42 });
+
+    const req = makeReq({ user: OWNER, params: { conversationId: "7" } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.businessId).toBe(42);
+    // l'id du chemin est bien résolu via la conversation
+    expect(mockConversationFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 7 } })
+    );
+    // l'ownership cible le user authentifié sur le business résolu
+    expect(mockBusinessFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id_business: 42, owner_id: OWNER.user_id },
+      })
+    );
+  });
+
+  // ── Cœur du ticket : conversation d'un AUTRE tenant → 403 ───────
+  it("renvoie 403 quand la conversation appartient à un autre business", async () => {
+    mockConversationFindUnique.mockResolvedValue({ business_id: 42 });
+    // user 2 ne possède pas le business 42 → null
+    mockBusinessFindFirst.mockResolvedValue(null);
+
+    const req = makeReq({ user: OTHER, params: { conversationId: "7" } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({ error: "FORBIDDEN" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  // ── Conversation inexistante → 404 (cohérent avec les autres entity) ──
+  it("renvoie 404 quand la conversation n'existe pas", async () => {
+    mockConversationFindUnique.mockResolvedValue(null);
+
+    const req = makeReq({ user: OWNER, params: { conversationId: "999" } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.body).toEqual({ error: "CONVERSATION_NOT_FOUND" });
+    expect(next).not.toHaveBeenCalled();
+    // pas de check ownership si la ressource n'existe pas
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+
+  // ── conversationId non numérique → 400, aucun lookup ────────────
+  it("renvoie 400 quand le conversationId est invalide", async () => {
+    const req = makeReq({ user: OWNER, params: { conversationId: "abc" } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+    // id invalide : on ne touche ni la conversation ni l'ownership
+    expect(mockConversationFindUnique).not.toHaveBeenCalled();
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+
+  // ── Admin : bypass après résolution du business ────────────────
+  it("laisse passer un admin sans vérifier l'ownership", async () => {
+    mockConversationFindUnique.mockResolvedValue({ business_id: 42 });
+
+    const req = makeReq({ user: ADMIN, params: { conversationId: "7" } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.businessId).toBe(42);
+    // admin court-circuite l'ownership mais résout quand même le business
     expect(mockBusinessFindFirst).not.toHaveBeenCalled();
   });
 });

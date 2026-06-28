@@ -7,7 +7,7 @@ export const requireBusinessAccess = (opts?: {
   from?: "query" | "params" | "body";
   key?: string;
  // ... dans opts.entity union:
-  entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog";
+  entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog" | "conversation";
 
 
 
@@ -96,6 +96,14 @@ export const requireBusinessAccess = (opts?: {
       });
       if (!q) return res.status(404).json({ error: "QUERY_LOG_NOT_FOUND" });
       businessId = q.business_id;
+
+    } else if (entity === "conversation") {
+      const conv = await prisma.chatConversation.findUnique({
+        where: { id },
+        select: { business_id: true },
+      });
+      if (!conv) return res.status(404).json({ error: "CONVERSATION_NOT_FOUND" });
+      businessId = conv.business_id;
     }
 
     
