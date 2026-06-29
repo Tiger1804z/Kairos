@@ -7,7 +7,7 @@ export const requireBusinessAccess = (opts?: {
   from?: "query" | "params" | "body";
   key?: string;
  // ... dans opts.entity union:
-  entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog" | "conversation" | "product";
+  entity?: "business" | "document" | "client" | "engagement" | "engagementItem" | "transaction" | "report" | "queryLog" | "conversation" | "product" | "importJob";
 
 
 
@@ -48,6 +48,19 @@ export const requireBusinessAccess = (opts?: {
       });
       if (!product) return res.status(404).json({ error: "PRODUCT_NOT_FOUND" });
       businessId = product.business_id;
+    } else if (entity === "importJob") {
+      // ImportJob.id est un UUID String : pas de Number(). On remonte
+      // importJob.id_business pour appliquer la frontière de tenant.
+      const jobId = typeof raw === "string" ? raw.trim() : "";
+      if (!jobId) {
+        return res.status(400).json({ error: "INVALID_ID" });
+      }
+      const job = await prisma.importJob.findUnique({
+        where: { id: jobId },
+        select: { id_business: true },
+      });
+      if (!job) return res.status(404).json({ error: "IMPORT_JOB_NOT_FOUND" });
+      businessId = job.id_business;
     } else {
     // Entities à id numérique (business/document/.../conversation).
     const id = Number(raw);
