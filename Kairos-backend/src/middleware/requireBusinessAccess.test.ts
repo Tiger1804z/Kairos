@@ -12,10 +12,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Prisma — défini avec vi.hoisted pour être dispo dans vi.mock avant l'import
-const { mockBusinessFindFirst, mockConversationFindUnique, mockProductFindUnique } = vi.hoisted(() => ({
+const { mockBusinessFindFirst, mockConversationFindUnique, mockProductFindUnique, mockImportJobFindUnique } = vi.hoisted(() => ({
   mockBusinessFindFirst: vi.fn(),
   mockConversationFindUnique: vi.fn(),
   mockProductFindUnique: vi.fn(),
+  mockImportJobFindUnique: vi.fn(),
 }));
 
 vi.mock("../prisma/prisma", () => ({
@@ -23,6 +24,7 @@ vi.mock("../prisma/prisma", () => ({
     business: { findFirst: mockBusinessFindFirst },
     chatConversation: { findUnique: mockConversationFindUnique },
     product: { findUnique: mockProductFindUnique },
+    importJob: { findUnique: mockImportJobFindUnique },
   },
 }));
 
@@ -396,5 +398,108 @@ describe("requireBusinessAccess — entity product en écriture (body/product_id
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.body).toEqual({ error: "FORBIDDEN" });
     expect(next).not.toHaveBeenCalled();
+  });
+});
+
+// ── S0-FIX-03 : ownership import job (entity "importJob") ───────────────────
+//
+// OBJECTIF : prouver que GET /import/jobs/:id résout id (UUID String) ->
+//   importJob.id_business, puis applique la frontière de tenant (owner_id ===
+//   user.user_id, bypass admin). Empêche l'IDOR/BOLA sur filename, errors et
+//   raw_row_json d'un autre tenant. Le controller ne renvoie rien si le check
+//   échoue (middleware avant getImportJob).
+const JOB_UUID = "99999999-8888-7777-6666-555555555555";
+
+describe("requireBusinessAccess — entity importJob (params/id)", () => {
+  const mw = requireBusinessAccess({
+    from: "params",
+    key: "id",
+    entity: "importJob",
+  });
+
+  // ── Owner : job résolu vers SON business → next() ──────────────
+  it("laisse passer (next) l'owner du business du job", async () => {
+    mockImportJobFindUnique.mockResolvedValue({ id_business: 42 });
+    mockBusinessFindFirst.mockResolvedValue({ id_business: 42 });
+
+    const req = makeReq({ user: OWNER, params: { id: JOB_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.businessId).toBe(42);
+    // l'UUID est passé tel quel (pas de Number()), lookup via importJob.id
+    expect(mockImportJobFindUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: JOB_UUID } })
+    );
+    expect(mockBusinessFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id_business: 42, owner_id: OWNER.user_id },
+      })
+    );
+  });
+
+  // ── Cœur du ticket : job d'un AUTRE tenant → 403 ───────────────
+  it("renvoie 403 quand le job appartient à un autre business", async () => {
+    mockImportJobFindUnique.mockResolvedValue({ id_business: 42 });
+    mockBusinessFindFirst.mockResolvedValue(null);
+
+    const req = makeReq({ user: OTHER, params: { id: JOB_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({ error: "FORBIDDEN" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  // ── Job inexistant → 404, aucun check ownership ────────────────
+  it("renvoie 404 quand le job n'existe pas", async () => {
+    mockImportJobFindUnique.mockResolvedValue(null);
+
+    const req = makeReq({ user: OWNER, params: { id: JOB_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.body).toEqual({ error: "IMPORT_JOB_NOT_FOUND" });
+    expect(next).not.toHaveBeenCalled();
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+
+  // ── id vide → 400, aucun lookup ────────────────────────────────
+  it("renvoie 400 quand l'id est vide", async () => {
+    const req = makeReq({ user: OWNER, params: { id: "  " } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+    expect(mockImportJobFindUnique).not.toHaveBeenCalled();
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
+  });
+
+  // ── Admin : bypass après résolution du business ────────────────
+  it("laisse passer un admin sans vérifier l'ownership", async () => {
+    mockImportJobFindUnique.mockResolvedValue({ id_business: 42 });
+
+    const req = makeReq({ user: ADMIN, params: { id: JOB_UUID } });
+    const res = makeRes();
+    const next = vi.fn();
+
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.businessId).toBe(42);
+    expect(mockBusinessFindFirst).not.toHaveBeenCalled();
   });
 });

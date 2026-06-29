@@ -20,6 +20,12 @@ router.post("/transactions", upload.single("file"), requireBusinessAccess({ from
 router.get("/jobs", requireBusinessAccess({ from: "query" }), listImportJobs);
 
 // GET /import/jobs/:id — detail d'un job
-router.get("/jobs/:id", getImportJob);
+// S0-FIX-03 : ownership check importJob -> business avant de retourner le job
+// (filename, errors, raw_row_json). id est un UUID résolu vers id_business.
+router.get(
+  "/jobs/:id",
+  requireBusinessAccess({ from: "params", key: "id", entity: "importJob" }),
+  getImportJob
+);
 
 export default router;
