@@ -3,6 +3,7 @@ import { handleCreateCost, handleGetCosts, handleImportCsv, csvUpload } from "..
 import { costWriteRateLimiter } from "../middleware/rateLimiter";
 import { validateCostBody } from "../middleware/validateCostBody";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
+import { validateBusinessIdParam } from "../middleware/validateBusinessIdParam";
 
 const router = Router();
 
@@ -20,7 +21,27 @@ router.post(
   requireBusinessAccess({ from: "body", key: "product_id", entity: "product" }),
   handleCreateCost
 );
-router.post("/import-csv", costWriteRateLimiter, csvUpload, handleImportCsv);
+// S0-FIX-04 : import CSV business-scoped. Chaque product_id du CSV est validé
+// contre ce businessId (ownership par ligne, all-or-nothing) dans le service.
+// Ordre : validateBusinessIdParam -> requireBusinessAccess -> rate limiter ->
+// upload -> controller.
+router.post(
+  "/:businessId/import-csv",
+  validateBusinessIdParam,
+  requireBusinessAccess({ from: "params", key: "businessId", entity: "business" }),
+  costWriteRateLimiter,
+  csvUpload,
+  handleImportCsv
+);
+
+// S0-FIX-04 : ancienne route non scopée démontée (pas de frontière tenant).
+// 410 Gone -> plus aucune écriture possible. Utiliser la route scopée ci-dessus.
+router.post("/import-csv", (_req, res) =>
+  res.status(410).json({
+    error: "GONE",
+    message: "Use POST /costs/:businessId/import-csv",
+  })
+);
 router.get(
   "/:productId",
   requireBusinessAccess({ from: "params", key: "productId", entity: "product" }),

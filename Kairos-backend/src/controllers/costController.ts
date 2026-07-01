@@ -33,8 +33,15 @@ export async function handleImportCsv(req: Request, res: Response) {
         return res.status(400).json({ error: "Aucun fichier envoyé" });
     }
 
+    // businessId résolu + ownership vérifié par requireBusinessAccess (route scopée).
+    const businessId = (req as any).businessId as number;
+
     try {
-        const result = await importCostsFromCsv(req.file.buffer);
+        const result = await importCostsFromCsv(req.file.buffer, businessId);
+        // Stratégie all-or-nothing : la moindre erreur -> rien écrit -> 400.
+        if (result.errors.length > 0) {
+            return res.status(400).json(result);
+        }
         return res.json(result);
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Erreur import CSV";

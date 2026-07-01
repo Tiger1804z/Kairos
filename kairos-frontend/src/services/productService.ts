@@ -28,10 +28,11 @@ export async function createCost(data:{
     return res.data;
 }
 
-export async function importCostsCsv(file: File) {
+export async function importCostsCsv(businessId: number, file: File) {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await api.post("/costs/import-csv", formData, {
+    // S0-FIX-04 : route business-scoped (ownership par ligne côté backend).
+    const res = await api.post(`/costs/${businessId}/import-csv`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
     });
     return res.data as { imported: number; errors: { row: number; reason: string }[] };
