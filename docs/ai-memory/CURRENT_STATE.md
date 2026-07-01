@@ -38,7 +38,8 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 - Rétention des `privacy_consent_events` non définie. `user_id` sans FK DB.
 - S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Remédiation en cours : tickets #51–#62 (GATE-A-REM). Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
 - B1 résolu (#51) : migration `privacy_consent_events` appliquée sur la base Neon prod-facing, consentement + export/deletion vérifiés runtime. Voir docs/business-intelligence/security/GATE_A_REM_01_PRIVACY_MIGRATION_VERIFICATION.md.
-- GATE-A-REM-02 (#52) résolu : consentement onboarding bloquant (400 `CONSENT_REQUIRED` si absent/false ; business + event atomiques via transaction, rollback si échec). Restant Gate A : DP2 légal, vérif env/tokens prod, export/deletion e2e, hardening (#53–#62).
+- GATE-A-REM-02 (#52) résolu : consentement onboarding bloquant (400 `CONSENT_REQUIRED` si absent/false ; business + event atomiques via transaction, rollback si échec). Restant Gate A : vérif env prod (F1), export/deletion e2e, hardening (#55–#62).
+- B3 vérifié (#54) : tokens Shopify en DB **tous chiffrés** (1/1), env+boot local PASS. **FAIL Render : `SHOPIFY_TOKEN_ENCRYPTION_KEY` absente (F1 — ajouter la même clé que locale, jamais régénérer)** ; `SHOPIFY_ACCESS_TOKEN` legacy à retirer ; `LEGACY_AI_SQL_ENABLED` à confirmer absent. Voir docs/business-intelligence/security/GATE_A_REM_04_PROD_ENV_AND_TOKEN_VERIFICATION.md.
 
 ## Sources de vérité (ne pas dupliquer ici)
 
