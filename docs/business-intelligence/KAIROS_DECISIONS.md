@@ -1376,6 +1376,28 @@ Faire tester une beta qui ressemble seulement à un dashboard passif ne validera
 
 ---
 
+### D-LEG1 — Entité légale beta = personne physique, validation légale externe avant beta publique
+
+**Statut:** Validée (fondateur, 2026-07-01 — issue #53)
+
+**Résumé:**  
+Kairos est exploité par **Sébastien Yves Robert Eugène**, personne physique / projet non incorporé, sous le nom de projet « InnovAI Solutions » (marque envisagée, non incorporée). Il est aussi le responsable de la protection des renseignements personnels (PRP). Contact privacy : innovai.solutions2026@outlook.com. Le package DP2 (entité, PRP, rétention, fournisseurs, transferts hors Québec) est défini au niveau « beta privée contrôlée avec vrais marchands à faible volume » (choix B).
+
+**Raison:**  
+Débloquer B2 de l'audit Gate A (#45) honnêtement : informations réelles confirmées plutôt que placeholders, sans prétendre à un GO légal complet.
+
+**Implications produit:**
+- Page `/privacy` affiche les informations confirmées (juridiction « Québec, Canada », pas d'adresse personnelle).
+- Ne jamais présenter « InnovAI Inc. » / « InnovAI Solutions Inc. » comme fait légal confirmé.
+- **Validation légale externe : non effectuée à ce jour. Recommandée avant beta publique, scale important ou commercialisation large.**
+- Si incorporation : mettre à jour DP2 + `/privacy`.
+
+**Référence:** [GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md](security/GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md)
+
+**Phase:** Avant beta privée vrais marchands.
+
+---
+
 ## 11. Questions ouvertes consolidées
 
 Ces questions restent sans réponse définitive. Statut mis à jour au 2026-06-03.
@@ -1404,9 +1426,9 @@ Ces questions restent sans réponse définitive. Statut mis à jour au 2026-06-0
 
 | # | Question | Urgence | Phase cible | Statut |
 |---|---|---|---|---|
-| Q11 | Qui sera officiellement désigné comme responsable de la protection des renseignements personnels ? | Critique | Avant beta | Ouverte |
-| Q12 | Quels fournisseurs (Render, OpenAI, Shopify, etc.) traitent ou hébergent des données hors Québec ? Documenter chacun. | Critique | Avant beta | Ouverte |
-| Q13 | Quelle documentation doit être formellement prête avant d'inviter les premiers bêta-testeurs ? | Critique | Avant beta | Ouverte |
+| Q11 | Qui sera officiellement désigné comme responsable de la protection des renseignements personnels ? | Critique | Avant beta | Résolue — voir D-LEG1 / GATE_A_REM_03 |
+| Q12 | Quels fournisseurs (Render, OpenAI, Shopify, etc.) traitent ou hébergent des données hors Québec ? Documenter chacun. | Critique | Avant beta | Résolue — voir GATE_A_REM_03 §4/§8 |
+| Q13 | Quelle documentation doit être formellement prête avant d'inviter les premiers bêta-testeurs ? | Critique | Avant beta | Résolue pour beta privée faible volume — voir GATE_A_REM_03 §11 ; validation légale externe requise avant beta publique |
 
 **Issues de MONETIZATION_RESEARCH.md (D12–D19) :**
 

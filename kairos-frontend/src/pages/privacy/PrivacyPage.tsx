@@ -7,11 +7,7 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
   </div>
 );
 
-const Placeholder = ({ children }: { children: React.ReactNode }) => (
-  <span className="rounded bg-yellow-500/10 px-1.5 py-0.5 text-yellow-300/80 ring-1 ring-yellow-500/20">
-    {children}
-  </span>
-);
+const PRIVACY_EMAIL = "innovai.solutions2026@outlook.com";
 
 export default function PrivacyPage() {
   return (
@@ -24,38 +20,48 @@ export default function PrivacyPage() {
         <h1 className="text-2xl font-bold tracking-tight">
           Politique de confidentialité
         </h1>
-
-        {/* Beta warning */}
-        <div className="mt-6 rounded-xl bg-yellow-500/10 p-4 ring-1 ring-yellow-500/20">
-          <p className="text-sm text-yellow-300/90">
-            <span className="font-semibold">Version bêta minimale.</span> Les éléments marqués{" "}
-            <Placeholder>à confirmer</Placeholder> sont des placeholders provisoires.
-          </p>
-        </div>
+        <p className="mt-2 text-xs text-white/40">Dernière mise à jour : 1er juillet 2026</p>
 
         {/* Sections */}
         <Section title="1. Qui collecte vos données ?">
           <p>
-            <Placeholder>Nom légal de l'entreprise — à confirmer avant bêta publique.</Placeholder>
+            Kairos est une application exploitée par son fondateur, sous le nom de projet
+            InnovAI Solutions. Juridiction : Québec, Canada.
+          </p>
+          <p className="mt-2">
+            Pour toute question relative à vos renseignements personnels :{" "}
+            <a href={`mailto:${PRIVACY_EMAIL}`} className="text-accent hover:underline">
+              {PRIVACY_EMAIL}
+            </a>
           </p>
         </Section>
 
         <Section title="2. Quelles données sont collectées ?">
           <ul className="list-disc list-inside space-y-1.5">
             <li>
-              <span className="text-white/80">Compte :</span> adresse courriel, mot de passe (chiffré),
-              informations d'authentification.
+              <span className="text-white/80">Compte :</span> prénom et nom, adresse courriel,
+              mot de passe (stocké sous forme hashée).
             </li>
             <li>
-              <span className="text-white/80">Business :</span> nom, devise, domaine Shopify.
+              <span className="text-white/80">Business :</span> nom du business, devise,
+              informations d'intégration Shopify.
             </li>
             <li>
-              <span className="text-white/80">Données Shopify connectées :</span> produits, coûts,
-              inventaire, commandes et ventes lorsque disponibles via l'API Shopify.
+              <span className="text-white/80">Données Shopify connectées :</span> produits,
+              variants, commandes, coûts, marges et métriques, lorsque disponibles via l'API
+              Shopify.
             </li>
             <li>
-              <span className="text-white/80">Données d'usage :</span> interactions avec le tableau
-              de bord, les insights et les fonctionnalités de l'application.
+              <span className="text-white/80">Conversations avec l'assistant AI :</span> vos
+              questions (prompts) et les réponses générées.
+            </li>
+            <li>
+              <span className="text-white/80">Événements de confidentialité :</span> consentements,
+              demandes d'export et de suppression.
+            </li>
+            <li>
+              <span className="text-white/80">Logs techniques :</span> journaux d'activité et
+              événements liés à la sécurité et au débogage.
             </li>
           </ul>
         </Section>
@@ -63,18 +69,43 @@ export default function PrivacyPage() {
         <Section title="3. Pourquoi utilisons-nous ces données ?">
           <ul className="list-disc list-inside space-y-1.5">
             <li>Calcul de la profitabilité et des marges de votre business.</li>
-            <li>Génération d'insights, de recommandations et de tableaux de bord.</li>
+            <li>Génération d'insights, de recommandations, de tableaux de bord et de réponses de l'assistant AI.</li>
+            <li>Support technique, sécurité et prévention de la fraude.</li>
+            <li>Respect de nos obligations légales (preuve de consentement, traitement des demandes).</li>
             <li>Amélioration continue du service.</li>
-            <li>Support technique et sécurité.</li>
           </ul>
         </Section>
 
         <Section title="4. Durée de conservation">
-          <p>
-            Pendant l'utilisation du service. Après fermeture de compte ou demande de suppression :
-            suppression ou anonymisation des données selon la politique interne et les demandes
-            applicables. <Placeholder>Durée exacte à définir avant bêta publique.</Placeholder>
-          </p>
+          <ul className="list-disc list-inside space-y-1.5">
+            <li>
+              <span className="text-white/80">Compte et business :</span> conservés tant que le
+              compte est actif, puis supprimés ou anonymisés sur demande, sauf obligations légales
+              ou de sécurité.
+            </li>
+            <li>
+              <span className="text-white/80">Données Shopify synchronisées :</span> conservées
+              tant que l'intégration est active ou jusqu'à demande de suppression.
+            </li>
+            <li>
+              <span className="text-white/80">Tokens d'accès Shopify :</span> conservés tant que
+              l'intégration est active, chiffrés au repos, supprimés à la déconnexion ou sur
+              demande de suppression.
+            </li>
+            <li>
+              <span className="text-white/80">Conversations AI :</span> conservées tant que le
+              compte est actif (historique, support, amélioration du service), supprimables sur
+              demande.
+            </li>
+            <li>
+              <span className="text-white/80">Logs techniques :</span> conservés pour une durée
+              limitée, sauf nécessité liée à la sécurité ou au débogage.
+            </li>
+            <li>
+              <span className="text-white/80">Événements de consentement et demandes privacy :</span>{" "}
+              conservés jusqu'à 7 ans comme preuve de consentement et de traitement des demandes.
+            </li>
+          </ul>
         </Section>
 
         <Section title="5. Vos droits">
@@ -83,8 +114,24 @@ export default function PrivacyPage() {
             et de suppression de vos données personnelles, lorsque applicable.
           </p>
           <p className="mt-2">
+            Pendant la phase bêta, les demandes d'export et de suppression sont enregistrées puis
+            traitées manuellement par notre équipe — aucune suppression automatique n'est
+            effectuée. Nous traiterons les demandes dans un délai raisonnable, conformément aux
+            obligations applicables.
+          </p>
+          <p className="mt-2">
+            Sur demande de suppression, nous supprimons ou anonymisons votre compte, votre
+            business, vos tokens Shopify, les données Shopify synchronisées, vos conversations AI
+            et les données opérationnelles associées. Certains événements de confidentialité,
+            demandes, journaux de sécurité ou informations minimales peuvent être conservés si
+            nécessaire pour nos obligations légales, la preuve de consentement ou de traitement,
+            la sécurité ou la prévention de la fraude.
+          </p>
+          <p className="mt-2">
             Pour exercer vos droits, contactez :{" "}
-            <Placeholder>privacy@exemple.com — à remplacer avant bêta publique.</Placeholder>
+            <a href={`mailto:${PRIVACY_EMAIL}`} className="text-accent hover:underline">
+              {PRIVACY_EMAIL}
+            </a>
           </p>
         </Section>
 
@@ -95,31 +142,48 @@ export default function PrivacyPage() {
               et accès aux données commerciales.
             </li>
             <li>
-              <span className="text-white/80">OpenAI :</span> génération d'insights et de
-              recommandations basés sur vos données.
+              <span className="text-white/80">OpenAI :</span> génération d'insights, de
+              recommandations et de réponses de l'assistant AI basés sur vos données.
             </li>
             <li>
-              <span className="text-white/80">Render :</span> hébergement de l'application.
+              <span className="text-white/80">Render :</span> hébergement du backend de
+              l'application.
             </li>
             <li>
-              <span className="text-white/80">Neon :</span> base de données.
+              <span className="text-white/80">Vercel :</span> hébergement de l'interface web.
+            </li>
+            <li>
+              <span className="text-white/80">Neon :</span> base de données PostgreSQL.
+            </li>
+            <li>
+              <span className="text-white/80">GitHub :</span> hébergement du code source (aucune
+              donnée marchande).
             </li>
           </ul>
-          <p className="mt-3 text-white/40 text-xs">
-            D'autres fournisseurs techniques pourraient s'ajouter avant la bêta publique.
+        </Section>
+
+        <Section title="7. Transferts hors Québec">
+          <p>
+            Certains de nos fournisseurs peuvent traiter ou héberger des données à l'extérieur du
+            Québec et/ou du Canada, notamment aux États-Unis ou dans d'autres régions, selon leur
+            infrastructure.
           </p>
         </Section>
 
-        <Section title="7. Responsable de la protection des renseignements personnels">
+        <Section title="8. Responsable de la protection des renseignements personnels">
           <p>
-            <Placeholder>À confirmer avant bêta publique.</Placeholder>
+            Sébastien Yves Robert Eugène —{" "}
+            <a href={`mailto:${PRIVACY_EMAIL}`} className="text-accent hover:underline">
+              {PRIVACY_EMAIL}
+            </a>{" "}
+            (Québec, Canada).
           </p>
         </Section>
 
-        <Section title="8. Modifications de cette politique">
+        <Section title="9. Modifications de cette politique">
           <p>
-            Cette politique peut être mise à jour. En cas de changement important, les utilisateurs
-            seront informés via l'application.
+            Nous pouvons mettre à jour cette politique de temps à autre. En cas de changement
+            important, nous aviserons les utilisateurs par un moyen approprié.
           </p>
         </Section>
 

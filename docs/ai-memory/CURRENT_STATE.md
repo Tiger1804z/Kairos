@@ -34,7 +34,7 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 
 ## Blockers
 
-- **Légal avant beta publique** : nom légal, responsable RP (Q11), email contact, durée conservation, cartographie fournisseurs (Q12 — Render/OpenAI/Shopify/Neon). Voir [project_privacy_blocker].
+- **DP2 défini (#53)** au niveau beta privée faible volume : entité (personne physique, D-LEG1), PRP, email privacy, rétention, fournisseurs, transferts hors QC — voir docs/business-intelligence/security/GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md. **Reste : validation légale externe avant beta publique/scale.**
 - Rétention des `privacy_consent_events` non définie. `user_id` sans FK DB.
 - S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Remédiation en cours : tickets #51–#62 (GATE-A-REM). Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
 - B1 résolu (#51) : migration `privacy_consent_events` appliquée sur la base Neon prod-facing, consentement + export/deletion vérifiés runtime. Voir docs/business-intelligence/security/GATE_A_REM_01_PRIVACY_MIGRATION_VERIFICATION.md.
