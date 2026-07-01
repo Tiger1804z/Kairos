@@ -16,19 +16,24 @@ const businessSafeSelect = {
   updated_at: true,
 } satisfies Prisma.BusinessSelect;
 
-export const createBusinessForOwnerService = async (data: {
-  owner_id: number;
-  name: string;
-  business_type?: string | null;
-  city?: string | null;
-  country?: string | null;
-  currency?: string;     // ⚠️ PAS null (schema = String non-null)
-  timezone?: string;     // ⚠️ PAS null (schema = String non-null)
-  is_active?: boolean;
-}) => {
+export const createBusinessForOwnerService = async (
+  data: {
+    owner_id: number;
+    name: string;
+    business_type?: string | null;
+    city?: string | null;
+    country?: string | null;
+    currency?: string;     // ⚠️ PAS null (schema = String non-null)
+    timezone?: string;     // ⚠️ PAS null (schema = String non-null)
+    is_active?: boolean;
+  },
+  // Client transactionnel Prisma — permet d'inclure la creation dans une transaction appelante
+  tx?: Prisma.TransactionClient
+) => {
+  const client = tx ?? prisma;
   const { owner_id, name, business_type, city, country, currency, timezone, is_active } = data;
 
-  const existing = await prisma.business.findFirst({
+  const existing = await client.business.findFirst({
     where: { owner_id, name },
     select: { id_business: true },
   });
@@ -45,7 +50,7 @@ export const createBusinessForOwnerService = async (data: {
     is_active: is_active ?? true,
   };
 
-  return prisma.business.create({
+  return client.business.create({
     data: createData,
     select: businessSafeSelect,
   });
