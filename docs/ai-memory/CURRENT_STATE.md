@@ -36,7 +36,7 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 
 - **Légal avant beta publique** : nom légal, responsable RP (Q11), email contact, durée conservation, cartographie fournisseurs (Q12 — Render/OpenAI/Shopify/Neon). Voir [project_privacy_blocker].
 - Rétention des `privacy_consent_events` non définie. `user_id` sans FK DB.
-- S0-T05B ownership fixes #41–#44 addressed AI conversation, costs, import job, and CSV import ownership. Next: S0-FINAL-AUDIT Gate A security/legal review. See docs/business-intelligence/security/S0_T05B_NON_BUSINESSID_OWNERSHIP_AUDIT.md.
+- S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Blocker P0 : migration `20260623233219_add_privacy_consent_events` non appliquée sur la DB configurée → consentement inopérant. Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
 
 ## Sources de vérité (ne pas dupliquer ici)
 
