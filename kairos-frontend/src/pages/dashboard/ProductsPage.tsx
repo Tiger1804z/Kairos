@@ -84,10 +84,15 @@ export default function ProductsPage() {
     async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (!selectedBusinessId) {
+            setError(t("products.error.csv"));
+            e.target.value = "";
+            return;
+        }
         setCsvImporting(true);
         setCsvResult(null);
         try {
-            const result = await importCostsCsv(file);
+            const result = await importCostsCsv(selectedBusinessId, file);
             setCsvResult(result);
             await fetchProducts();
         } catch {
