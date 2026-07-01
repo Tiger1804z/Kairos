@@ -36,7 +36,8 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 
 - **Légal avant beta publique** : nom légal, responsable RP (Q11), email contact, durée conservation, cartographie fournisseurs (Q12 — Render/OpenAI/Shopify/Neon). Voir [project_privacy_blocker].
 - Rétention des `privacy_consent_events` non définie. `user_id` sans FK DB.
-- S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Blocker P0 : migration `20260623233219_add_privacy_consent_events` non appliquée sur la DB configurée → consentement inopérant. Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
+- S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Remédiation en cours : tickets #51–#62 (GATE-A-REM). Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
+- B1 résolu (#51) : migration `privacy_consent_events` appliquée sur la base Neon prod-facing, consentement + export/deletion vérifiés runtime. Voir docs/business-intelligence/security/GATE_A_REM_01_PRIVACY_MIGRATION_VERIFICATION.md.
 
 ## Sources de vérité (ne pas dupliquer ici)
 
