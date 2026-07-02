@@ -4,8 +4,18 @@ import prisma from '../prisma/prisma';
 import { syncAll } from '../services/shopifySyncService';
 import { computeProfitabilityForBusiness } from './profitabilityController';
 
-// state -> { shop, userId, businessId } — stored in memory; no JWT at callback time
-const pendingStates = new Map<string, { shop: string; userId: number; businessId: number }>();
+// state -> { shop, userId, businessId, expiresAt } — stored in memory; no JWT at callback time
+// GATE-A-REM-10 : TTL court — un state non consommé expire (anti-accumulation +
+// fenêtre d'utilisation bornée si state volé). Anti-CSRF inchangé : 128-bit, single-use.
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+const pendingStates = new Map<string, { shop: string; userId: number; businessId: number; expiresAt: number }>();
+
+// Cleanup opportuniste à chaque création de state — Map minuscule, pas besoin de cron.
+function prunePendingStates(now: number): void {
+    for (const [state, entry] of pendingStates) {
+        if (entry.expiresAt <= now) pendingStates.delete(state);
+    }
+}
 
 async function runShopifyInitialImport(businessId: number): Promise<void> {
     console.log(`[shopify] Initial Shopify sync started for business ${businessId}`);
@@ -43,8 +53,10 @@ export const connectShopify = async (req: Request, res: Response): Promise<void>
     }
 
     console.log(`[shopify] Starting Shopify OAuth for business ${businessId}`);
+    const now = Date.now();
+    prunePendingStates(now);
     const { url, state } = buildAuthURL(shop);
-    pendingStates.set(state, { shop, userId, businessId: Number(businessId) });
+    pendingStates.set(state, { shop, userId, businessId: Number(businessId), expiresAt: now + OAUTH_STATE_TTL_MS });
     res.json({ authUrl: url });
 };
 
@@ -59,6 +71,13 @@ export const shopifyCallback = async (req: Request, res: Response): Promise<void
     }
 
     const pending = pendingStates.get(state);
+    // State expiré : supprimé + même 403 que state inconnu (pas d'oracle côté client).
+    if (pending && pending.expiresAt <= Date.now()) {
+        pendingStates.delete(state);
+        console.warn(`[shopifyCallback] OAuth state expired — shop=${shop}`);
+        res.status(403).json({ error: "State invalide" });
+        return;
+    }
     if (!pending || pending.shop !== shop) {
         res.status(403).json({ error: "State invalide" });
         return;

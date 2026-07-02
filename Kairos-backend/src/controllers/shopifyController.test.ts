@@ -206,3 +206,103 @@ describe("shopifyCallback — sanitization des erreurs (GATE-A-REM-08)", () => {
         expect(mockExchange).not.toHaveBeenCalled();
     });
 });
+
+describe("shopifyCallback — TTL des pending states (GATE-A-REM-10)", () => {
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-07-02T12:00:00Z"));
+        warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        warnSpy.mockRestore();
+    });
+
+    it("state non expiré (9 min) → flow OAuth continue comme avant", async () => {
+        await seedPendingState("ttl-valide");
+        mockExchange.mockResolvedValueOnce(FAKE_TOKEN);
+        mockSaveStore.mockResolvedValueOnce({ id: 1 });
+
+        vi.advanceTimersByTime(9 * 60 * 1000);
+
+        const res = makeRes();
+        await shopifyCallback(makeCallbackReq("ttl-valide"), res);
+
+        expect(res.redirect).toHaveBeenCalledWith(`${FRONTEND}/shopify/success?businessId=${TEST_BUSINESS}`);
+        expect(res.status).not.toHaveBeenCalledWith(403);
+    });
+
+    it("state expiré (11 min) → 403 safe, échange jamais tenté, branche expiration loggée", async () => {
+        await seedPendingState("ttl-expire");
+        vi.advanceTimersByTime(11 * 60 * 1000);
+
+        const res = makeRes();
+        await shopifyCallback(makeCallbackReq("ttl-expire"), res);
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.json).toHaveBeenCalledWith({ error: "State invalide" });
+        expect(mockExchange).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it("state expiré supprimé après rejet — replay → même 403", async () => {
+        await seedPendingState("ttl-replay-expire");
+        vi.advanceTimersByTime(11 * 60 * 1000);
+
+        await shopifyCallback(makeCallbackReq("ttl-replay-expire"), makeRes());
+        const res2 = makeRes();
+        await shopifyCallback(makeCallbackReq("ttl-replay-expire"), res2);
+
+        expect(res2.status).toHaveBeenCalledWith(403);
+        expect(mockExchange).not.toHaveBeenCalled();
+        // 2e appel : state déjà supprimé → branche "inconnu", warn une seule fois (1er appel)
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("state consommé avec succès → supprimé (replay → 403, un seul échange)", async () => {
+        await seedPendingState("ttl-single-use");
+        mockExchange.mockResolvedValueOnce(FAKE_TOKEN);
+        mockSaveStore.mockResolvedValueOnce({ id: 1 });
+
+        await shopifyCallback(makeCallbackReq("ttl-single-use"), makeRes());
+        const res2 = makeRes();
+        await shopifyCallback(makeCallbackReq("ttl-single-use"), res2);
+
+        expect(res2.status).toHaveBeenCalledWith(403);
+        expect(mockExchange).toHaveBeenCalledTimes(1);
+    });
+
+    it("prune opportuniste : créer un nouveau state purge les expirés (pas de branche expiration au callback)", async () => {
+        await seedPendingState("ttl-vieux");
+        vi.advanceTimersByTime(11 * 60 * 1000);
+        await seedPendingState("ttl-neuf"); // connectShopify → prunePendingStates purge ttl-vieux
+
+        const res = makeRes();
+        await shopifyCallback(makeCallbackReq("ttl-vieux"), res);
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(mockExchange).not.toHaveBeenCalled();
+        // Aucun warn "state expired" → le state était DÉJÀ absent (purgé à la création),
+        // pas rejeté par le check d'expiration du callback.
+        expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("réponse et logs d'expiration : safe, sans code OAuth ni token", async () => {
+        await seedPendingState("ttl-safe");
+        vi.advanceTimersByTime(11 * 60 * 1000);
+
+        const res = makeRes();
+        await shopifyCallback(makeCallbackReq("ttl-safe"), res);
+
+        const body = JSON.stringify(res.json.mock.calls[0]?.[0]);
+        expect(body).not.toContain(FAKE_OAUTH_CODE);
+        expect(body).not.toContain(FAKE_TOKEN);
+
+        const logged = warnSpy.mock.calls.map((args: unknown[]) => args.map(String).join(" ")).join("\n");
+        expect(logged).not.toContain(FAKE_OAUTH_CODE);
+        expect(logged).not.toContain("ttl-safe"); // valeur du state pas loggée
+    });
+});
