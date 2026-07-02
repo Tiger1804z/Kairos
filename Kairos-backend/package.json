@@ -11,6 +11,8 @@
     "seed:db": "tsx prisma/seedShopifyTestData.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck",
     "migrate:tokens": "tsx scripts/migrate-tokens.ts"
   },
   "prisma": {
