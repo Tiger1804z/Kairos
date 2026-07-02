@@ -5,7 +5,7 @@
 >
 > **Si ce fichier dépasse une page, il contient probablement trop d'historique. Couper ou déplacer vers la source de vérité appropriée.**
 
-_Dernière mise à jour : 2026-06-24_
+_Dernière mise à jour : 2026-07-02_
 
 ## Produit
 
@@ -20,32 +20,25 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 
 ## Focus actuel
 
-- **Sprint 0 — Security & Legal** (quasi terminé). Dernier livré : S0-T15 input validation (`094d7a4`).
-- Tâches restantes / ouvertes → **GitHub Issues** (ex. #27 S0-T05B audit ownership routes non-businessId). Ne pas recopier ici.
+- **Gate A remediation** (issue #45, tickets #51–#62, milestone « Sprint 0 — Gate A Security / Legal »). Résolus : #51, #52, #55, #56, #57, #58, #59, #60, #61. Restants : **#62** (revue JWT storage + CSP frontend) puis vérification runtime finale (#54, après promotion `staging → main`).
+- Détail de chaque ticket résolu → **GitHub Issues fermées / PRs mergées** (ne pas recopier ici).
 
 ## Contraintes actives
 
 - **Tokens Shopify chiffrés** AES-256-GCM (`utils/crypto.ts`). Clé `SHOPIFY_TOKEN_ENCRYPTION_KEY` requise — backend throw si absente.
 - **Multi-tenant** : toute route business-scoped passe `validateBusinessIdParam` → `requireBusinessAccess` (ownership). Ne pas lire `:businessId` brut.
-- **SQL LLM legacy désactivé** (`aiAsk` → 410). Routes legacy CRM/compta **débranchées** front + back (404). Ne pas remonter.
-- **Conformité Loi 25 / RGPD** : consentement onboarding, page `/privacy`, API export/suppression (event log, traitement admin manuel).
-- **Tests** : `npm test` (vitest). Typecheck backend : `npm run typecheck` (= `tsc --noEmit`, `build` = alias) — doit passer exit 0.
+- **SQL LLM legacy désactivé** (`aiAsk` → 410). Routes legacy CRM/compta **débranchées** front + back (404), fichiers documents legacy supprimés (#59). Ne pas remonter.
+- **Conformité Loi 25 / RGPD** : consentement onboarding, page `/privacy`, API export/suppression (event log, traitement admin manuel). Rétention : events privacy jusqu'à 7 ans, aucune purge automatisée (D-LEG2, #61).
+- **OAuth Shopify** : pending states TTL 10 min (#60), erreurs callback sanitizées côté client (#58).
+- **Tests** : `npm test` (vitest). Typecheck backend : `npm run typecheck` (= `tsc --noEmit`, `build` = alias) — doit passer exit 0 (#59).
 - Frontend : `noUnusedLocals` strict → tout import débranché casse le build. Vérif = `npm run build`. Pas de test runner front.
 
 ## Blockers
 
-- **DP2 défini (#53)** au niveau beta privée faible volume : entité (personne physique, D-LEG1), PRP, email privacy, rétention, fournisseurs, transferts hors QC — voir docs/business-intelligence/security/GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md. **Reste : validation légale externe avant beta publique/scale.**
-- GATE-A-REM-11 (#61) résolu : politique de rétention définie (events privacy jusqu'à 7 ans, purge manuelle en beta, aucune automatisation) — voir docs/business-intelligence/security/GATE_A_REM_11_PRIVACY_RETENTION_POLICY.md et D-LEG2. `user_id` sans FK DB reste un risque résiduel distinct (migration Prisma hors scope).
-- S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Remédiation en cours : tickets #51–#62 (GATE-A-REM). Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
-- B1 résolu (#51) : migration `privacy_consent_events` appliquée sur la base Neon prod-facing, consentement + export/deletion vérifiés runtime. Voir docs/business-intelligence/security/GATE_A_REM_01_PRIVACY_MIGRATION_VERIFICATION.md.
-- GATE-A-REM-02 (#52) résolu : consentement onboarding bloquant (400 `CONSENT_REQUIRED` si absent/false ; business + event atomiques via transaction, rollback si échec). Restant Gate A : vérif runtime Render post-promotion (#54), hardening (#58–#62).
-- GATE-A-REM-06 (#56) résolu : `/import/*` rate-limited (preview+write 10/15min/user), uploads multer bornés 5 MB → 413 (`csvUpload.ts` partagé import+costs).
-- GATE-A-REM-07 (#57) résolu : `variant_id` validé dans `createCost` (check combiné id+product_id, 400 `VARIANT_INVALID` anti-énumération, business transitif via ownership #42).
-- GATE-A-REM-10 (#60) résolu : pending states OAuth Shopify avec TTL 10 min — expiré = 403 identique à invalide + suppression, prune opportuniste à chaque création. Anti-CSRF inchangé (128-bit, single-use).
-- GATE-A-REM-09 (#59) résolu : gate typecheck backend ajouté (`typecheck`/`build` dans package.json) ; controller/routes documents legacy supprimés (morts, non montés — git history = archive). Routes legacy restent débranchées.
-- GATE-A-REM-08 (#58) résolu : callback OAuth Shopify sanitizé — plus de `detail` upstream dans le 500 (générique `SHOPIFY_OAUTH_CALLBACK_FAILED`), logs par allowlist (status upstream, shop, error code — jamais `response.data`/`config`).
-- B4 résolu (#55) : export/deletion requests testées e2e (13 tests intégration + smoke runtime, events 3/3 en DB, zéro suppression) ; traitement manuel/admin documenté. Voir docs/business-intelligence/security/GATE_A_REM_05_EXPORT_DELETION_E2E_PROCEDURE.md.
-- B3 (#54) — **Refs #54, pas fermé.** Tokens Shopify en DB tous chiffrés (PASS), env+boot local PASS. Render : `SHOPIFY_TOKEN_ENCRYPTION_KEY` ajoutée (déclaratif, non vérifiée runtime) ; `LEGACY_AI_SQL_ENABLED` confirmé absent ; `SHOPIFY_ACCESS_TOKEN` legacy retrait différé. **Render déploie encore depuis `main`** (Gate A sur `staging`) → vérification runtime Render + suppression `SHOPIFY_ACCESS_TOKEN` reportées après promotion `staging → main` + redeploy. Voir docs/business-intelligence/security/GATE_A_REM_04_PROD_ENV_AND_TOKEN_VERIFICATION.md.
+- **Validation légale externe (avocat)** non effectuée — requise avant beta publique/scale/commercialisation. DP2 défini pour beta privée faible volume (#53) : voir docs/business-intelligence/security/GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md.
+- **B3 (#54) — pas fermé.** Tokens Shopify chiffrés (PASS), env+boot local PASS, Render déclaratif OK mais **non vérifié runtime**. Render déploie encore depuis `main` (Gate A sur `staging`) → vérification runtime + suppression `SHOPIFY_ACCESS_TOKEN` legacy reportées après promotion `staging → main` + redeploy. Voir docs/business-intelligence/security/GATE_A_REM_04_PROD_ENV_AND_TOKEN_VERIFICATION.md.
+- **#62 non commencé** : revue JWT localStorage + CSP frontend (dernier hardening avant vérification runtime finale).
+- `user_id` sur `PrivacyConsentEvent` sans FK DB — risque résiduel mineur, migration Prisma hors scope Gate A actuel.
 
 ## Sources de vérité (ne pas dupliquer ici)
 
