@@ -43,7 +43,7 @@
 | FRONTEND_URL | present |
 | LEGACY_AI_SQL_ENABLED | **absent** ✅ |
 
-## 5. Env Render backend (déclaré par le fondateur, 2026-07-01)
+## 5. Env Render backend (déclaré par le fondateur, 2026-07-01 — état initial de l'audit)
 
 | Variable | Statut Render |
 |---|---|
@@ -59,7 +59,7 @@
 | **LEGACY_AI_SQL_ENABLED** | ⚠️ non visible / vraisemblablement absent — **à confirmer** |
 | **SHOPIFY_ACCESS_TOKEN** | ⚠️ présente — **legacy, zéro usage dans le code backend** (grep : aucune référence) |
 
-### Findings Render
+### Findings Render (état initial)
 
 1. **F1 — CRITIQUE : `SHOPIFY_TOKEN_ENCRYPTION_KEY` absente de Render.**
    Conséquence : avec le code actuel, `validateEnv()` → `process.exit(1)` au boot — le backend
@@ -74,6 +74,29 @@
 4. **F4 : `OPENAI_API_KEY` présente dans le backend Render ET le service Python.**
    Attendu/normal : le backend l'utilise ([aiService.ts](../../../Kairos-backend/src/services/aiService.ts)
    + preview import CSV) et le service Python fait le chat LLM. Deux usages légitimes documentés.
+
+## 5bis. Actions Render appliquées (fondateur, 2026-07-01 — après l'audit initial)
+
+Contexte : **Render déploie actuellement depuis `main`**, alors que les remédiations Gate A
+(#51–#54) sont sur `staging`, pas encore promues. Décision : appliquer seulement les actions
+Render sans risque immédiat, différer le reste jusqu'à la promotion `staging → main`.
+
+| Finding | Action | Statut |
+|---|---|---|
+| F1 | `SHOPIFY_TOKEN_ENCRYPTION_KEY` ajoutée dans Render, **valeur déclarée identique au `.env` local** (non revérifiée par grep/hash — confiance déclarative fondateur) | ✅ **prepared/configured in Render for Gate A deploy** |
+| F3 | `LEGACY_AI_SQL_ENABLED` confirmé **absent** de Render | ✅ Confirmé absent |
+| F2 | `SHOPIFY_ACCESS_TOKEN` legacy — **suppression différée** | ⏸ **Removal deferred until after `staging → main` promotion** (raison : éviter de toucher l'env Render tant qu'il tourne sur le code `main` actuel, non lié aux changements Gate A) |
+
+**Important — ce que F1 ne prouve PAS encore :**
+- La clé a été *ajoutée* déclarativement, mais **aucune vérification runtime Render** n'a été
+  faite (pas d'accès aux logs Render depuis cet agent). On ne sait pas encore si :
+  - Render a redéployé/redémarré le service après l'ajout de la variable ;
+  - le boot Render logge bien `[env] Environment validation passed` ;
+  - le service actuellement déployé (code `main`) contient même la validation `validateEnv()`
+    qui consomme cette clé (à vérifier selon ce que `main` contient réellement).
+- **Runtime Render verification : PENDING** — reportée après la promotion du code Gate A
+  (`staging → main`) et le redeploy Render qui en découle. C'est à ce moment que la clé
+  ajoutée aujourd'hui sera réellement mise à l'épreuve par le code qui en a besoin.
 
 ## 6. Vérification des tokens Shopify (dry-run autorisé, lecture seule)
 
@@ -113,23 +136,41 @@ Server running on port 3000
 |---|---|
 | Tokens Shopify en DB | ✅ PASS |
 | Env local + boot local | ✅ PASS |
-| Env Render | ❌ **FAIL** (F1) + 2 points à confirmer/nettoyer (F2, F3) |
-| **Global** | ❌ **FAIL — action Render requise avant de considérer B3 résolu** |
+| Env Render — configuration déclarée | 🟡 F1 corrigé (déclaratif), F3 confirmé absent, F2 différé (raison documentée) |
+| Env Render — vérification runtime | ⏳ **PENDING** — reportée après promotion `staging → main` + redeploy Render |
+| **Global (#54)** | 🟡 **Refs #54 — NON fermé.** Amélioré depuis l'audit initial, mais pas de preuve runtime Render tant que le code Gate A n'est pas déployé. |
 
 ## 10. Blockers restants
 
-- F1 : ajouter `SHOPIFY_TOKEN_ENCRYPTION_KEY` (même clé que locale) dans Render, redéployer,
-  vérifier le log `[env] Environment validation passed` dans les logs Render.
-- F3 : confirmer `LEGACY_AI_SQL_ENABLED` absent (ou `false`) dans Render.
-- F2 : supprimer `SHOPIFY_ACCESS_TOKEN` de Render après vérification qu'aucun service ne l'utilise.
+- **Vérification runtime Render** (bloquant pour fermer #54) : après `staging → main` +
+  redeploy, confirmer dans les logs Render `[env] Environment validation passed`, et que le
+  service démarre/reste up sans crash-loop.
+- F2 : supprimer `SHOPIFY_ACCESS_TOKEN` de Render — différé volontairement jusqu'à la
+  promotion `staging → main` (éviter de toucher l'env Render pendant qu'il tourne sur `main`
+  actuel, changement non lié à Gate A).
+- Non revérifié par cet agent : que la valeur ajoutée dans Render correspond bit-pour-bit à la
+  clé locale (déclaratif fondateur uniquement — aucune valeur n'a été comparée par l'agent,
+  par design, pour ne jamais manipuler de secret).
 
 ## 11. Recommandations
 
-1. Corriger F1 immédiatement (copier la clé locale → Render, sans la régénérer).
-2. Après redeploy : vérifier logs Render (`[env] Environment validation passed`) et refaire
-   un smoke test sync Shopify.
-3. Purger F2 ; confirmer F3 ; re-vérifier puis fermer #54.
-4. Moyen terme : séparer les bases staging/prod (risque structurel documenté dans GATE-A-REM-01).
+1. Promouvoir `staging → main`, laisser Render redéployer.
+2. Vérifier les logs Render post-deploy : `[env] Environment validation passed`, absence de
+   crash-loop, puis un smoke test sync Shopify réel.
+3. Immédiatement après : supprimer `SHOPIFY_ACCESS_TOKEN` de Render (F2).
+4. Une fois la vérification runtime confirmée PASS → fermer #54 (`Closes #54`) dans un commit
+   ou une PR de suivi dédiée à cette vérification finale.
+5. Moyen terme : séparer les bases staging/prod (risque structurel documenté dans GATE-A-REM-01).
+
+## 12bis. Suivi requis pour clore #54
+
+Checklist à cocher lors de la vérification runtime finale (post `staging → main` + redeploy) :
+
+- [ ] Logs Render : `[env] Environment validation passed` présent après redeploy.
+- [ ] Service Render up, pas de crash-loop.
+- [ ] `SHOPIFY_ACCESS_TOKEN` supprimée de Render (F2).
+- [ ] Smoke test sync Shopify réel (via Render, pas seulement local) réussi.
+- [ ] Rapport mis à jour avec preuve runtime → alors seulement `Closes #54`.
 
 ## 12. Confirmation secrets
 
