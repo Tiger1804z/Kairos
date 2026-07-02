@@ -1,10 +1,11 @@
 import type { Request, Response } from "express";
 import { createCost, getCostByProduct } from "../services/costService";
 import { importCostsFromCsv } from "../services/csvCostImporter";
-import multer from "multer";
+import { csvUploadSingle } from "../middleware/csvUpload";
 
-const upload = multer({ storage: multer.memoryStorage() });
-export const csvUpload = upload.single("file");
+// GATE-A-REM-06 : multer partagé avec limits.fileSize (5 MB → 413), même
+// comportement que les routes /import. Export conservé pour costRoutes.
+export const csvUpload = csvUploadSingle;
 
 export async function handleCreateCost(req: Request, res: Response) {
     const {product_id, variant_id, cost_per_unit, note} = req.body;
