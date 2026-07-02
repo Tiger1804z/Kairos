@@ -93,9 +93,17 @@ export const shopifyCallback = async (req: Request, res: Response): Promise<void
             res.redirect(`${process.env.FRONTEND_URL}/shopify/success?error=store_already_connected`);
             return;
         }
-        const detail = err?.response?.data ?? err?.message ?? "inconnu";
-        console.error("[shopifyCallback] erreur:", detail);
-        res.status(500).json({ error: "Echec de l'echange de token", detail });
+        // SECURITY (GATE-A-REM-08): ne jamais renvoyer ni logger err.response.data
+        // (payload upstream Shopify) ni err.config (contient client_secret + code OAuth).
+        // Log par allowlist : status upstream, code d'erreur réseau, message court.
+        const upstreamStatus = err?.response?.status ?? "none";
+        console.error(
+            `[shopifyCallback] OAuth callback failed — shop=${shop}, upstream_status=${upstreamStatus}, error_code=${err?.code ?? "none"}, message=${err?.message ?? "unknown"}`
+        );
+        res.status(500).json({
+            error: "SHOPIFY_OAUTH_CALLBACK_FAILED",
+            message: "Unable to complete Shopify OAuth callback.",
+        });
     }
 };
 
