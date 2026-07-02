@@ -1,20 +1,27 @@
 import { Router } from "express";
-import multer from "multer";
 import { previewImport, executeImport, listImportJobs, getImportJob } from "../controllers/importController";
 import { requireBusinessAccess } from "../middleware/requireBusinessAccess";
+import { csvUploadSingle } from "../middleware/csvUpload";
+import { importPreviewRateLimiter, importWriteRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-// multer en memoire : on garde le fichier en buffer, pas sur le disque
-// sans ca multer doit l'ecrire dans un dossier temporaire, et ca complique la lecture du fichier pour le parser ensuite
-// correct pour un mvp avec des fichiers de taille raisonnable 
-const upload = multer({ storage: multer.memoryStorage() });
+// GATE-A-REM-06 : upload multer partagé (memoryStorage + limits.fileSize 5 MB → 413)
+// + rate limiters (preview peut déclencher OpenAI). Limiter AVANT upload : une
+// requête rejetée 429 ne bufferise pas le fichier.
 
 // POST /import/transactions/preview — upload CSV + retourne preview + mapping suggere
-router.post("/transactions/preview", upload.single("file"), previewImport);
+router.post("/transactions/preview", importPreviewRateLimiter, csvUploadSingle, previewImport);
 
 // POST /import/transactions — lance l'import avec le mapping valide
-router.post("/transactions", upload.single("file"), requireBusinessAccess({ from: "body" }), executeImport);
+// business_id arrive dans le body multipart → l'upload doit passer avant requireBusinessAccess.
+router.post(
+  "/transactions",
+  importWriteRateLimiter,
+  csvUploadSingle,
+  requireBusinessAccess({ from: "body" }),
+  executeImport
+);
 
 // GET /import/jobs?business_id=X — liste les jobs d'import
 router.get("/jobs", requireBusinessAccess({ from: "query" }), listImportJobs);

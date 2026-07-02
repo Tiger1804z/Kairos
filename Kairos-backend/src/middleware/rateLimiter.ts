@@ -129,7 +129,32 @@ export const costWriteRateLimiter = rateLimit({
 });
 
 /**
- * 6) CRON / INTERNAL — 1 requête / 1 min / IP.
+ * 6) IMPORT preview — le plus strict : chaque appel peut déclencher OpenAI
+ *    (aiMapColumns sur colonnes non mappées) + parse CSV en mémoire.
+ *    10 requêtes / 15 min / user (→ IP). GATE-A-REM-06.
+ */
+export const importPreviewRateLimiter = rateLimit({
+  ...common,
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  keyGenerator: userOrIpKeyGenerator,
+});
+
+/**
+ * 7) IMPORT write — import de transactions (parse CSV + écritures DB en masse).
+ *    Action manuelle rare : 10 requêtes / 15 min / user (→ IP). GATE-A-REM-06.
+ *    Lecture des jobs volontairement non limitée (faible risque, pas
+ *    d'over-engineering).
+ */
+export const importWriteRateLimiter = rateLimit({
+  ...common,
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  keyGenerator: userOrIpKeyGenerator,
+});
+
+/**
+ * 8) CRON / INTERNAL — 1 requête / 1 min / IP.
  *    Défini et exporté pour usage futur. AUCUN endpoint cron/interne n'existe
  *    aujourd'hui dans le code → ce limiter n'est monté NULLE PART (on n'invente
  *    pas de route). À appliquer quand un endpoint /cron ou /internal sera créé.
