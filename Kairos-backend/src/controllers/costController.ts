@@ -15,9 +15,20 @@ export async function handleCreateCost(req: Request, res: Response) {
 
     }
 
-    const cost = await createCost({ product_id, variant_id, cost_per_unit, note });
-
-    return res.status(201).json(cost);
+    try {
+        const cost = await createCost({ product_id, variant_id, cost_per_unit, note });
+        return res.status(201).json(cost);
+    } catch (err: unknown) {
+        // GATE-A-REM-07 : erreur combinée volontaire — ne distingue pas
+        // "variant inexistant" de "variant d'un autre produit/business".
+        if (err instanceof Error && err.message === "VARIANT_INVALID") {
+            return res.status(400).json({
+                error: "VARIANT_INVALID",
+                message: "variant invalid or not associated with product",
+            });
+        }
+        return res.status(500).json({ error: "SERVER_ERROR" });
+    }
 }
 
 
