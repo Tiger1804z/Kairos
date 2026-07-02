@@ -1398,6 +1398,27 @@ Débloquer B2 de l'audit Gate A (#45) honnêtement : informations réelles confi
 
 ---
 
+### D-LEG2 — Politique de rétention des events privacy = jusqu'à 7 ans, purge manuelle en beta
+
+**Statut:** Validée (fondateur, 2026-07-01 — issue #61)
+
+**Résumé:**  
+Les `privacy_consent_events` (consentement, retrait, demandes export/suppression) sont conservés **jusqu'à 7 ans** comme preuve de consentement et de traitement des demandes. Logs techniques : cible 30–90 jours. Compte/business/données Shopify/conversations AI : conservés tant que le compte/l'intégration est actif, supprimés ou anonymisés sur demande sauf obligations légales/sécurité. **Aucune purge automatique n'est implémentée** — ces durées sont des engagements de politique appliqués manuellement pendant la beta.
+
+**Raison:**  
+Résoudre le risque §7.5 de l'audit Gate A (#45) : la rétention des events de consentement n'était pas définie. Un audit trail légal (preuve de consentement/traitement) doit couvrir les obligations de preuve, pas seulement la minimisation — distinct de l'horizon de justification de collecte (voir D-DATA1).
+
+**Implications produit:**
+- Page `/privacy` §4 reflète déjà ces durées.
+- Ne jamais promettre une suppression automatique (« supprimé après 7 ans ») tant qu'aucun job de purge n'existe — formulation correcte : « conservé jusqu'à 7 ans ».
+- `user_id` sur `PrivacyConsentEvent` sans FK DB reste un risque résiduel distinct, non traité ici (nécessiterait migration Prisma).
+
+**Référence:** [GATE_A_REM_11_PRIVACY_RETENTION_POLICY.md](security/GATE_A_REM_11_PRIVACY_RETENTION_POLICY.md), [GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md](security/GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md) §7
+
+**Phase:** Avant beta privée vrais marchands. Automatisation de purge + validation légale externe requises avant beta publique/scale.
+
+---
+
 ## 11. Questions ouvertes consolidées
 
 Ces questions restent sans réponse définitive. Statut mis à jour au 2026-06-03.

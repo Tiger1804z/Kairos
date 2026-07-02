@@ -35,7 +35,7 @@ SaaS « True Profit Intelligence for Shopify ». Phase : durcissement sécurité
 ## Blockers
 
 - **DP2 défini (#53)** au niveau beta privée faible volume : entité (personne physique, D-LEG1), PRP, email privacy, rétention, fournisseurs, transferts hors QC — voir docs/business-intelligence/security/GATE_A_REM_03_DP2_PRIVACY_LEGAL_PACKAGE.md. **Reste : validation légale externe avant beta publique/scale.**
-- Rétention des `privacy_consent_events` non définie. `user_id` sans FK DB.
+- GATE-A-REM-11 (#61) résolu : politique de rétention définie (events privacy jusqu'à 7 ans, purge manuelle en beta, aucune automatisation) — voir docs/business-intelligence/security/GATE_A_REM_11_PRIVACY_RETENTION_POLICY.md et D-LEG2. `user_id` sans FK DB reste un risque résiduel distinct (migration Prisma hors scope).
 - S0-FINAL-AUDIT (#45) rendu : GO WITH CONDITIONS staging/test-data, NO-GO vrais marchands/public. Remédiation en cours : tickets #51–#62 (GATE-A-REM). Voir docs/business-intelligence/security/S0_FINAL_GATE_A_SECURITY_LEGAL_AUDIT.md.
 - B1 résolu (#51) : migration `privacy_consent_events` appliquée sur la base Neon prod-facing, consentement + export/deletion vérifiés runtime. Voir docs/business-intelligence/security/GATE_A_REM_01_PRIVACY_MIGRATION_VERIFICATION.md.
 - GATE-A-REM-02 (#52) résolu : consentement onboarding bloquant (400 `CONSENT_REQUIRED` si absent/false ; business + event atomiques via transaction, rollback si échec). Restant Gate A : vérif runtime Render post-promotion (#54), hardening (#58–#62).
